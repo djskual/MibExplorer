@@ -1,0 +1,439 @@
+<Window x:Class="MibExplorer.Views.MainWindow.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:MibExplorer.Models"
+        mc:Ignorable="d"
+        Title="MibExplorer"
+        Width="1420"
+        Height="860"
+        MinWidth="1280"
+        MinHeight="760"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource AppWindowBackgroundBrush}"
+        Foreground="{DynamicResource AppTextBrush}">
+
+    <DockPanel>
+        <Menu DockPanel.Dock="Top"
+              Background="{DynamicResource AppPanelBrush}"
+              Foreground="{DynamicResource AppTextBrush}">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Prepare workspace"
+                          Command="{Binding PrepareWorkspaceCommand}"/>
+                <MenuItem Header="_Refresh current folder"
+                          Command="{Binding RefreshCommand}"/>
+                <Separator/>
+                <MenuItem Header="E_xit"
+                          Click="Exit_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Actions">
+                <MenuItem Header="_Download"
+                          Command="{Binding DownloadCommand}"/>
+                <MenuItem Header="_Upload"
+                          Command="{Binding UploadCommand}"/>
+                <MenuItem Header="_Rename"
+                          Command="{Binding RenameCommand}"/>
+                <MenuItem Header="_Delete"
+                          Command="{Binding DeleteCommand}"/>
+                <MenuItem Header="E_xtract folder"
+                          Command="{Binding ExtractCommand}"/>
+            </MenuItem>
+        </Menu>
+
+        <Border DockPanel.Dock="Bottom"
+                Margin="12,0,12,12"
+                Padding="10,8"
+                Background="{DynamicResource AppPanelBrush}"
+                BorderBrush="{DynamicResource AppBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="220"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="{Binding StatusMessage}"/>
+
+                <StackPanel Grid.Row="0"
+                            Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right">
+                    <TextBlock Text="Progress"
+                               Foreground="{DynamicResource AppMutedTextBrush}"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Margin="8,0,0,0"
+                               VerticalAlignment="Center"
+                               Text="{Binding ProgressLabel}"/>
+                </StackPanel>
+
+                <Grid Grid.Row="1"
+                      Grid.ColumnSpan="2"
+                      Margin="0,8,0,0">
+                    <ProgressBar Height="10"
+                                 Minimum="0"
+                                 Maximum="100"
+                                 Value="{Binding ProgressValue}"
+                                 Visibility="{Binding IsProgressVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Grid Margin="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="320"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="10"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Column="0"
+                    Grid.Row="0"
+                    Grid.RowSpan="3"
+                    Background="{DynamicResource AppPanelBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="14">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="MIB connection"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"/>
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="Starting point only: the layout is ready, the SSH transport comes next."
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource AppMutedTextBrush}"/>
+                    </StackPanel>
+
+                    <GroupBox Grid.Row="2" Header="Target">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="88"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="10"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="10"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="10"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Host" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <TextBox Grid.Row="0" Grid.Column="0" Margin="0,22,10,0" Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Margin="0,22,0,0" Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="Username" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <TextBox Grid.Row="2" Grid.ColumnSpan="2" Margin="0,22,0,0" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <TextBlock Grid.Row="4" Grid.ColumnSpan="2" Text="Password" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <PasswordBox x:Name="PasswordBox"
+                                         Grid.Row="4"
+                                         Grid.ColumnSpan="2"
+                                         Margin="0,22,0,0"
+                                         PasswordChanged="PasswordBox_OnPasswordChanged"/>
+
+                            <Button Grid.Row="6"
+                                    Grid.ColumnSpan="2"
+                                    Margin="0,8,0,0"
+                                    Height="40"
+                                    Content="Prepare workspace"
+                                    Command="{Binding PrepareWorkspaceCommand}"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Grid.Row="4" Header="Planned actions">
+                        <UniformGrid Columns="2" Rows="3" Margin="0">
+                            <Button Margin="0,0,8,8" Content="Download" Command="{Binding DownloadCommand}"/>
+                            <Button Margin="0,0,0,8" Content="Upload" Command="{Binding UploadCommand}"/>
+                            <Button Margin="0,0,8,8" Content="Rename" Command="{Binding RenameCommand}"/>
+                            <Button Margin="0,0,0,8" Content="Delete" Command="{Binding DeleteCommand}"/>
+                            <Button Margin="0,0,8,0" Content="Extract folder" Command="{Binding ExtractCommand}"/>
+                            <Button Margin="0,0,0,0" Content="Refresh" Command="{Binding RefreshCommand}"/>
+                        </UniformGrid>
+                    </GroupBox>
+
+                    <GroupBox Grid.Row="6" Header="Selected item">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SelectedName}"
+                                       FontWeight="SemiBold"
+                                       FontSize="16"/>
+                            <TextBlock Margin="0,10,0,0" Text="Path" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <TextBlock Text="{Binding SelectedPath}" TextWrapping="Wrap"/>
+                            <TextBlock Margin="0,10,0,0" Text="Type" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <TextBlock Text="{Binding SelectedType}"/>
+                            <TextBlock Margin="0,10,0,0" Text="Size" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <TextBlock Text="{Binding SelectedSize}"/>
+                            <TextBlock Margin="0,10,0,0" Text="Modified" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <TextBlock Text="{Binding SelectedModifiedAt}"/>
+                            <Border Margin="0,14,0,0"
+                                    Padding="10"
+                                    Background="{DynamicResource AppPanelAltBrush}"
+                                    BorderBrush="{DynamicResource AppBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="10">
+                                <TextBlock Text="{Binding SelectedHint}"
+                                           TextWrapping="Wrap"
+                                           Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            </Border>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2"
+                    Grid.Row="0"
+                    Background="{DynamicResource AppPanelBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="14">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Left">
+                            <TextBlock Text="Remote explorer"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Margin="0,4,0,0"
+                                       Text="Windows-like layout: left tree, center content, right details."
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Width="120" Height="34" Margin="0,0,8,0" Content="Refresh" Command="{Binding RefreshCommand}"/>
+                            <Button Width="150" Height="34" Content="Extract current" Command="{Binding ExtractCommand}"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <Border Grid.Row="2"
+                            Padding="10"
+                            Background="{DynamicResource AppPanelAltBrush}"
+                            BorderBrush="{DynamicResource AppBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10">
+                        <ItemsControl ItemsSource="{Binding Breadcrumbs}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,6,6"
+                                            Padding="10,4"
+                                            Background="{DynamicResource AppControlBrush}"
+                                            BorderBrush="{DynamicResource AppBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="10">
+                                        <TextBlock Text="{Binding}"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="2"
+                  Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="330"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Background="{DynamicResource AppPanelBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Padding="12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Folders"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"/>
+
+                        <Border Grid.Row="2"
+                                Background="{DynamicResource AppPanelAltBrush}"
+                                BorderBrush="{DynamicResource AppBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <TreeView x:Name="RemoteTreeView"
+                                      ItemsSource="{Binding RootNodes}"
+                                      SelectedItemChanged="RemoteTreeView_OnSelectedItemChanged">
+                                <TreeView.Resources>
+                                    <HierarchicalDataTemplate DataType="{x:Type models:RemoteExplorerItem}"
+                                                              ItemsSource="{Binding Children}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Glyph}" Margin="0,0,8,0"/>
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </StackPanel>
+                                    </HierarchicalDataTemplate>
+                                </TreeView.Resources>
+                            </TreeView>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="2"
+                        Background="{DynamicResource AppPanelBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Padding="12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Left">
+                                <TextBlock Text="Content"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Margin="0,4,0,0"
+                                           Text="{Binding CurrentFolderLabel}"
+                                           Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <ListView Grid.Row="2"
+                                  ItemsSource="{Binding CurrentFolderItems}"
+                                  SelectedItem="{Binding SelectedListItem, Mode=TwoWay}"
+                                  MouseDoubleClick="CurrentFolderList_OnMouseDoubleClick">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Width="44" Header="">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Glyph}" HorizontalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="240" Header="Name" DisplayMemberBinding="{Binding Name}"/>
+                                    <GridViewColumn Width="100" Header="Type" DisplayMemberBinding="{Binding TypeLabel}"/>
+                                    <GridViewColumn Width="100" Header="Size" DisplayMemberBinding="{Binding SizeLabel}"/>
+                                    <GridViewColumn Width="140" Header="Modified" DisplayMemberBinding="{Binding ModifiedAtLabel}"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Border Grid.Column="4"
+                    Grid.Row="0"
+                    Grid.RowSpan="3"
+                    Background="{DynamicResource AppPanelBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="14">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Implementation notes"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"/>
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="This project is intentionally clean and limited to the first real step: a strong desktop shell before adding SSH." 
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource AppMutedTextBrush}"/>
+                    </StackPanel>
+
+                    <GroupBox Grid.Row="2" Header="Next integration path">
+                        <StackPanel>
+                            <Border Style="{StaticResource InfoCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="1. Add SSH.NET transport"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="Replace DesignMibConnectionService with a real SSH-backed service. Keep the same interface so the UI does not move."
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Margin="0,10,0,0" Style="{StaticResource InfoCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="2. Wire lazy loading for remote folders"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="Tree nodes already support placeholder children. The SSH service only has to return real entries."
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Margin="0,10,0,0" Style="{StaticResource InfoCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="3. Activate real actions"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="Download, upload, rename, delete and extract are already placed in the UI and command flow."
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <Border Grid.Row="4"
+                            Padding="12"
+                            Background="{DynamicResource AppPanelAltBrush}"
+                            BorderBrush="{DynamicResource AppBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12">
+                        <TextBlock Text="Project baseline ready for VS2022."
+                                   FontWeight="SemiBold"/>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
