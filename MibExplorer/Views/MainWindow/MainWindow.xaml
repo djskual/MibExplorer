@@ -15,7 +15,8 @@
         Foreground="{DynamicResource AppTextBrush}">
 
     <DockPanel>
-        <Menu DockPanel.Dock="Top"
+        <Menu x:Name="MainMenu"
+              DockPanel.Dock="Top"
               Background="{DynamicResource AppPanelBrush}"
               Foreground="{DynamicResource AppTextBrush}">
             <MenuItem Header="_File">
@@ -81,7 +82,7 @@
                     <ProgressBar Height="10"
                                  Minimum="0"
                                  Maximum="100"
-                                 Value="{Binding ProgressValue}"
+                                 Value="{Binding ProgressValue, Mode=OneWay}"
                                  Visibility="{Binding IsProgressVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </Grid>
             </Grid>
@@ -287,6 +288,7 @@
                             <RowDefinition Height="10"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
+
                         <TextBlock Text="Folders"
                                    FontSize="16"
                                    FontWeight="SemiBold"/>
@@ -295,13 +297,17 @@
                                 Background="{DynamicResource AppPanelAltBrush}"
                                 BorderBrush="{DynamicResource AppBorderBrush}"
                                 BorderThickness="1"
-                                CornerRadius="10">
+                                CornerRadius="10"
+                                Padding="0">
                             <TreeView x:Name="RemoteTreeView"
                                       ItemsSource="{Binding RootNodes}"
-                                      SelectedItemChanged="RemoteTreeView_OnSelectedItemChanged">
+                                      SelectedItemChanged="RemoteTreeView_OnSelectedItemChanged"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                      ScrollViewer.CanContentScroll="False">
                                 <TreeView.Resources>
                                     <HierarchicalDataTemplate DataType="{x:Type models:RemoteExplorerItem}"
-                                                              ItemsSource="{Binding Children}">
+                                                  ItemsSource="{Binding Children}">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding Glyph}" Margin="0,0,8,0"/>
                                             <TextBlock Text="{Binding Name}"/>
@@ -329,34 +335,53 @@
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Left">
                                 <TextBlock Text="Content"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"/>
+                                       FontSize="16"
+                                       FontWeight="SemiBold"/>
                                 <TextBlock Margin="0,4,0,0"
                                            Text="{Binding CurrentFolderLabel}"
                                            Foreground="{DynamicResource AppMutedTextBrush}"/>
                             </StackPanel>
                         </DockPanel>
 
-                        <ListView Grid.Row="2"
-                                  ItemsSource="{Binding CurrentFolderItems}"
-                                  SelectedItem="{Binding SelectedListItem, Mode=TwoWay}"
-                                  MouseDoubleClick="CurrentFolderList_OnMouseDoubleClick">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Width="44" Header="">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Glyph}" HorizontalAlignment="Center"/>
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Width="240" Header="Name" DisplayMemberBinding="{Binding Name}"/>
-                                    <GridViewColumn Width="100" Header="Type" DisplayMemberBinding="{Binding TypeLabel}"/>
-                                    <GridViewColumn Width="100" Header="Size" DisplayMemberBinding="{Binding SizeLabel}"/>
-                                    <GridViewColumn Width="140" Header="Modified" DisplayMemberBinding="{Binding ModifiedAtLabel}"/>
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
+                        <Border Grid.Row="2"
+                                Background="{DynamicResource AppPanelAltBrush}"
+                                BorderBrush="{DynamicResource AppBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="0">
+                            <Grid Margin="2,2,2,0">
+                                <ListView x:Name="CurrentFolderList"
+                                          ItemsSource="{Binding CurrentFolderItemsView}"
+                                          SelectedItem="{Binding SelectedListItem, Mode=TwoWay}"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                          ScrollViewer.CanContentScroll="False"
+                                          MouseDoubleClick="CurrentFolderList_OnMouseDoubleClick">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn Width="44" Header="">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Glyph}" HorizontalAlignment="Center"/>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                            <GridViewColumn Width="240" Header="Name" DisplayMemberBinding="{Binding Name}"/>
+                                            <GridViewColumn Width="100" Header="Type" DisplayMemberBinding="{Binding TypeLabel}"/>
+                                            <GridViewColumn Width="100" Header="Size" DisplayMemberBinding="{Binding SizeLabel}"/>
+                                            <GridViewColumn Width="140" Header="Modified" DisplayMemberBinding="{Binding ModifiedAtLabel}"/>
+                                        </GridView>
+                                    </ListView.View>
+                                </ListView>
+                                <Image x:Name="CurrentFolderListFreezeOverlay"
+                                       Visibility="Collapsed"
+                                       IsHitTestVisible="False"
+                                       Stretch="Fill"
+                                       Panel.ZIndex="10"/>
+                            </Grid>
+                        </Border>
                     </Grid>
                 </Border>
             </Grid>

@@ -1,9 +1,12 @@
-using System.Collections.ObjectModel;
-using System.Windows;
 using MibExplorer.Core;
 using MibExplorer.Models;
 using MibExplorer.Services;
 using MibExplorer.Services.Design;
+using System;
+using System.Collections.ObjectModel;
+using System.Windows;
+using System.ComponentModel;
+using System.Windows.Data;
 
 namespace MibExplorer.ViewModels;
 
@@ -29,6 +32,9 @@ public sealed class MainViewModel : ObservableObject
     private RemoteExplorerItem? _selectedTreeNode;
     private RemoteExplorerItem? _selectedListItem;
 
+    private string _currentSortColumn = "Name";
+    private bool _currentSortAscending = true;
+
     public MainViewModel()
         : this(new DesignMibConnectionService())
     {
@@ -41,6 +47,11 @@ public sealed class MainViewModel : ObservableObject
         RootNodes = new ObservableCollection<RemoteExplorerItem>();
         CurrentFolderItems = new ObservableCollection<RemoteExplorerItem>();
         Breadcrumbs = new ObservableCollection<string>();
+
+        CurrentFolderItemsView = CollectionViewSource.GetDefaultView(CurrentFolderItems);
+
+        ActiveSortColumn = _currentSortColumn;
+        IsSortAscending = _currentSortAscending;
 
         _prepareWorkspaceCommand = new RelayCommand(async () => await PrepareWorkspaceAsync(), () => !IsBusy);
         _refreshCommand = new RelayCommand(async () => await RefreshSelectedFolderAsync(), () => !IsBusy);
@@ -64,6 +75,8 @@ public sealed class MainViewModel : ObservableObject
     public ObservableCollection<RemoteExplorerItem> RootNodes { get; }
 
     public ObservableCollection<RemoteExplorerItem> CurrentFolderItems { get; }
+
+    public ICollectionView CurrentFolderItemsView { get; }
 
     public ObservableCollection<string> Breadcrumbs { get; }
 
@@ -138,6 +151,20 @@ public sealed class MainViewModel : ObservableObject
         private set => SetProperty(ref _progressLabel, value);
     }
 
+    private string? _activeSortColumn;
+    public string? ActiveSortColumn
+    {
+        get => _activeSortColumn;
+        set => SetProperty(ref _activeSortColumn, value);
+    }
+
+    private bool _isSortAscending = true;
+    public bool IsSortAscending
+    {
+        get => _isSortAscending;
+        set => SetProperty(ref _isSortAscending, value);
+    }
+
     public RemoteExplorerItem? SelectedTreeNode
     {
         get => _selectedTreeNode;
@@ -206,23 +233,28 @@ public sealed class MainViewModel : ObservableObject
             CurrentFolderItems.Clear();
             Breadcrumbs.Clear();
 
-            var roots = await _mibConnectionService.GetRootEntriesAsync();
-            foreach (var root in roots.OrderBy(x => x.IsDirectory ? 0 : 1).ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
+            var root = new RemoteExplorerItem
             {
-                root.Children.Add(new RemoteExplorerItem { Name = "Loading...", FullPath = root.FullPath + "/__placeholder__", EntryType = RemoteEntryType.Unknown });
-                RootNodes.Add(root);
-            }
+                Name = "/",
+                FullPath = "/",
+                EntryType = RemoteEntryType.Directory
+            };
+
+            root.Children.Add(new RemoteExplorerItem
+            {
+                Name = "Loading...",
+                FullPath = "/__placeholder__",
+                EntryType = RemoteEntryType.Unknown
+            });
+
+            RootNodes.Add(root);
 
             ProgressValue = 70;
 
-            var first = RootNodes.FirstOrDefault();
-            if (first is not null)
-            {
-                await EnsureChildrenLoadedAsync(first);
-                SelectedTreeNode = first;
-                first.IsExpanded = true;
-                first.IsSelected = true;
-            }
+            await EnsureChildrenLoadedAsync(root);
+            SelectedTreeNode = root;
+            root.IsExpanded = true;
+            root.IsSelected = true;
 
             ProgressValue = 100;
             StatusMessage = "Workspace ready. The UI now has the structure needed for the SSH layer.";
@@ -270,11 +302,47 @@ public sealed class MainViewModel : ObservableObject
     {
         CurrentFolderItems.Clear();
 
-        var source = node.IsDirectory ? node.Children.Where(x => !IsPlaceholder(x)) : Array.Empty<RemoteExplorerItem>();
-        foreach (var child in source.OrderBy(x => x.IsDirectory ? 0 : 1).ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
+        if (!node.IsDirectory)
+            return;
+
+        var children = await _mibConnectionService.GetChildrenAsync(node.FullPath);
+
+        foreach (var child in children)
             CurrentFolderItems.Add(child);
 
-        await Task.CompletedTask;
+        ApplySort();
+    }
+
+    public void SortCurrentFolder(string columnName)
+    {
+        if (string.IsNullOrWhiteSpace(columnName))
+            return;
+
+        columnName = columnName.Trim();
+
+        if (string.Equals(_currentSortColumn, columnName, StringComparison.OrdinalIgnoreCase))
+            _currentSortAscending = !_currentSortAscending;
+        else
+        {
+            _currentSortColumn = columnName;
+            _currentSortAscending = true;
+        }
+
+        ActiveSortColumn = _currentSortColumn;
+        IsSortAscending = _currentSortAscending;
+
+        ApplySort();
+    }
+
+    private void ApplySort()
+    {
+        if (CurrentFolderItemsView is not ListCollectionView listView)
+            return;
+
+        using (listView.DeferRefresh())
+        {
+            listView.CustomSort = new RemoteExplorerItemComparer(_currentSortColumn, _currentSortAscending);
+        }
     }
 
     private async Task EnsureChildrenLoadedAsync(RemoteExplorerItem node, bool forceReload = false)
@@ -291,10 +359,16 @@ public sealed class MainViewModel : ObservableObject
             var children = await _mibConnectionService.GetChildrenAsync(node.FullPath);
             node.Children.Clear();
 
-            foreach (var child in children.OrderBy(x => x.IsDirectory ? 0 : 1).ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
+            foreach (var child in children
+             .Where(x => x.IsDirectory)
+             .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
             {
-                if (child.IsDirectory)
-                    child.Children.Add(new RemoteExplorerItem { Name = "Loading...", FullPath = child.FullPath + "/__placeholder__", EntryType = RemoteEntryType.Unknown });
+                child.Children.Add(new RemoteExplorerItem
+                {
+                    Name = "Loading...",
+                    FullPath = child.FullPath + "/__placeholder__",
+                    EntryType = RemoteEntryType.Unknown
+                });
 
                 node.Children.Add(child);
             }

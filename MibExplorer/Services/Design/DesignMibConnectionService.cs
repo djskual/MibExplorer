@@ -81,6 +81,7 @@ public sealed class DesignMibConnectionService : IMibConnectionService
 
         map["/eso/hmi/Data/VWMQB/AmbianceLight"] =
         [
+            Dir("AmbianceLighttest", "/eso/hmi/Data/VWMQB/AmbianceLight/AmbianceLighttest"),
             File("0.gca", "/eso/hmi/Data/VWMQB/AmbianceLight/0.gca", 8192),
             File("1.gca", "/eso/hmi/Data/VWMQB/AmbianceLight/1.gca", 8192),
         ];
@@ -117,7 +118,30 @@ public sealed class DesignMibConnectionService : IMibConnectionService
         map["/tsd"] =
         [
             Dir("persistent", "/tsd/persistent"),
+            Dir("persistent1", "/tsd/persistent1"),
+            Dir("persistent2", "/tsd/persistent2"),
+            Dir("persistent3", "/tsd/persistent3"),
+            Dir("persistent4", "/tsd/persistent4"),
+            Dir("persistent5", "/tsd/persistent5"),
+            Dir("persistent6", "/tsd/persistent6"),
+            Dir("persistent7", "/tsd/persistent7"),
+            Dir("persistent8", "/tsd/persistent8"),
             File("update.log", "/tsd/update.log", 58122),
+            File("update1.log", "/tsd/update1.log", 58122),
+            File("update2.log", "/tsd/update2.log", 58122),
+            File("update3.log", "/tsd/update3.log", 58122),
+            File("update4.log", "/tsd/update4.log", 58122),
+            File("update5.log", "/tsd/update5.log", 58122),
+            File("update6.log", "/tsd/update6.log", 58122),
+            File("update7.log", "/tsd/update7.log", 58122),
+            File("update8.log", "/tsd/update8.log", 58122),
+            File("update9.log", "/tsd/update9.log", 58122),
+            File("update10.log", "/tsd/update10.log", 58122),
+            File("update11.log", "/tsd/update11.log", 58122),
+            File("update12.log", "/tsd/update12.log", 58122),
+            File("update13.log", "/tsd/update13.log", 58122),
+            File("update14.log", "/tsd/update14.log", 58122),
+            File("update15.log", "/tsd/update15.log", 58122),
         ];
 
         map["/tsd/persistent"] =
