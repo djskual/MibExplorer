@@ -1,0 +1,41 @@
+namespace MibExplorer.Settings;
+
+public sealed class AppSettings
+{
+    public bool AutoCheckUpdatesOnStartup { get; set; } = true;
+    public bool IncludePrereleaseVersionsInUpdateCheck { get; set; } = false;
+    public bool RememberWindowSizeAndPosition { get; set; } = true;
+
+    public double? WindowWidth { get; set; }
+    public double? WindowHeight { get; set; }
+    public double? WindowLeft { get; set; }
+    public double? WindowTop { get; set; }
+
+    public string? LastHost { get; set; }
+    public string? LastPort { get; set; }
+    public string? LastUsername { get; set; }
+
+    public AppSettings Clone()
+    {
+        return new AppSettings
+        {
+            AutoCheckUpdatesOnStartup = AutoCheckUpdatesOnStartup,
+            IncludePrereleaseVersionsInUpdateCheck = IncludePrereleaseVersionsInUpdateCheck,
+            RememberWindowSizeAndPosition = RememberWindowSizeAndPosition,
+            WindowWidth = WindowWidth,
+            WindowHeight = WindowHeight,
+            WindowLeft = WindowLeft,
+            WindowTop = WindowTop,
+            LastHost = LastHost,
+            LastPort = LastPort,
+            LastUsername = LastUsername
+        };
+    }
+
+    public void Normalize()
+    {
+        LastHost = string.IsNullOrWhiteSpace(LastHost) ? null : LastHost.Trim();
+        LastPort = string.IsNullOrWhiteSpace(LastPort) ? null : LastPort.Trim();
+        LastUsername = string.IsNullOrWhiteSpace(LastUsername) ? null : LastUsername.Trim();
+    }
+}

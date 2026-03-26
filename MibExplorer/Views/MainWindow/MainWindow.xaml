@@ -40,6 +40,17 @@
                 <MenuItem Header="E_xtract folder"
                           Command="{Binding ExtractCommand}"/>
             </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="_Settings..."
+                          Click="Settings_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_Check for updates"
+                          Click="CheckUpdate_Click"/>
+                <Separator/>
+                <MenuItem Header="_About"
+                          Click="About_Click"/>
+            </MenuItem>
         </Menu>
 
         <Border DockPanel.Dock="Bottom"

@@ -1,0 +1,77 @@
+<Window x:Class="MibExplorer.Views.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="About MibExplorer"
+        Width="540"
+        Height="340"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppWindowBackgroundBrush}"
+        Foreground="{DynamicResource AppTextBrush}">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Logo -->
+            <Image Source="pack://application:,,,/Assets/app.png"
+                   Width="70"
+                   Height="70"
+                   VerticalAlignment="Top"
+                   Margin="0,6,0,0"/>
+
+            <!-- Title + version -->
+            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                <TextBlock Text="MibExplorer"
+                           FontSize="24"
+                           FontWeight="Bold"/>
+
+                <TextBlock x:Name="VersionText"
+                           Margin="0,2,0,6"
+                           FontSize="14"/>
+
+                <TextBlock Text="Desktop explorer for MIB systems over SSH, with tree navigation, file operations and controlled tooling."
+                           FontSize="14"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Info -->
+        <StackPanel Grid.Row="2">
+            <Separator Margin="0,0,0,8"/>
+            <TextBlock Text="Author: djskual" Margin="0,0,0,6"/>
+            <TextBlock x:Name="FrameworkText" Margin="0,0,0,0"/>
+            <Separator Margin="0,8,0,8"/>
+
+            <TextBlock Margin="0,0,0,0">
+                <Run>Project page: </Run>
+                <Hyperlink Click="GithubLink_Click">
+                    github.com/djskual/MibExplorer
+                </Hyperlink>
+            </TextBlock>
+
+            <TextBlock Text="For research and development purposes only."
+                       TextWrapping="Wrap"
+                       Margin="0,16,0,0"/>
+        </StackPanel>
+
+        <!-- OK button -->
+        <Button Grid.Row="3"
+                Content="OK"
+                Width="90"
+                Height="34"
+                HorizontalAlignment="Right"
+                Margin="0,12,0,0"
+                Click="Ok_Click"/>
+    </Grid>
+</Window>

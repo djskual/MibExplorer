@@ -7,6 +7,8 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.ComponentModel;
 using System.Windows.Data;
+using MibExplorer.Settings;
+using MibExplorer.Views.Dialogs;
 
 namespace MibExplorer.ViewModels;
 
@@ -68,6 +70,17 @@ public sealed class MainViewModel : ObservableObject
         RenameCommand = _renameCommand;
         DeleteCommand = _deleteCommand;
         ExtractCommand = _extractCommand;
+
+        var settings = AppSettingsStore.Current;
+
+        if (!string.IsNullOrWhiteSpace(settings.LastHost))
+            Host = settings.LastHost;
+
+        if (!string.IsNullOrWhiteSpace(settings.LastPort))
+            Port = settings.LastPort;
+
+        if (!string.IsNullOrWhiteSpace(settings.LastUsername))
+            Username = settings.LastUsername;
 
         _ = PrepareWorkspaceAsync();
     }
@@ -384,7 +397,7 @@ public sealed class MainViewModel : ObservableObject
     private void ShowPendingMessage(string actionName)
     {
         var target = SelectedItem?.FullPath ?? "current selection";
-        MessageBox.Show(
+        AppMessageBox.Show(
             $"{actionName} will be connected once the SSH transport layer is implemented.\n\nTarget: {target}",
             "MibExplorer",
             MessageBoxButton.OK,
