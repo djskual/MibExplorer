@@ -24,7 +24,6 @@ public partial class MainWindow : Window
     private string? _pendingSortKey;
     private const string SshKeysFolderName = "Keys";
     private const string SshPrivateKeyFileName = "id_rsa";
-    private const string SshPublicKeyFileName = "id_rsa.pub";
 
     public MainWindow()
     {

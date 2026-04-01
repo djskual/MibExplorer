@@ -14,7 +14,11 @@ public sealed class DesignMibConnectionService : IMibConnectionService
 
     public bool IsConnected => true;
 
-    public Task DownloadFileAsync(string remotePath, string localPath, CancellationToken cancellationToken = default)
+    public Task DownloadFileAsync(
+    string remotePath,
+    string localPath,
+    IProgress<FileTransferProgressInfo>? progress = null,
+    CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -22,7 +26,29 @@ public sealed class DesignMibConnectionService : IMibConnectionService
         if (!string.IsNullOrWhiteSpace(directory))
             Directory.CreateDirectory(directory);
 
-        System.IO.File.WriteAllText(localPath, $"Design-mode download placeholder for: {remotePath}");
+        const string contentPrefix = "Design-mode download placeholder for: ";
+        string content = contentPrefix + remotePath;
+
+        progress?.Report(new FileTransferProgressInfo
+        {
+            Operation = "Download",
+            SourcePath = remotePath,
+            DestinationPath = localPath,
+            BytesTransferred = 0,
+            TotalBytes = (ulong)content.Length
+        });
+
+        System.IO.File.WriteAllText(localPath, content);
+
+        progress?.Report(new FileTransferProgressInfo
+        {
+            Operation = "Download",
+            SourcePath = remotePath,
+            DestinationPath = localPath,
+            BytesTransferred = (ulong)content.Length,
+            TotalBytes = (ulong)content.Length
+        });
+
         return Task.CompletedTask;
     }
 

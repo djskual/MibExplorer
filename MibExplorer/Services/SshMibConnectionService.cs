@@ -12,7 +12,11 @@ public sealed class SshMibConnectionService : IMibConnectionService
 
     public bool IsConnected => _sshClient?.IsConnected == true;
 
-    public Task DownloadFileAsync(string remotePath, string localPath, CancellationToken cancellationToken = default)
+    public async Task DownloadFileAsync(
+    string remotePath,
+    string localPath,
+    IProgress<FileTransferProgressInfo>? progress = null,
+    CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         EnsureConnected();
@@ -30,16 +34,38 @@ public sealed class SshMibConnectionService : IMibConnectionService
         var connectionInfo = _sshClient?.ConnectionInfo
             ?? throw new InvalidOperationException("SSH connection info is not available.");
 
-        using var scp = new ScpClient(connectionInfo);
+        await Task.Run(() =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
 
-        scp.Connect();
+            using var scp = new ScpClient(connectionInfo);
 
-        using var localStream = System.IO.File.Create(localPath);
-        scp.Download(remotePath, localStream);
+            scp.Downloading += (_, e) =>
+            {
+                progress?.Report(new FileTransferProgressInfo
+                {
+                    Operation = "Download",
+                    SourcePath = remotePath,
+                    DestinationPath = localPath,
+                    BytesTransferred = (ulong)e.Downloaded,
+                    TotalBytes = (ulong)e.Size
+                });
+            };
 
-        scp.Disconnect();
+            scp.Connect();
 
-        return Task.CompletedTask;
+            try
+            {
+                using var localStream = System.IO.File.Create(localPath);
+                scp.Download(remotePath, localStream);
+                localStream.Flush();
+            }
+            finally
+            {
+                if (scp.IsConnected)
+                    scp.Disconnect();
+            }
+        }, cancellationToken);
     }
 
     public Task ConnectAsync(ConnectionSettings settings, CancellationToken cancellationToken = default)

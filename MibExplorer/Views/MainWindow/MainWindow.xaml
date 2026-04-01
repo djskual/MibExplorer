@@ -6,9 +6,9 @@
         xmlns:models="clr-namespace:MibExplorer.Models"
         mc:Ignorable="d"
         Title="MibExplorer"
-        Width="1420"
+        Width="1180"
         Height="860"
-        MinWidth="1280"
+        MinWidth="1040"
         MinHeight="760"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource AppWindowBackgroundBrush}"
@@ -104,8 +104,6 @@
                 <ColumnDefinition Width="340"/>
                 <ColumnDefinition Width="10"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="10"/>
-                <ColumnDefinition Width="320"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -137,7 +135,7 @@
                                    FontSize="20"
                                    FontWeight="SemiBold"/>
                         <TextBlock Margin="0,6,0,0"
-                                   Text="Starting point only: the layout is ready, the SSH transport comes next."
+                                   Text="Connect to a prepared MIB over SSH, browse the remote filesystem and run file operations."
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource AppMutedTextBrush}"/>
                     </StackPanel>
@@ -220,11 +218,9 @@
                                          Columns="2"
                                          Margin="0,8,0,0">
                                 <Button Margin="0,0,8,0"
-                                        Height="40"
-                                        Content="Test connection"
+                                        Content="Connect"
                                         Command="{Binding TestConnectionCommand}"/>
-                                <Button Height="40"
-                                        Content="Prepare workspace"
+                                <Button Content="Prepare workspace"
                                         Command="{Binding PrepareWorkspaceCommand}"/>
                             </UniformGrid>
                         </Grid>
@@ -289,7 +285,7 @@
                                        FontSize="20"
                                        FontWeight="SemiBold"/>
                             <TextBlock Margin="0,4,0,0"
-                                       Text="Windows-like layout: left tree, center content, right details."
+                                       Text="Browse the remote filesystem and use the actions on the left to work with files and folders."
                                        Foreground="{DynamicResource AppMutedTextBrush}"/>
                         </StackPanel>
 
@@ -445,80 +441,6 @@
                     </Grid>
                 </Border>
             </Grid>
-
-            <Border Grid.Column="4"
-                    Grid.Row="0"
-                    Grid.RowSpan="3"
-                    Background="{DynamicResource AppPanelBrush}"
-                    BorderBrush="{DynamicResource AppBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="14"
-                    Padding="14">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="12"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="12"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel>
-                        <TextBlock Text="Implementation notes"
-                                   FontSize="20"
-                                   FontWeight="SemiBold"/>
-                        <TextBlock Margin="0,6,0,0"
-                                   Text="This project is intentionally clean and limited to the first real step: a strong desktop shell before adding SSH." 
-                                   TextWrapping="Wrap"
-                                   Foreground="{DynamicResource AppMutedTextBrush}"/>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="2" Header="Next integration path">
-                        <StackPanel>
-                            <Border Style="{StaticResource InfoCardStyle}">
-                                <StackPanel>
-                                    <TextBlock Text="1. Add SSH.NET transport"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Margin="0,6,0,0"
-                                               Text="Replace DesignMibConnectionService with a real SSH-backed service. Keep the same interface so the UI does not move."
-                                               TextWrapping="Wrap"
-                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Margin="0,10,0,0" Style="{StaticResource InfoCardStyle}">
-                                <StackPanel>
-                                    <TextBlock Text="2. Wire lazy loading for remote folders"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Margin="0,6,0,0"
-                                               Text="Tree nodes already support placeholder children. The SSH service only has to return real entries."
-                                               TextWrapping="Wrap"
-                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Margin="0,10,0,0" Style="{StaticResource InfoCardStyle}">
-                                <StackPanel>
-                                    <TextBlock Text="3. Activate real actions"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Margin="0,6,0,0"
-                                               Text="Download, upload, rename, delete and extract are already placed in the UI and command flow."
-                                               TextWrapping="Wrap"
-                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <Border Grid.Row="4"
-                            Padding="12"
-                            Background="{DynamicResource AppPanelAltBrush}"
-                            BorderBrush="{DynamicResource AppBorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="12">
-                        <TextBlock Text="Project baseline ready for VS2022."
-                                   FontWeight="SemiBold"/>
-                    </Border>
-                </Grid>
-            </Border>
         </Grid>
     </DockPanel>
 </Window>

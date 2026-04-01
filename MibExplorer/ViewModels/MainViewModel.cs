@@ -548,10 +548,12 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
 
+        var selectedFile = SelectedItem;
+
         var saveDialog = new SaveFileDialog
         {
             Title = "Download remote file",
-            FileName = SelectedItem.Name,
+            FileName = selectedFile.Name,
             Filter = "All files (*.*)|*.*",
             OverwritePrompt = true,
             AddExtension = false,
@@ -566,12 +568,34 @@ public sealed class MainViewModel : ObservableObject
 
         try
         {
-            SetBusyState(true, $"Downloading {SelectedItem.Name}...", 35);
+            SetBusyState(true, $"Downloading {selectedFile.Name}...", 0);
+            StatusMessage = $"Starting download of {selectedFile.Name}...";
 
-            await _mibConnectionService.DownloadFileAsync(SelectedItem.FullPath, saveDialog.FileName);
+            var progress = new Progress<FileTransferProgressInfo>(info =>
+            {
+                if (info.HasKnownLength)
+                {
+                    ProgressValue = info.Percentage;
+                    ProgressLabel = $"{info.Percentage:0}%";
+                    StatusMessage =
+                        $"Downloading {selectedFile.Name}... " +
+                        $"{FormatTransferSize(info.BytesTransferred)} / {FormatTransferSize(info.TotalBytes!.Value)}";
+                }
+                else
+                {
+                    ProgressLabel = "Working...";
+                    StatusMessage = $"Downloading {selectedFile.Name}...";
+                }
+            });
+
+            await _mibConnectionService.DownloadFileAsync(
+                selectedFile.FullPath,
+                saveDialog.FileName,
+                progress);
 
             ProgressValue = 100;
-            StatusMessage = $"Downloaded {SelectedItem.FullPath} to {saveDialog.FileName}";
+            ProgressLabel = "100%";
+            StatusMessage = $"Downloaded {selectedFile.FullPath} to {saveDialog.FileName}";
         }
         catch (Exception ex)
         {
@@ -586,6 +610,23 @@ public sealed class MainViewModel : ObservableObject
         {
             SetBusyState(false, "Ready", 0);
         }
+    }
+
+    private static string FormatTransferSize(ulong bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        double size = bytes;
+        int unitIndex = 0;
+
+        while (size >= 1024d && unitIndex < units.Length - 1)
+        {
+            size /= 1024d;
+            unitIndex++;
+        }
+
+        return unitIndex == 0
+            ? $"{size:0} {units[unitIndex]}"
+            : $"{size:0.##} {units[unitIndex]}";
     }
 
     private void ShowPendingMessage(string actionName)
