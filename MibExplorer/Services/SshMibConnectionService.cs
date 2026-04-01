@@ -56,7 +56,17 @@ public sealed class SshMibConnectionService : IMibConnectionService
         connectionInfo.Timeout = TimeSpan.FromSeconds(10);
 
         _sshClient = new SshClient(connectionInfo);
-        _sshClient.Connect();
+
+        try
+        {
+            _sshClient.Connect();
+        }
+        catch
+        {
+            _sshClient.Dispose();
+            _sshClient = null;
+            throw;
+        }
 
         return Task.CompletedTask;
     }
@@ -79,39 +89,6 @@ public sealed class SshMibConnectionService : IMibConnectionService
         {
             string message = string.IsNullOrWhiteSpace(cmd.Error)
                 ? "Remote command failed."
-                : cmd.Error.Trim();
-
-            throw new SshException(message);
-        }
-
-        return Task.FromResult(result);
-    }
-
-    public Task<string> DebugListCommandAsync(string remotePath, CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        EnsureConnected();
-
-        string normalizedPath = NormalizeRemotePath(remotePath);
-        string escapedPath = EscapeShellArg(normalizedPath);
-
-        string commandText =
-            "sh -c " +
-            EscapeShellArg(
-                $"cd {escapedPath} 2>/dev/null || exit 2; " +
-                "pwd; " +
-                "echo '---'; " +
-                "ls -la 2>/dev/null; " +
-                "echo '---'; " +
-                "ls -1A 2>/dev/null");
-
-        using var cmd = _sshClient!.CreateCommand(commandText);
-        string result = cmd.Execute();
-
-        if (cmd.ExitStatus != 0)
-        {
-            string message = string.IsNullOrWhiteSpace(cmd.Error)
-                ? $"Debug list command failed for: {normalizedPath}"
                 : cmd.Error.Trim();
 
             throw new SshException(message);
@@ -246,48 +223,5 @@ public sealed class SshMibConnectionService : IMibConnectionService
     private static string EscapeShellArg(string value)
     {
         return "'" + value.Replace("'", "'\"'\"'") + "'";
-    }
-
-    private static IReadOnlyList<RemoteExplorerItem> ParseListing(string parentPath, string raw)
-    {
-        var items = new List<RemoteExplorerItem>();
-
-        foreach (string line in raw.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
-        {
-            string[] parts = line.Split('|');
-            if (parts.Length < 3)
-                continue;
-
-            string type = parts[0].Trim();
-            string name = parts[1].Trim();
-            string sizeRaw = parts[2].Trim();
-
-            if (string.IsNullOrWhiteSpace(name))
-                continue;
-
-            long size = 0;
-            long.TryParse(sizeRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out size);
-
-            string fullPath = parentPath == "/"
-                ? "/" + name
-                : parentPath.TrimEnd('/') + "/" + name;
-
-            items.Add(new RemoteExplorerItem
-            {
-                Name = name,
-                FullPath = fullPath,
-                EntryType = type switch
-                {
-                    "D" => RemoteEntryType.Directory,
-                    "F" => RemoteEntryType.File,
-                    "L" => RemoteEntryType.Symlink,
-                    _ => RemoteEntryType.Unknown
-                },
-                Size = size,
-                ModifiedAt = null
-            });
-        }
-
-        return items;
     }
 }

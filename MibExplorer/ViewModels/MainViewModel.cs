@@ -489,7 +489,7 @@ public sealed class MainViewModel : ObservableObject
     {
         var target = SelectedItem?.FullPath ?? "current selection";
         AppMessageBox.Show(
-            $"{actionName} will be connected once the SSH transport layer is implemented.\n\nTarget: {target}",
+            $"{actionName} is not implemented yet.\n\nTarget: {target}",
             "MibExplorer",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
