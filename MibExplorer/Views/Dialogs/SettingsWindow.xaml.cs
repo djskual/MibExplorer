@@ -22,6 +22,8 @@ public partial class SettingsWindow : Window
         LastHostTextBox.Text = _workingCopy.LastHost ?? string.Empty;
         LastPortTextBox.Text = _workingCopy.LastPort ?? string.Empty;
         LastUsernameTextBox.Text = _workingCopy.LastUsername ?? string.Empty;
+        UsePrivateKeyCheckBox.IsChecked = _workingCopy.UsePrivateKey;
+        PrivateKeyPathTextBox.Text = _workingCopy.LastPrivateKeyPath ?? string.Empty;
         AutoCheckUpdatesCheck.IsChecked = _workingCopy.AutoCheckUpdatesOnStartup;
         IncludePrereleaseCheck.IsChecked = _workingCopy.IncludePrereleaseVersionsInUpdateCheck;
 
@@ -71,6 +73,8 @@ public partial class SettingsWindow : Window
         _workingCopy.LastHost = LastHostTextBox.Text;
         _workingCopy.LastPort = LastPortTextBox.Text;
         _workingCopy.LastUsername = LastUsernameTextBox.Text;
+        _workingCopy.UsePrivateKey = UsePrivateKeyCheckBox.IsChecked == true;
+        _workingCopy.LastPrivateKeyPath = PrivateKeyPathTextBox.Text;
         _workingCopy.AutoCheckUpdatesOnStartup = AutoCheckUpdatesCheck.IsChecked == true;
         _workingCopy.IncludePrereleaseVersionsInUpdateCheck = IncludePrereleaseCheck.IsChecked == true;
 

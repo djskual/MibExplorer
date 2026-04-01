@@ -22,10 +22,6 @@ public partial class MainWindow : Window
     private MainViewModel ViewModel => (MainViewModel)DataContext;
     private bool _isSortingFromHeader;
     private string? _pendingSortKey;
-    //private const string HeaderName = "Name";
-    //private const string HeaderType = "Type";
-    //private const string HeaderSize = "Size";
-    //private const string HeaderModified = "Modified";
     private const string SshKeysFolderName = "Keys";
     private const string SshPrivateKeyFileName = "id_rsa";
     private const string SshPublicKeyFileName = "id_rsa.pub";
@@ -144,7 +140,8 @@ public partial class MainWindow : Window
             "- Host = the IP shown on the MIB\n" +
             "- Port = 22\n" +
             "- Username = root\n" +
-            "- Private key = Keys\\id_rsa\n\n" +
+            "- Private key = the path configured in Settings\n" +
+            "  default: Keys\\id_rsa\n\n" +
             "Tip:\n" +
             "Your PC must be on the same network as the MIB.",
             "Connection Help",
@@ -163,6 +160,13 @@ public partial class MainWindow : Window
             return;
 
         AppSettingsStore.Save(window.ResultSettings);
+
+        ViewModel.Host = window.ResultSettings.LastHost ?? ViewModel.Host;
+        ViewModel.Port = window.ResultSettings.LastPort ?? ViewModel.Port;
+        ViewModel.Username = window.ResultSettings.LastUsername ?? ViewModel.Username;
+        ViewModel.UsePrivateKey = window.ResultSettings.UsePrivateKey;
+        ViewModel.PrivateKeyPath = window.ResultSettings.LastPrivateKeyPath
+            ?? Path.Combine(AppContext.BaseDirectory, "Keys", "id_rsa");
     }
 
     private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
@@ -651,11 +655,6 @@ public partial class MainWindow : Window
     private void Exit_Click(object sender, RoutedEventArgs e)
     {
         Close();
-    }
-
-    private void PasswordBox_OnPasswordChanged(object sender, RoutedEventArgs e)
-    {
-        ViewModel.Password = PasswordBox.Password;
     }
 
     private void RemoteTreeView_OnSelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)

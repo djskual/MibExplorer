@@ -205,14 +205,15 @@
 
                             <TextBlock Grid.Row="6"
                                        Grid.ColumnSpan="3"
-                                       Text="Password"
+                                       Text="SSH private key"
                                        Foreground="{DynamicResource AppMutedTextBrush}"/>
 
-                            <PasswordBox x:Name="PasswordBox"
-                                         Grid.Row="6"
-                                         Grid.ColumnSpan="3"
-                                         Margin="0,22,0,0"
-                                         PasswordChanged="PasswordBox_OnPasswordChanged"/>
+                            <TextBox Grid.Row="6"
+                                     Grid.ColumnSpan="3"
+                                     Margin="0,22,0,0"
+                                     IsReadOnly="True"
+                                     Text="{Binding PrivateKeyPath}"
+                                     ToolTip="{Binding PrivateKeyPath}"/>
 
                             <UniformGrid Grid.Row="8"
                                          Grid.ColumnSpan="3"
