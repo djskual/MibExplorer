@@ -1,4 +1,5 @@
 using MibExplorer.Models;
+using System.IO;
 
 namespace MibExplorer.Services.Design;
 
@@ -12,6 +13,18 @@ public sealed class DesignMibConnectionService : IMibConnectionService
     }
 
     public bool IsConnected => true;
+
+    public Task DownloadFileAsync(string remotePath, string localPath, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        string? directory = Path.GetDirectoryName(localPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
+
+        System.IO.File.WriteAllText(localPath, $"Design-mode download placeholder for: {remotePath}");
+        return Task.CompletedTask;
+    }
 
     public Task ConnectAsync(ConnectionSettings settings, CancellationToken cancellationToken = default)
     {

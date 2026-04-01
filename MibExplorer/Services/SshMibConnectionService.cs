@@ -12,6 +12,36 @@ public sealed class SshMibConnectionService : IMibConnectionService
 
     public bool IsConnected => _sshClient?.IsConnected == true;
 
+    public Task DownloadFileAsync(string remotePath, string localPath, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        if (string.IsNullOrWhiteSpace(remotePath))
+            throw new InvalidOperationException("Remote path is required.");
+
+        if (string.IsNullOrWhiteSpace(localPath))
+            throw new InvalidOperationException("Local path is required.");
+
+        string? directory = Path.GetDirectoryName(localPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
+
+        var connectionInfo = _sshClient?.ConnectionInfo
+            ?? throw new InvalidOperationException("SSH connection info is not available.");
+
+        using var scp = new ScpClient(connectionInfo);
+
+        scp.Connect();
+
+        using var localStream = System.IO.File.Create(localPath);
+        scp.Download(remotePath, localStream);
+
+        scp.Disconnect();
+
+        return Task.CompletedTask;
+    }
+
     public Task ConnectAsync(ConnectionSettings settings, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -63,8 +93,21 @@ public sealed class SshMibConnectionService : IMibConnectionService
         }
         catch
         {
-            _sshClient.Dispose();
-            _sshClient = null;
+            try
+            {
+                if (_sshClient is not null)
+                {
+                    if (_sshClient.IsConnected)
+                        _sshClient.Disconnect();
+
+                    _sshClient.Dispose();
+                    _sshClient = null;
+                }
+            }
+            catch
+            {
+            }
+
             throw;
         }
 

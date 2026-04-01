@@ -12,4 +12,6 @@ public interface IMibConnectionService : IDisposable
 
     Task<IReadOnlyList<RemoteExplorerItem>> GetRootEntriesAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<RemoteExplorerItem>> GetChildrenAsync(string remotePath, CancellationToken cancellationToken = default);
+
+    Task DownloadFileAsync(string remotePath, string localPath, CancellationToken cancellationToken = default);
 }

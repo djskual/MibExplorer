@@ -2,14 +2,14 @@ using MibExplorer.Core;
 using MibExplorer.Models;
 using MibExplorer.Services;
 using MibExplorer.Services.Design;
-using System;
+using MibExplorer.Settings;
+using MibExplorer.Views.Dialogs;
 using System.IO;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.ComponentModel;
 using System.Windows.Data;
-using MibExplorer.Settings;
-using MibExplorer.Views.Dialogs;
+using Microsoft.Win32;
 
 namespace MibExplorer.ViewModels;
 
@@ -64,7 +64,7 @@ public sealed class MainViewModel : ObservableObject
         _prepareWorkspaceCommand = new RelayCommand(async () => await PrepareWorkspaceAsync(), () => !IsBusy);
         _refreshCommand = new RelayCommand(async () => await RefreshSelectedFolderAsync(), () => !IsBusy);
         _testConnectionCommand = new RelayCommand(async () => await TestConnectionAsync(), () => !IsBusy);
-        _downloadCommand = new RelayCommand(() => ShowPendingMessage("Download"), () => CanRunFileAction);
+        _downloadCommand = new RelayCommand(async () => await DownloadSelectedFileAsync(), () => CanRunFileAction);
         _uploadCommand = new RelayCommand(() => ShowPendingMessage("Upload"), () => CanRunFolderAction);
         _renameCommand = new RelayCommand(() => ShowPendingMessage("Rename"), () => CanRunItemAction);
         _deleteCommand = new RelayCommand(() => ShowPendingMessage("Delete"), () => CanRunItemAction);
@@ -531,6 +531,60 @@ public sealed class MainViewModel : ObservableObject
         finally
         {
             node.IsLoading = false;
+        }
+    }
+
+    private async Task DownloadSelectedFileAsync()
+    {
+        if (!_mibConnectionService.IsConnected)
+        {
+            StatusMessage = "Not connected. Test the SSH connection first.";
+            return;
+        }
+
+        if (SelectedItem is null || SelectedItem.IsDirectory)
+        {
+            StatusMessage = "Select a file to download.";
+            return;
+        }
+
+        var saveDialog = new SaveFileDialog
+        {
+            Title = "Download remote file",
+            FileName = SelectedItem.Name,
+            Filter = "All files (*.*)|*.*",
+            OverwritePrompt = true,
+            AddExtension = false,
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)
+        };
+
+        if (saveDialog.ShowDialog() != true)
+        {
+            StatusMessage = "Download cancelled.";
+            return;
+        }
+
+        try
+        {
+            SetBusyState(true, $"Downloading {SelectedItem.Name}...", 35);
+
+            await _mibConnectionService.DownloadFileAsync(SelectedItem.FullPath, saveDialog.FileName);
+
+            ProgressValue = 100;
+            StatusMessage = $"Downloaded {SelectedItem.FullPath} to {saveDialog.FileName}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Download failed: {ex.Message}";
+            AppMessageBox.Show(
+                $"Failed to download file.\n\n{ex.Message}",
+                "MibExplorer",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            SetBusyState(false, "Ready", 0);
         }
     }
 
