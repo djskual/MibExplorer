@@ -52,6 +52,52 @@ public sealed class DesignMibConnectionService : IMibConnectionService
         return Task.CompletedTask;
     }
 
+    public Task UploadFileAsync(
+    string localPath,
+    string remotePath,
+    IProgress<FileTransferProgressInfo>? progress = null,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        ulong totalBytes = 0;
+        if (System.IO.File.Exists(localPath))
+            totalBytes = (ulong)new FileInfo(localPath).Length;
+
+        progress?.Report(new FileTransferProgressInfo
+        {
+            Operation = "Upload",
+            SourcePath = localPath,
+            DestinationPath = remotePath,
+            BytesTransferred = 0,
+            TotalBytes = totalBytes
+        });
+
+        progress?.Report(new FileTransferProgressInfo
+        {
+            Operation = "Upload",
+            SourcePath = localPath,
+            DestinationPath = remotePath,
+            BytesTransferred = totalBytes,
+            TotalBytes = totalBytes
+        });
+
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteFileAsync(
+    string remotePath,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.CompletedTask;
+    }
+
+    public bool CanWriteToPath(string remotePath)
+    {
+        return true;
+    }
+
     public Task ConnectAsync(ConnectionSettings settings, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

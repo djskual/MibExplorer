@@ -68,6 +68,92 @@ public sealed class SshMibConnectionService : IMibConnectionService
         }, cancellationToken);
     }
 
+    public async Task UploadFileAsync(
+    string localPath,
+    string remotePath,
+    IProgress<FileTransferProgressInfo>? progress = null,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        if (string.IsNullOrWhiteSpace(localPath))
+            throw new InvalidOperationException("Local path is required.");
+
+        if (string.IsNullOrWhiteSpace(remotePath))
+            throw new InvalidOperationException("Remote path is required.");
+
+        if (!System.IO.File.Exists(localPath))
+            throw new FileNotFoundException("Local file not found.", localPath);
+
+        var connectionInfo = _sshClient?.ConnectionInfo
+            ?? throw new InvalidOperationException("SSH connection info is not available.");
+
+        await RunWritableOperationAsync(remotePath, async ct =>
+        {
+            await Task.Run(() =>
+            {
+                ct.ThrowIfCancellationRequested();
+
+                ulong totalBytes = (ulong)new FileInfo(localPath).Length;
+
+                using var scp = new ScpClient(connectionInfo);
+
+                scp.Uploading += (_, e) =>
+                {
+                    progress?.Report(new FileTransferProgressInfo
+                    {
+                        Operation = "Upload",
+                        SourcePath = localPath,
+                        DestinationPath = remotePath,
+                        BytesTransferred = (ulong)e.Uploaded,
+                        TotalBytes = (ulong)e.Size
+                    });
+                };
+
+                scp.Connect();
+
+                try
+                {
+                    using var localStream = System.IO.File.OpenRead(localPath);
+                    scp.Upload(localStream, remotePath);
+
+                    progress?.Report(new FileTransferProgressInfo
+                    {
+                        Operation = "Upload",
+                        SourcePath = localPath,
+                        DestinationPath = remotePath,
+                        BytesTransferred = totalBytes,
+                        TotalBytes = totalBytes
+                    });
+                }
+                finally
+                {
+                    if (scp.IsConnected)
+                        scp.Disconnect();
+                }
+            }, ct);
+        }, cancellationToken);
+    }
+
+    public async Task DeleteFileAsync(
+    string remotePath,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        if (string.IsNullOrWhiteSpace(remotePath))
+            throw new InvalidOperationException("Remote path is required.");
+
+        await RunWritableOperationAsync(remotePath, async ct =>
+        {
+            await ExecuteCommandAsync(
+                $"rm -f {EscapeShellArg(remotePath)}",
+                ct);
+        }, cancellationToken);
+    }
+
     public Task ConnectAsync(ConnectionSettings settings, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -289,8 +375,117 @@ public sealed class SshMibConnectionService : IMibConnectionService
         return remotePath.Trim();
     }
 
-    private static string EscapeShellArg(string value)
+    public bool CanWriteToPath(string remotePath)
     {
-        return "'" + value.Replace("'", "'\"'\"'") + "'";
+        var mounts = ResolveWritableMounts(remotePath);
+        return mounts.Count > 0;
+    }
+
+    private static IReadOnlyList<string> ResolveWritableMounts(string remotePath)
+    {
+        string normalized = NormalizeRemotePath(remotePath).Replace('\\', '/');
+
+        var mounts = new List<string>();
+
+        if (normalized.StartsWith("/eso/", StringComparison.Ordinal) ||
+            normalized.Equals("/eso", StringComparison.Ordinal) ||
+            normalized.StartsWith("/mnt/app/", StringComparison.Ordinal) ||
+            normalized.Equals("/mnt/app", StringComparison.Ordinal))
+        {
+            mounts.Add("/net/mmx/mnt/app");
+        }
+
+        if (normalized.StartsWith("/mnt/system/", StringComparison.Ordinal) ||
+            normalized.Equals("/mnt/system", StringComparison.Ordinal))
+        {
+            mounts.Add("/net/mmx/mnt/system");
+        }
+
+        if (normalized.StartsWith("/net/rcc/mnt/efs-persist/", StringComparison.Ordinal) ||
+            normalized.Equals("/net/rcc/mnt/efs-persist", StringComparison.Ordinal))
+        {
+            mounts.Add("/net/rcc/mnt/efs-persist");
+        }
+
+        return mounts;
+    }
+
+    private async Task MountWritableAsync(IEnumerable<string> mountPoints, CancellationToken cancellationToken = default)
+    {
+        foreach (string mountPoint in mountPoints.Distinct(StringComparer.Ordinal))
+        {
+            await ExecuteCommandAsync($"mount -uw {EscapeShellArg(mountPoint)}", cancellationToken);
+        }
+    }
+
+    private async Task MountReadOnlyAsync(IEnumerable<string> mountPoints, CancellationToken cancellationToken = default)
+    {
+        foreach (string mountPoint in mountPoints.Distinct(StringComparer.Ordinal))
+        {
+            try
+            {
+                await ExecuteCommandAsync($"mount -ur {EscapeShellArg(mountPoint)}", cancellationToken);
+            }
+            catch
+            {
+                // Cleanup should not hide the original failure.
+            }
+        }
+    }
+
+    private async Task RunWritableOperationAsync(
+        string remotePath,
+        Func<CancellationToken, Task> operation,
+        CancellationToken cancellationToken = default)
+    {
+        var mountPoints = ResolveWritableMounts(remotePath);
+
+        if (mountPoints.Count == 0)
+            throw new InvalidOperationException($"No writable mount mapping is defined for path: {remotePath}");
+
+        await MountWritableAsync(mountPoints, cancellationToken);
+
+        try
+        {
+            await operation(cancellationToken);
+        }
+        finally
+        {
+            await MountReadOnlyAsync(mountPoints, cancellationToken);
+        }
+    }
+
+    private static string BuildTemporaryRemotePath(string remotePath)
+    {
+        return remotePath + ".__mibexplorer_tmp__";
+    }
+
+    private static string BuildBackupRemotePath(string remotePath)
+    {
+        return remotePath + ".__mibexplorer_bak__";
+    }
+
+    private async Task<bool> RemotePathExistsAsync(string remotePath, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await ExecuteCommandAsync(
+                $"sh -c {EscapeShellArg($"test -e {EscapeShellArg(remotePath)} && echo exists")}",
+                cancellationToken);
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string EscapeShellArg(string arg)
+    {
+        if (string.IsNullOrEmpty(arg))
+            return "''";
+
+        return "'" + arg.Replace("'", "'\"'\"'") + "'";
     }
 }

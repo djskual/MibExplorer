@@ -10,6 +10,9 @@ using System.Windows;
 using System.ComponentModel;
 using System.Windows.Data;
 using Microsoft.Win32;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace MibExplorer.ViewModels;
 
@@ -63,9 +66,9 @@ public sealed class MainViewModel : ObservableObject
         _refreshCommand = new RelayCommand(async () => await RefreshSelectedFolderAsync(), () => !IsBusy);
         _testConnectionCommand = new RelayCommand(async () => await TestConnectionAsync(), () => !IsBusy);
         _downloadCommand = new RelayCommand(async () => await DownloadSelectedFileAsync(), () => CanRunFileAction);
-        _uploadCommand = new RelayCommand(() => ShowPendingMessage("Upload"), () => CanRunFolderAction);
+        _uploadCommand = new RelayCommand(async () => await UploadFileToSelectedFolderAsync(), () => CanRunFolderAction);
         _renameCommand = new RelayCommand(() => ShowPendingMessage("Rename"), () => CanRunItemAction);
-        _deleteCommand = new RelayCommand(() => ShowPendingMessage("Delete"), () => CanRunItemAction);
+        _deleteCommand = new RelayCommand(async () => await DeleteSelectedFileAsync(), () => CanRunFileAction);
         _extractCommand = new RelayCommand(async () => await ExtractSelectedFolderAsync(), () => CanRunFolderAction);
 
         RefreshCommand = _refreshCommand;
@@ -282,18 +285,49 @@ public sealed class MainViewModel : ObservableObject
 
     public string CurrentFolderLabel => SelectedTreeNode?.FullPath ?? "/";
 
+    private sealed class ExtractDirectoryPlan
+    {
+        public string LocalRelativePath { get; init; } = string.Empty;
+        public string RemoteRelativePath { get; init; } = string.Empty;
+    }
+
     private sealed class ExtractFilePlan
     {
         public string RemotePath { get; init; } = string.Empty;
-        public string RelativePath { get; init; } = string.Empty;
+        public string LocalRelativePath { get; init; } = string.Empty;
+        public string RemoteRelativePath { get; init; } = string.Empty;
         public ulong Size { get; init; }
     }
 
     private sealed class ExtractPlan
     {
-        public List<string> Directories { get; } = [];
+        public List<ExtractDirectoryPlan> Directories { get; } = [];
         public List<ExtractFilePlan> Files { get; } = [];
         public ulong TotalBytes { get; set; }
+    }
+
+    private sealed class ExtractMapFile
+    {
+        [JsonPropertyName("version")]
+        public int Version { get; init; } = 1;
+
+        [JsonPropertyName("remoteRoot")]
+        public string RemoteRoot { get; init; } = string.Empty;
+
+        [JsonPropertyName("entries")]
+        public List<ExtractMapEntry> Entries { get; init; } = [];
+    }
+
+    private sealed class ExtractMapEntry
+    {
+        [JsonPropertyName("localRelativePath")]
+        public string LocalRelativePath { get; init; } = string.Empty;
+
+        [JsonPropertyName("remoteRelativePath")]
+        public string RemoteRelativePath { get; init; } = string.Empty;
+
+        [JsonPropertyName("type")]
+        public string Type { get; init; } = string.Empty;
     }
 
     private async Task PrepareWorkspaceAsync()
@@ -562,7 +596,7 @@ public sealed class MainViewModel : ObservableObject
         var saveDialog = new SaveFileDialog
         {
             Title = "Download remote file",
-            FileName = selectedFile.Name,
+            FileName = SanitizeLocalPathSegment(selectedFile.Name),
             Filter = "All files (*.*)|*.*",
             OverwritePrompt = true,
             AddExtension = false,
@@ -621,6 +655,157 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    private async Task UploadFileToSelectedFolderAsync()
+    {
+        if (!_mibConnectionService.IsConnected)
+        {
+            StatusMessage = "Not connected. Test the SSH connection first.";
+            return;
+        }
+
+        if (SelectedItem is null || !SelectedItem.IsDirectory)
+        {
+            StatusMessage = "Select a destination folder first.";
+            return;
+        }
+
+        var selectedFolder = SelectedItem;
+
+        var openDialog = new OpenFileDialog
+        {
+            Title = "Select file to upload",
+            CheckFileExists = true,
+            CheckPathExists = true,
+            Multiselect = false,
+            Filter = "All files (*.*)|*.*"
+        };
+
+        if (openDialog.ShowDialog() != true)
+        {
+            StatusMessage = "Upload cancelled.";
+            return;
+        }
+
+        string localPath = openDialog.FileName;
+        string fileName = Path.GetFileName(localPath);
+        string remotePath = selectedFolder.FullPath.TrimEnd('/') + "/" + fileName;
+
+        try
+        {
+            SetBusyState(true, $"Uploading {fileName}...", 0);
+            StatusMessage = $"Starting upload of {fileName}...";
+
+            var progress = new Progress<FileTransferProgressInfo>(info =>
+            {
+                if (info.HasKnownLength)
+                {
+                    ProgressValue = info.Percentage;
+                    ProgressLabel = $"{info.Percentage:0}%";
+                    StatusMessage =
+                        $"Uploading {fileName}... " +
+                        $"{FormatTransferSize(info.BytesTransferred)} / {FormatTransferSize(info.TotalBytes!.Value)}";
+                }
+                else
+                {
+                    ProgressLabel = "Working...";
+                    StatusMessage = $"Uploading {fileName}...";
+                }
+            });
+
+            await _mibConnectionService.UploadFileAsync(localPath, remotePath, progress);
+
+            ProgressValue = 100;
+            ProgressLabel = "100%";
+            StatusMessage = $"Uploaded {localPath} to {remotePath}";
+
+            await EnsureChildrenLoadedAsync(selectedFolder, forceReload: true);
+            await PopulateCurrentFolderAsync(selectedFolder);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Upload failed: {ex.Message}";
+            AppMessageBox.Show(
+                $"Failed to upload file.\n\n{ex.Message}",
+                "MibExplorer",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            SetBusyState(false, "Ready", 0);
+        }
+    }
+
+    private async Task DeleteSelectedFileAsync()
+    {
+        if (!_mibConnectionService.IsConnected)
+        {
+            StatusMessage = "Not connected.";
+            return;
+        }
+
+        if (SelectedItem is null || SelectedItem.IsDirectory)
+        {
+            StatusMessage = "Select a file to delete.";
+            return;
+        }
+
+        var file = SelectedItem;
+
+        if (!_mibConnectionService.CanWriteToPath(file.FullPath))
+        {
+            StatusMessage = "Path is not writable.";
+
+            AppMessageBox.Show(
+                $"This path cannot be modified.\n\n{file.FullPath}",
+                "Not allowed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+
+            return;
+        }
+
+        var result = AppMessageBox.Show(
+            $"Delete file?\n\n{file.FullPath}",
+            "Confirm delete",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            StatusMessage = "Delete cancelled.";
+            return;
+        }
+
+        try
+        {
+            SetBusyState(true, $"Deleting {file.Name}...", 0);
+
+            await _mibConnectionService.DeleteFileAsync(file.FullPath);
+
+            StatusMessage = $"Deleted {file.FullPath}";
+
+            if (SelectedTreeNode is not null)
+            {
+                await EnsureChildrenLoadedAsync(SelectedTreeNode, true);
+                await PopulateCurrentFolderAsync(SelectedTreeNode);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Delete failed: {ex.Message}";
+            AppMessageBox.Show(
+                $"Failed to delete file.\n\n{ex.Message}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            SetBusyState(false, "Ready", 0);
+        }
+    }
+
     private static string CombineRelativePath(string parent, string child)
     {
         if (string.IsNullOrWhiteSpace(parent))
@@ -629,11 +814,102 @@ public sealed class MainViewModel : ObservableObject
         return Path.Combine(parent, child);
     }
 
+    private static string SanitizeLocalPathSegment(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "_";
+
+        char[] invalidChars = Path.GetInvalidFileNameChars();
+        var builder = new StringBuilder(name.Length);
+
+        foreach (char c in name)
+        {
+            builder.Append(Array.IndexOf(invalidChars, c) >= 0 ? '_' : c);
+        }
+
+        string sanitized = builder.ToString().Trim();
+
+        if (string.IsNullOrWhiteSpace(sanitized))
+            sanitized = "_";
+
+        sanitized = sanitized.TrimEnd('.', ' ');
+
+        if (string.IsNullOrWhiteSpace(sanitized))
+            sanitized = "_";
+
+        string upper = sanitized.ToUpperInvariant();
+
+        if (upper is "CON" or "PRN" or "AUX" or "NUL" or
+            "COM1" or "COM2" or "COM3" or "COM4" or "COM5" or "COM6" or "COM7" or "COM8" or "COM9" or
+            "LPT1" or "LPT2" or "LPT3" or "LPT4" or "LPT5" or "LPT6" or "LPT7" or "LPT8" or "LPT9")
+        {
+            sanitized = "_" + sanitized;
+        }
+
+        return sanitized;
+    }
+
     private static string GetExtractRootFolderName(RemoteExplorerItem folder)
     {
         return folder.FullPath == "/"
             ? "root"
             : folder.Name;
+    }
+
+    private async Task WriteExtractMapAsync(string extractRoot, string remoteRootPath, ExtractPlan plan)
+    {
+        string mapPath = Path.Combine(extractRoot, ".mibexplorer-map.json");
+
+        string remoteRootNormalized = NormalizeRemotePathForMap(remoteRootPath);
+
+        var entries = new List<ExtractMapEntry>();
+
+        foreach (ExtractDirectoryPlan directory in plan.Directories.OrderBy(p => p.LocalRelativePath, StringComparer.Ordinal))
+        {
+            entries.Add(new ExtractMapEntry
+            {
+                LocalRelativePath = NormalizeRelativePathForMap(directory.LocalRelativePath),
+                RemoteRelativePath = NormalizeRelativePathForMap(directory.RemoteRelativePath),
+                Type = "directory"
+            });
+        }
+
+        foreach (ExtractFilePlan file in plan.Files.OrderBy(f => f.LocalRelativePath, StringComparer.Ordinal))
+        {
+            entries.Add(new ExtractMapEntry
+            {
+                LocalRelativePath = NormalizeRelativePathForMap(file.LocalRelativePath),
+                RemoteRelativePath = NormalizeRelativePathForMap(file.RemoteRelativePath),
+                Type = "file"
+            });
+        }
+
+        var map = new ExtractMapFile
+        {
+            RemoteRoot = remoteRootNormalized,
+            Entries = entries
+        };
+
+        var jsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
+
+        string json = JsonSerializer.Serialize(map, jsonOptions);
+        await File.WriteAllTextAsync(mapPath, json);
+    }
+
+    private static string NormalizeRemotePathForMap(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return "/";
+
+        return path.Replace('\\', '/').TrimEnd('/');
+    }
+
+    private static string NormalizeRelativePathForMap(string path)
+    {
+        return path.Replace('\\', '/');
     }
 
     private async Task ExtractSelectedFolderAsync()
@@ -652,19 +928,25 @@ public sealed class MainViewModel : ObservableObject
 
         var selectedFolder = SelectedItem;
 
+        string initialFolder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+
         var folderDialog = new OpenFolderDialog
         {
             Title = "Select extraction destination",
-            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)
+            InitialDirectory = initialFolder,
+            FolderName = initialFolder,
+            Multiselect = false
         };
 
-        if (folderDialog.ShowDialog() != true)
+        bool? dialogResult = folderDialog.ShowDialog();
+
+        if (dialogResult != true || string.IsNullOrWhiteSpace(folderDialog.FolderName))
         {
             StatusMessage = "Extract folder cancelled.";
             return;
         }
 
-        string rootFolderName = GetExtractRootFolderName(selectedFolder);
+        string rootFolderName = SanitizeLocalPathSegment(GetExtractRootFolderName(selectedFolder));
         string extractRoot = Path.Combine(folderDialog.FolderName, rootFolderName);
 
         try
@@ -676,8 +958,10 @@ public sealed class MainViewModel : ObservableObject
 
             Directory.CreateDirectory(extractRoot);
 
-            foreach (string relativeDirectory in plan.Directories)
-                Directory.CreateDirectory(Path.Combine(extractRoot, relativeDirectory));
+            foreach (ExtractDirectoryPlan relativeDirectory in plan.Directories)
+                Directory.CreateDirectory(Path.Combine(extractRoot, relativeDirectory.LocalRelativePath));
+
+            await WriteExtractMapAsync(extractRoot, selectedFolder.FullPath, plan);
 
             if (plan.Files.Count == 0)
             {
@@ -695,7 +979,7 @@ public sealed class MainViewModel : ObservableObject
                 int fileIndex = i + 1;
                 ulong completedBeforeCurrentFile = completedBytes;
 
-                string localFilePath = Path.Combine(extractRoot, file.RelativePath);
+                string localFilePath = Path.Combine(extractRoot, file.LocalRelativePath);
 
                 var progress = new Progress<FileTransferProgressInfo>(info =>
                 {
@@ -707,7 +991,7 @@ public sealed class MainViewModel : ObservableObject
                         ProgressValue = percentage;
                         ProgressLabel = $"{percentage:0}%";
                         StatusMessage =
-                            $"Extracting {fileIndex}/{plan.Files.Count}: {file.RelativePath} " +
+                            $"Extracting {fileIndex}/{plan.Files.Count}: {file.LocalRelativePath} " +
                             $"({FormatTransferSize(totalTransferred)} / {FormatTransferSize(plan.TotalBytes)})";
                     }
                     else
@@ -716,7 +1000,7 @@ public sealed class MainViewModel : ObservableObject
 
                         ProgressValue = percentage;
                         ProgressLabel = $"{percentage:0}%";
-                        StatusMessage = $"Extracting {fileIndex}/{plan.Files.Count}: {file.RelativePath}";
+                        StatusMessage = $"Extracting {fileIndex}/{plan.Files.Count}: {file.LocalRelativePath}";
                     }
                 });
 
@@ -764,22 +1048,29 @@ public sealed class MainViewModel : ObservableObject
 
         foreach (var child in children)
         {
+            string safeChildName = SanitizeLocalPathSegment(child.Name);
+            string remoteRelativeChildPath = CombineRelativePath(relativeFolderPath, child.Name);
+            string localRelativeChildPath = CombineRelativePath(relativeFolderPath, safeChildName);
+
             if (child.IsDirectory)
             {
-                string childRelativePath = CombineRelativePath(relativeFolderPath, child.Name);
-                plan.Directories.Add(childRelativePath);
+                plan.Directories.Add(new ExtractDirectoryPlan
+                {
+                    LocalRelativePath = localRelativeChildPath,
+                    RemoteRelativePath = remoteRelativeChildPath
+                });
 
-                await BuildExtractPlanRecursiveAsync(child.FullPath, childRelativePath, plan);
+                await BuildExtractPlanRecursiveAsync(child.FullPath, remoteRelativeChildPath, plan);
             }
             else if (child.EntryType == RemoteEntryType.File)
             {
-                string fileRelativePath = CombineRelativePath(relativeFolderPath, child.Name);
                 ulong fileSize = child.Size > 0 ? (ulong)child.Size : 0UL;
 
                 plan.Files.Add(new ExtractFilePlan
                 {
                     RemotePath = child.FullPath,
-                    RelativePath = fileRelativePath,
+                    LocalRelativePath = localRelativeChildPath,
+                    RemoteRelativePath = remoteRelativeChildPath,
                     Size = fileSize
                 });
 

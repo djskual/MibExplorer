@@ -18,4 +18,16 @@ public interface IMibConnectionService : IDisposable
         string localPath,
         IProgress<FileTransferProgressInfo>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task UploadFileAsync(
+        string localPath,
+        string remotePath,
+        IProgress<FileTransferProgressInfo>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    bool CanWriteToPath(string remotePath);
+
+    Task DeleteFileAsync(
+        string remotePath,
+        CancellationToken cancellationToken = default);
 }
