@@ -29,6 +29,10 @@ public sealed class MainViewModel : ObservableObject
     private string _port = "22";
     private string _username = "root";
     private string _password = string.Empty;
+    private bool _usePrivateKey = true;
+    private string _privateKeyPath = string.Empty;
+    private string _workspaceFolder = string.Empty;
+    private string _publicKeyExportPath = string.Empty;
     private string _statusMessage = "Ready. Generate SSH keys, enable SSH on the MIB, then test the connection.";
     private bool _isBusy;
     private double _progressValue;
@@ -86,6 +90,23 @@ public sealed class MainViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(settings.LastUsername))
             Username = settings.LastUsername;
 
+        UsePrivateKey = settings.UsePrivateKey;
+
+        if (!string.IsNullOrWhiteSpace(settings.LastPrivateKeyPath))
+            PrivateKeyPath = settings.LastPrivateKeyPath;
+        else
+            PrivateKeyPath = Path.Combine(AppContext.BaseDirectory, "Keys", "id_rsa");
+
+        if (!string.IsNullOrWhiteSpace(settings.LastWorkspaceFolder))
+            WorkspaceFolder = settings.LastWorkspaceFolder;
+        else
+            WorkspaceFolder = Path.Combine(AppContext.BaseDirectory, "Keys");
+
+        if (!string.IsNullOrWhiteSpace(settings.LastPublicKeyExportPath))
+            PublicKeyExportPath = settings.LastPublicKeyExportPath;
+        else
+            PublicKeyExportPath = Path.Combine(AppContext.BaseDirectory, "Keys", "id_rsa.pub");
+
         _ = PrepareWorkspaceAsync();
     }
 
@@ -135,6 +156,30 @@ public sealed class MainViewModel : ObservableObject
     {
         get => _password;
         set => SetProperty(ref _password, value);
+    }
+
+    public bool UsePrivateKey
+    {
+        get => _usePrivateKey;
+        set => SetProperty(ref _usePrivateKey, value);
+    }
+
+    public string PrivateKeyPath
+    {
+        get => _privateKeyPath;
+        set => SetProperty(ref _privateKeyPath, value);
+    }
+
+    public string WorkspaceFolder
+    {
+        get => _workspaceFolder;
+        set => SetProperty(ref _workspaceFolder, value);
+    }
+
+    public string PublicKeyExportPath
+    {
+        get => _publicKeyExportPath;
+        set => SetProperty(ref _publicKeyExportPath, value);
     }
 
     public string StatusMessage
@@ -301,7 +346,9 @@ public sealed class MainViewModel : ObservableObject
         {
             SetBusyState(true, "Testing SSH connection...", 25);
 
-            string privateKeyPath = Path.Combine(AppContext.BaseDirectory, "Keys", "id_rsa");
+            string privateKeyPath = !string.IsNullOrWhiteSpace(PrivateKeyPath)
+                ? PrivateKeyPath
+                : Path.Combine(AppContext.BaseDirectory, "Keys", "id_rsa");
 
             var settings = new ConnectionSettings
             {
@@ -309,8 +356,10 @@ public sealed class MainViewModel : ObservableObject
                 Port = int.TryParse(Port, out int parsedPort) ? parsedPort : 22,
                 Username = Username.Trim(),
                 Password = Password,
-                UsePrivateKey = File.Exists(privateKeyPath),
-                PrivateKeyPath = privateKeyPath
+                UsePrivateKey = UsePrivateKey && File.Exists(privateKeyPath),
+                PrivateKeyPath = privateKeyPath,
+                WorkspaceFolder = WorkspaceFolder,
+                PublicKeyExportPath = PublicKeyExportPath
             };
 
             await _mibConnectionService.ConnectAsync(settings);

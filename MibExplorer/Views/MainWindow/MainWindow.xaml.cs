@@ -59,27 +59,12 @@ public partial class MainWindow : Window
                 settings.LastHost = ViewModel.Host;
                 settings.LastPort = ViewModel.Port;
                 settings.LastUsername = ViewModel.Username;
+                settings.UsePrivateKey = ViewModel.UsePrivateKey;
+                settings.LastPrivateKeyPath = ViewModel.PrivateKeyPath;
+                settings.LastWorkspaceFolder = ViewModel.WorkspaceFolder;
+                settings.LastPublicKeyExportPath = ViewModel.PublicKeyExportPath;
             }));
         };
-    }
-
-    private void ShowConnectionError(Exception ex)
-    {
-        string message = ex switch
-        {
-            FileNotFoundException fnf => $"Private key not found.\n\n{fnf.FileName}",
-            SshAuthenticationException => "SSH authentication failed.\n\nCheck the key, username and MIB SSH setup.",
-            SshConnectionException => $"SSH connection failed.\n\n{ex.Message}",
-            SshException => $"SSH error.\n\n{ex.Message}",
-            _ => $"Connection failed.\n\n{ex.Message}"
-        };
-
-        AppMessageBox.Show(
-            this,
-            message,
-            "SSH Connection",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
     }
 
     private async void GenerateSshKeys_Click(object sender, RoutedEventArgs e)
@@ -95,6 +80,14 @@ public partial class MainWindow : Window
                 baseFolder,
                 SshPrivateKeyFileName,
                 "mibexplorer");
+
+            AppSettingsStore.Save(UpdateSettings(settings =>
+            {
+                settings.UsePrivateKey = true;
+                settings.LastPrivateKeyPath = result.PrivateKeyPath;
+                settings.LastWorkspaceFolder = baseFolder;
+                settings.LastPublicKeyExportPath = result.PublicKeyPath;
+            }));
 
             AppMessageBox.Show(
                 this,
