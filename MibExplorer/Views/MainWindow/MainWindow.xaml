@@ -37,19 +37,19 @@
                           Command="{Binding RenameCommand}"/>
                 <MenuItem Header="_Delete"
                           Command="{Binding DeleteCommand}"/>
-                <MenuItem Header="E_xtract folder"
+                <MenuItem Header="_Extract folder"
                           Command="{Binding ExtractCommand}"/>
             </MenuItem>
             <MenuItem Header="_Tools">
-                <MenuItem Header="_Settings..."
-                          Click="Settings_Click"/>
+                <MenuItem Header="_Generate SSH Keys..." Click="GenerateSshKeys_Click"/>
+                <MenuItem Header="_Connection Help..." Click="ConnectionHelp_Click"/>
+                <Separator/>
+                <MenuItem Header="_Settings..." Click="Settings_Click"/>
             </MenuItem>
             <MenuItem Header="_Help">
-                <MenuItem Header="_Check for updates"
-                          Click="CheckUpdate_Click"/>
+                <MenuItem Header="_Check for updates" Click="CheckUpdate_Click"/>
                 <Separator/>
-                <MenuItem Header="_About"
-                          Click="About_Click"/>
+                <MenuItem Header="_About" Click="About_Click"/>
             </MenuItem>
         </Menu>
 
@@ -147,6 +147,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="88"/>
+                                <ColumnDefinition Width="34"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -156,24 +157,65 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="10"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="10"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Host" Foreground="{DynamicResource AppMutedTextBrush}"/>
-                            <TextBox Grid.Row="0" Grid.Column="0" Margin="0,22,10,0" Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Margin="0,22,0,0" Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Row="0"
+                                       Grid.ColumnSpan="3"
+                                       Text="Host"
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
 
-                            <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="Username" Foreground="{DynamicResource AppMutedTextBrush}"/>
-                            <TextBox Grid.Row="2" Grid.ColumnSpan="2" Margin="0,22,0,0" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Grid.Row="0"
+                                     Grid.Column="0"
+                                     Margin="0,22,10,0"
+                                     Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"/>
 
-                            <TextBlock Grid.Row="4" Grid.ColumnSpan="2" Text="Password" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <TextBox Grid.Row="0"
+                                     Grid.Column="1"
+                                     Margin="0,22,10,0"
+                                     Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <Button Grid.Row="0"
+                                    Grid.Column="2"
+                                    Margin="0,22,0,0"
+                                    Width="28"
+                                    Height="28"
+                                    Padding="0"
+                                    VerticalAlignment="Top"
+                                    Content="?"
+                                    Click="ConnectionHelp_Click"
+                                    ToolTip="How to find the MIB SSH IP address"/>
+
+                            <TextBlock Grid.Row="2"
+                                       Grid.ColumnSpan="3"
+                                       Text="Need help? Toolbox Green Menu: production -&gt; mmx_prod -&gt; ip-setting_prod -&gt; IP-Address"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                            <TextBlock Grid.Row="4"
+                                       Grid.ColumnSpan="3"
+                                       Text="Username"
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                            <TextBox Grid.Row="4"
+                                     Grid.ColumnSpan="3"
+                                     Margin="0,22,0,0"
+                                     Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <TextBlock Grid.Row="6"
+                                       Grid.ColumnSpan="3"
+                                       Text="Password"
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
+
                             <PasswordBox x:Name="PasswordBox"
-                                         Grid.Row="4"
-                                         Grid.ColumnSpan="2"
+                                         Grid.Row="6"
+                                         Grid.ColumnSpan="3"
                                          Margin="0,22,0,0"
                                          PasswordChanged="PasswordBox_OnPasswordChanged"/>
 
-                            <Button Grid.Row="6"
-                                    Grid.ColumnSpan="2"
+                            <Button Grid.Row="8"
+                                    Grid.ColumnSpan="3"
                                     Margin="0,8,0,0"
                                     Height="40"
                                     Content="Prepare workspace"

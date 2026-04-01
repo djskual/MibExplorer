@@ -15,6 +15,11 @@ public sealed class AppSettings
     public string? LastPort { get; set; }
     public string? LastUsername { get; set; }
 
+    public bool UsePrivateKey { get; set; } = true;
+    public string? LastPrivateKeyPath { get; set; }
+    public string? LastWorkspaceFolder { get; set; }
+    public string? LastPublicKeyExportPath { get; set; }
+
     public AppSettings Clone()
     {
         return new AppSettings
@@ -28,7 +33,11 @@ public sealed class AppSettings
             WindowTop = WindowTop,
             LastHost = LastHost,
             LastPort = LastPort,
-            LastUsername = LastUsername
+            LastUsername = LastUsername,
+            UsePrivateKey = UsePrivateKey,
+            LastPrivateKeyPath = LastPrivateKeyPath,
+            LastWorkspaceFolder = LastWorkspaceFolder,
+            LastPublicKeyExportPath = LastPublicKeyExportPath
         };
     }
 
@@ -37,5 +46,8 @@ public sealed class AppSettings
         LastHost = string.IsNullOrWhiteSpace(LastHost) ? null : LastHost.Trim();
         LastPort = string.IsNullOrWhiteSpace(LastPort) ? null : LastPort.Trim();
         LastUsername = string.IsNullOrWhiteSpace(LastUsername) ? null : LastUsername.Trim();
+        LastPrivateKeyPath = string.IsNullOrWhiteSpace(LastPrivateKeyPath) ? null : LastPrivateKeyPath.Trim();
+        LastWorkspaceFolder = string.IsNullOrWhiteSpace(LastWorkspaceFolder) ? null : LastWorkspaceFolder.Trim();
+        LastPublicKeyExportPath = string.IsNullOrWhiteSpace(LastPublicKeyExportPath) ? null : LastPublicKeyExportPath.Trim();
     }
 }

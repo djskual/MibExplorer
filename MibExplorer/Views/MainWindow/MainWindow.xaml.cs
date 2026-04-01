@@ -2,6 +2,7 @@
 using MibExplorer.Settings;
 using MibExplorer.ViewModels;
 using MibExplorer.Views.Dialogs;
+using MibExplorer.Services;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -20,10 +21,13 @@ public partial class MainWindow : Window
     private MainViewModel ViewModel => (MainViewModel)DataContext;
     private bool _isSortingFromHeader;
     private string? _pendingSortKey;
-    private const string HeaderName = "Name";
-    private const string HeaderType = "Type";
-    private const string HeaderSize = "Size";
-    private const string HeaderModified = "Modified";
+    //private const string HeaderName = "Name";
+    //private const string HeaderType = "Type";
+    //private const string HeaderSize = "Size";
+    //private const string HeaderModified = "Modified";
+    private const string SshKeysFolderName = "Keys";
+    private const string SshPrivateKeyFileName = "id_rsa";
+    private const string SshPublicKeyFileName = "id_rsa.pub";
 
     public MainWindow()
     {
@@ -56,6 +60,83 @@ public partial class MainWindow : Window
                 settings.LastUsername = ViewModel.Username;
             }));
         };
+    }
+
+    private async void GenerateSshKeys_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            string baseFolder = Path.Combine(AppContext.BaseDirectory, SshKeysFolderName);
+            Directory.CreateDirectory(baseFolder);
+
+            var service = new SshKeyService();
+
+            var result = await service.GenerateRsaKeyPairAsync(
+                baseFolder,
+                SshPrivateKeyFileName,
+                "mibexplorer");
+
+            AppMessageBox.Show(
+                this,
+                "SSH key pair successfully generated.\n\n" +
+                "Files created:\n" +
+                "- id_rsa\n" +
+                "- id_rsa.pub\n\n" +
+                "Next steps:\n" +
+                "1. Copy id_rsa.pub to the Toolbox SD card Custom folder.\n" +
+                "2. On the MIB, open Toolbox / Green Menu.\n" +
+                "3. Run customization -> advanced -> Install SSHD service.\n" +
+                "4. Keep id_rsa on this PC for MibExplorer SSH login.\n\n" +
+                "The key folder will now open.",
+                "SSH Keys",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"\"{baseFolder}\"",
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            AppMessageBox.Show(
+                this,
+                $"Failed to generate SSH keys.\n\n{ex.Message}",
+                "SSH Keys",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void ConnectionHelp_Click(object sender, RoutedEventArgs e)
+    {
+        AppMessageBox.Show(
+            this,
+            "How to connect to a prepared MIB\n\n" +
+            "1. Make sure Toolbox is already installed on the MIB.\n" +
+            "2. Generate SSH keys from Tools -> Generate SSH Keys.\n" +
+            "3. Copy id_rsa.pub to the Toolbox SD card Custom folder.\n" +
+            "4. On the MIB, run:\n" +
+            "   customization -> advanced -> Install SSHD service\n\n" +
+            "How to find the SSH IP address\n" +
+            "Open the Green Menu and go to:\n" +
+            "production -> mmx_prod -> ip-setting_prod -> IP-Address\n\n" +
+            "Use the correct interface:\n" +
+            "- mlan0 = Wi-Fi client\n" +
+            "- uap0 = hotspot\n" +
+            "- en0 = Ethernet\n\n" +
+            "Connection values for MibExplorer\n" +
+            "- Host = the IP shown on the MIB\n" +
+            "- Port = 22\n" +
+            "- Username = root\n" +
+            "- Private key = Keys\\id_rsa\n\n" +
+            "Tip:\n" +
+            "Your PC must be on the same network as the MIB.",
+            "Connection Help",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
     }
 
     private void Settings_Click(object sender, RoutedEventArgs e)

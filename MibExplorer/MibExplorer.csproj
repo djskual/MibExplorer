@@ -22,4 +22,8 @@
     <Resource Include="Assets\app.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="SSH.NET" Version="2025.1.0" />
+  </ItemGroup>
+
 </Project>
