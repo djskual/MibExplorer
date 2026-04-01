@@ -214,12 +214,18 @@
                                          Margin="0,22,0,0"
                                          PasswordChanged="PasswordBox_OnPasswordChanged"/>
 
-                            <Button Grid.Row="8"
-                                    Grid.ColumnSpan="3"
-                                    Margin="0,8,0,0"
-                                    Height="40"
-                                    Content="Prepare workspace"
-                                    Command="{Binding PrepareWorkspaceCommand}"/>
+                            <UniformGrid Grid.Row="8"
+                                         Grid.ColumnSpan="3"
+                                         Columns="2"
+                                         Margin="0,8,0,0">
+                                <Button Margin="0,0,8,0"
+                                        Height="40"
+                                        Content="Test connection"
+                                        Command="{Binding TestConnectionCommand}"/>
+                                <Button Height="40"
+                                        Content="Prepare workspace"
+                                        Command="{Binding PrepareWorkspaceCommand}"/>
+                            </UniformGrid>
                         </Grid>
                     </GroupBox>
 

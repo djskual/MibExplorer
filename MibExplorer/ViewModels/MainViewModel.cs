@@ -3,6 +3,7 @@ using MibExplorer.Models;
 using MibExplorer.Services;
 using MibExplorer.Services.Design;
 using System;
+using System.IO;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.ComponentModel;
@@ -22,12 +23,13 @@ public sealed class MainViewModel : ObservableObject
     private readonly RelayCommand _renameCommand;
     private readonly RelayCommand _deleteCommand;
     private readonly RelayCommand _extractCommand;
+    private readonly RelayCommand _testConnectionCommand;
 
     private string _host = "192.168.1.10";
     private string _port = "22";
     private string _username = "root";
     private string _password = string.Empty;
-    private string _statusMessage = "UI initialized. SSH layer will be wired in the next step.";
+    private string _statusMessage = "Ready. Generate SSH keys, enable SSH on the MIB, then test the connection.";
     private bool _isBusy;
     private double _progressValue;
     private string _progressLabel = "Idle";
@@ -57,6 +59,7 @@ public sealed class MainViewModel : ObservableObject
 
         _prepareWorkspaceCommand = new RelayCommand(async () => await PrepareWorkspaceAsync(), () => !IsBusy);
         _refreshCommand = new RelayCommand(async () => await RefreshSelectedFolderAsync(), () => !IsBusy);
+        _testConnectionCommand = new RelayCommand(async () => await TestConnectionAsync(), () => !IsBusy);
         _downloadCommand = new RelayCommand(() => ShowPendingMessage("Download"), () => CanRunFileAction);
         _uploadCommand = new RelayCommand(() => ShowPendingMessage("Upload"), () => CanRunFolderAction);
         _renameCommand = new RelayCommand(() => ShowPendingMessage("Rename"), () => CanRunItemAction);
@@ -65,6 +68,7 @@ public sealed class MainViewModel : ObservableObject
 
         PrepareWorkspaceCommand = _prepareWorkspaceCommand;
         RefreshCommand = _refreshCommand;
+        TestConnectionCommand = _testConnectionCommand;
         DownloadCommand = _downloadCommand;
         UploadCommand = _uploadCommand;
         RenameCommand = _renameCommand;
@@ -96,6 +100,8 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand PrepareWorkspaceCommand { get; }
 
     public RelayCommand RefreshCommand { get; }
+
+    public RelayCommand TestConnectionCommand { get; }
 
     public RelayCommand DownloadCommand { get; }
 
@@ -240,7 +246,7 @@ public sealed class MainViewModel : ObservableObject
     {
         try
         {
-            SetBusyState(true, "Loading sample MIB structure...", 20);
+            SetBusyState(true, "Preparing workspace...", 20);
 
             RootNodes.Clear();
             CurrentFolderItems.Clear();
@@ -250,27 +256,34 @@ public sealed class MainViewModel : ObservableObject
             {
                 Name = "/",
                 FullPath = "/",
-                EntryType = RemoteEntryType.Directory
+                EntryType = RemoteEntryType.Directory,
+                IsLoaded = false
             };
 
-            root.Children.Add(new RemoteExplorerItem
-            {
-                Name = "Loading...",
-                FullPath = "/__placeholder__",
-                EntryType = RemoteEntryType.Unknown
-            });
-
             RootNodes.Add(root);
+            Breadcrumbs.Add("/");
 
-            ProgressValue = 70;
+            if (_mibConnectionService.IsConnected)
+            {
+                ProgressValue = 60;
 
-            await EnsureChildrenLoadedAsync(root);
-            SelectedTreeNode = root;
-            root.IsExpanded = true;
-            root.IsSelected = true;
+                await EnsureChildrenLoadedAsync(root, forceReload: true);
+                SelectedTreeNode = root;
+                root.IsExpanded = true;
+                root.IsSelected = true;
 
-            ProgressValue = 100;
-            StatusMessage = "Workspace ready. The UI now has the structure needed for the SSH layer.";
+                ProgressValue = 100;
+                StatusMessage = "Connected. Remote filesystem loaded from MIB root.";
+            }
+            else
+            {
+                SelectedTreeNode = root;
+                root.IsExpanded = true;
+                root.IsSelected = true;
+
+                ProgressValue = 100;
+                StatusMessage = "Workspace ready. Test the SSH connection to load the real MIB filesystem.";
+            }
         }
         catch (Exception ex)
         {
@@ -282,15 +295,80 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    private async Task TestConnectionAsync()
+    {
+        try
+        {
+            SetBusyState(true, "Testing SSH connection...", 25);
+
+            string privateKeyPath = Path.Combine(AppContext.BaseDirectory, "Keys", "id_rsa");
+
+            var settings = new ConnectionSettings
+            {
+                Host = Host.Trim(),
+                Port = int.TryParse(Port, out int parsedPort) ? parsedPort : 22,
+                Username = Username.Trim(),
+                Password = Password,
+                UsePrivateKey = File.Exists(privateKeyPath),
+                PrivateKeyPath = privateKeyPath
+            };
+
+            await _mibConnectionService.ConnectAsync(settings);
+
+            ProgressValue = 60;
+
+            string pwd = (await _mibConnectionService.ExecuteCommandAsync("pwd")).Trim();
+            if (string.IsNullOrWhiteSpace(pwd))
+                pwd = "/";
+
+            ProgressValue = 80;
+
+            await PrepareWorkspaceAsync();
+
+            StatusMessage = $"SSH connected successfully. Remote pwd: {pwd}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"SSH connection failed: {ex.Message}";
+        }
+        finally
+        {
+            SetBusyState(false, "Ready", 0);
+        }
+    }
+
     private async Task RefreshSelectedFolderAsync()
     {
-        if (SelectedTreeNode is null)
+        if (!_mibConnectionService.IsConnected)
+        {
+            StatusMessage = "Not connected. Test the SSH connection first.";
             return;
+        }
 
-        SelectedTreeNode.IsLoaded = false;
-        await EnsureChildrenLoadedAsync(SelectedTreeNode, forceReload: true);
-        await PopulateCurrentFolderAsync(SelectedTreeNode);
-        StatusMessage = $"Refreshed {SelectedTreeNode.FullPath}";
+        if (SelectedTreeNode is null)
+        {
+            StatusMessage = "No folder selected.";
+            return;
+        }
+
+        try
+        {
+            SetBusyState(true, $"Refreshing {SelectedTreeNode.FullPath}...", 40);
+
+            SelectedTreeNode.IsLoaded = false;
+            await EnsureChildrenLoadedAsync(SelectedTreeNode, forceReload: true);
+            await PopulateCurrentFolderAsync(SelectedTreeNode);
+
+            StatusMessage = $"Refreshed {SelectedTreeNode.FullPath}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Refresh failed: {ex.Message}";
+        }
+        finally
+        {
+            SetBusyState(false, "Ready", 0);
+        }
     }
 
     private async Task OnTreeNodeSelectedAsync(RemoteExplorerItem node)
@@ -313,17 +391,27 @@ public sealed class MainViewModel : ObservableObject
 
     private async Task PopulateCurrentFolderAsync(RemoteExplorerItem node)
     {
-        CurrentFolderItems.Clear();
-
         if (!node.IsDirectory)
             return;
 
-        var children = await _mibConnectionService.GetChildrenAsync(node.FullPath);
+        if (!_mibConnectionService.IsConnected)
+            return;
 
-        foreach (var child in children)
-            CurrentFolderItems.Add(child);
+        try
+        {
+            var children = await _mibConnectionService.GetChildrenAsync(node.FullPath);
 
-        ApplySort();
+            CurrentFolderItems.Clear();
+
+            foreach (var child in children)
+                CurrentFolderItems.Add(child);
+
+            ApplySort();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to load folder content: {ex.Message}";
+        }
     }
 
     public void SortCurrentFolder(string columnName)
@@ -361,6 +449,9 @@ public sealed class MainViewModel : ObservableObject
     private async Task EnsureChildrenLoadedAsync(RemoteExplorerItem node, bool forceReload = false)
     {
         if (!node.IsDirectory)
+            return;
+
+        if (!_mibConnectionService.IsConnected)
             return;
 
         if (node.IsLoaded && !forceReload)
@@ -430,6 +521,7 @@ public sealed class MainViewModel : ObservableObject
     {
         _prepareWorkspaceCommand.RaiseCanExecuteChanged();
         _refreshCommand.RaiseCanExecuteChanged();
+        _testConnectionCommand.RaiseCanExecuteChanged();
         _downloadCommand.RaiseCanExecuteChanged();
         _uploadCommand.RaiseCanExecuteChanged();
         _renameCommand.RaiseCanExecuteChanged();

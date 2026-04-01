@@ -11,6 +11,25 @@ public sealed class DesignMibConnectionService : IMibConnectionService
         _map = BuildMap();
     }
 
+    public bool IsConnected => true;
+
+    public Task ConnectAsync(ConnectionSettings settings, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.CompletedTask;
+    }
+
+    public Task DisconnectAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task<string> ExecuteCommandAsync(string command, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult("design-mode");
+    }
+
     public Task<IReadOnlyList<RemoteExplorerItem>> GetRootEntriesAsync(CancellationToken cancellationToken = default)
     {
         return GetChildrenAsync("/", cancellationToken);
@@ -21,6 +40,10 @@ public sealed class DesignMibConnectionService : IMibConnectionService
         cancellationToken.ThrowIfCancellationRequested();
         _map.TryGetValue(remotePath, out var entries);
         return Task.FromResult(entries ?? (IReadOnlyList<RemoteExplorerItem>)Array.Empty<RemoteExplorerItem>());
+    }
+
+    public void Dispose()
+    {
     }
 
     private static Dictionary<string, IReadOnlyList<RemoteExplorerItem>> BuildMap()

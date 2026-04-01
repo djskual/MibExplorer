@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Renci.SshNet.Common;
 
 namespace MibExplorer.Views.MainWindow;
 
@@ -32,7 +33,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = new MainViewModel();
+        DataContext = new MainViewModel(new SshMibConnectionService());
 
         Loaded += (_, _) => UpdateSortHeaderVisuals();
 
@@ -60,6 +61,25 @@ public partial class MainWindow : Window
                 settings.LastUsername = ViewModel.Username;
             }));
         };
+    }
+
+    private void ShowConnectionError(Exception ex)
+    {
+        string message = ex switch
+        {
+            FileNotFoundException fnf => $"Private key not found.\n\n{fnf.FileName}",
+            SshAuthenticationException => "SSH authentication failed.\n\nCheck the key, username and MIB SSH setup.",
+            SshConnectionException => $"SSH connection failed.\n\n{ex.Message}",
+            SshException => $"SSH error.\n\n{ex.Message}",
+            _ => $"Connection failed.\n\n{ex.Message}"
+        };
+
+        AppMessageBox.Show(
+            this,
+            message,
+            "SSH Connection",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
     }
 
     private async void GenerateSshKeys_Click(object sender, RoutedEventArgs e)

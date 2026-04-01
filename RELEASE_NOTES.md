@@ -9,11 +9,16 @@
 - Integrated workflow guidance after key generation
 - Connection Help dialog in Tools menu
 - Host field help button for MIB SSH IP guidance
+- Real SSH connection support for prepared MIB units
+- Test connection action in main window
+- Initial live filesystem loading from MIB root over SSH
 
 ## Improved
 - SSH key generation now uses Toolbox-style filenames (id_rsa / id_rsa.pub)
 - Generated SSH keys are opened automatically in the local Keys folder after creation
 - Connection workflow guidance is now integrated directly in the main window
+- Main workspace can now switch from placeholder state to live remote data after successful SSH login
+- Runtime explorer is now ready to browse real MIB folders instead of UI-only structure
 
 ## Fixed
 
