@@ -16,7 +16,6 @@ namespace MibExplorer.ViewModels;
 public sealed class MainViewModel : ObservableObject
 {
     private readonly IMibConnectionService _mibConnectionService;
-    private readonly RelayCommand _prepareWorkspaceCommand;
     private readonly RelayCommand _refreshCommand;
     private readonly RelayCommand _downloadCommand;
     private readonly RelayCommand _uploadCommand;
@@ -61,16 +60,14 @@ public sealed class MainViewModel : ObservableObject
         ActiveSortColumn = _currentSortColumn;
         IsSortAscending = _currentSortAscending;
 
-        _prepareWorkspaceCommand = new RelayCommand(async () => await PrepareWorkspaceAsync(), () => !IsBusy);
         _refreshCommand = new RelayCommand(async () => await RefreshSelectedFolderAsync(), () => !IsBusy);
         _testConnectionCommand = new RelayCommand(async () => await TestConnectionAsync(), () => !IsBusy);
         _downloadCommand = new RelayCommand(async () => await DownloadSelectedFileAsync(), () => CanRunFileAction);
         _uploadCommand = new RelayCommand(() => ShowPendingMessage("Upload"), () => CanRunFolderAction);
         _renameCommand = new RelayCommand(() => ShowPendingMessage("Rename"), () => CanRunItemAction);
         _deleteCommand = new RelayCommand(() => ShowPendingMessage("Delete"), () => CanRunItemAction);
-        _extractCommand = new RelayCommand(() => ShowPendingMessage("Extract folder"), () => CanRunFolderAction);
+        _extractCommand = new RelayCommand(async () => await ExtractSelectedFolderAsync(), () => CanRunFolderAction);
 
-        PrepareWorkspaceCommand = _prepareWorkspaceCommand;
         RefreshCommand = _refreshCommand;
         TestConnectionCommand = _testConnectionCommand;
         DownloadCommand = _downloadCommand;
@@ -117,8 +114,6 @@ public sealed class MainViewModel : ObservableObject
     public ICollectionView CurrentFolderItemsView { get; }
 
     public ObservableCollection<string> Breadcrumbs { get; }
-
-    public RelayCommand PrepareWorkspaceCommand { get; }
 
     public RelayCommand RefreshCommand { get; }
 
@@ -286,6 +281,20 @@ public sealed class MainViewModel : ObservableObject
     public bool CanRunFileAction => !IsBusy && SelectedItem is not null && !SelectedItem.IsDirectory;
 
     public string CurrentFolderLabel => SelectedTreeNode?.FullPath ?? "/";
+
+    private sealed class ExtractFilePlan
+    {
+        public string RemotePath { get; init; } = string.Empty;
+        public string RelativePath { get; init; } = string.Empty;
+        public ulong Size { get; init; }
+    }
+
+    private sealed class ExtractPlan
+    {
+        public List<string> Directories { get; } = [];
+        public List<ExtractFilePlan> Files { get; } = [];
+        public ulong TotalBytes { get; set; }
+    }
 
     private async Task PrepareWorkspaceAsync()
     {
@@ -612,6 +621,173 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    private static string CombineRelativePath(string parent, string child)
+    {
+        if (string.IsNullOrWhiteSpace(parent))
+            return child;
+
+        return Path.Combine(parent, child);
+    }
+
+    private static string GetExtractRootFolderName(RemoteExplorerItem folder)
+    {
+        return folder.FullPath == "/"
+            ? "root"
+            : folder.Name;
+    }
+
+    private async Task ExtractSelectedFolderAsync()
+    {
+        if (!_mibConnectionService.IsConnected)
+        {
+            StatusMessage = "Not connected. Test the SSH connection first.";
+            return;
+        }
+
+        if (SelectedItem is null || !SelectedItem.IsDirectory)
+        {
+            StatusMessage = "Select a folder to extract.";
+            return;
+        }
+
+        var selectedFolder = SelectedItem;
+
+        var folderDialog = new OpenFolderDialog
+        {
+            Title = "Select extraction destination",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)
+        };
+
+        if (folderDialog.ShowDialog() != true)
+        {
+            StatusMessage = "Extract folder cancelled.";
+            return;
+        }
+
+        string rootFolderName = GetExtractRootFolderName(selectedFolder);
+        string extractRoot = Path.Combine(folderDialog.FolderName, rootFolderName);
+
+        try
+        {
+            SetBusyState(true, $"Scanning {selectedFolder.Name}...", 0);
+            StatusMessage = $"Scanning {selectedFolder.FullPath} for extraction...";
+
+            ExtractPlan plan = await BuildExtractPlanAsync(selectedFolder.FullPath);
+
+            Directory.CreateDirectory(extractRoot);
+
+            foreach (string relativeDirectory in plan.Directories)
+                Directory.CreateDirectory(Path.Combine(extractRoot, relativeDirectory));
+
+            if (plan.Files.Count == 0)
+            {
+                ProgressValue = 100;
+                ProgressLabel = "100%";
+                StatusMessage = $"Extracted empty folder {selectedFolder.FullPath} to {extractRoot}";
+                return;
+            }
+
+            ulong completedBytes = 0;
+
+            for (int i = 0; i < plan.Files.Count; i++)
+            {
+                var file = plan.Files[i];
+                int fileIndex = i + 1;
+                ulong completedBeforeCurrentFile = completedBytes;
+
+                string localFilePath = Path.Combine(extractRoot, file.RelativePath);
+
+                var progress = new Progress<FileTransferProgressInfo>(info =>
+                {
+                    if (plan.TotalBytes > 0)
+                    {
+                        ulong totalTransferred = completedBeforeCurrentFile + info.BytesTransferred;
+                        double percentage = Math.Clamp(totalTransferred * 100d / plan.TotalBytes, 0d, 100d);
+
+                        ProgressValue = percentage;
+                        ProgressLabel = $"{percentage:0}%";
+                        StatusMessage =
+                            $"Extracting {fileIndex}/{plan.Files.Count}: {file.RelativePath} " +
+                            $"({FormatTransferSize(totalTransferred)} / {FormatTransferSize(plan.TotalBytes)})";
+                    }
+                    else
+                    {
+                        double percentage = Math.Clamp((double)(fileIndex - 1) * 100d / plan.Files.Count, 0d, 100d);
+
+                        ProgressValue = percentage;
+                        ProgressLabel = $"{percentage:0}%";
+                        StatusMessage = $"Extracting {fileIndex}/{plan.Files.Count}: {file.RelativePath}";
+                    }
+                });
+
+                await _mibConnectionService.DownloadFileAsync(file.RemotePath, localFilePath, progress);
+
+                completedBytes += file.Size;
+
+                if (plan.TotalBytes > 0)
+                {
+                    double percentage = Math.Clamp(completedBytes * 100d / plan.TotalBytes, 0d, 100d);
+                    ProgressValue = percentage;
+                    ProgressLabel = $"{percentage:0}%";
+                }
+            }
+
+            ProgressValue = 100;
+            ProgressLabel = "100%";
+            StatusMessage = $"Extracted {selectedFolder.FullPath} to {extractRoot}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Extract folder failed: {ex.Message}";
+            AppMessageBox.Show(
+                $"Failed to extract folder.\n\n{ex.Message}",
+                "MibExplorer",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            SetBusyState(false, "Ready", 0);
+        }
+    }
+
+    private async Task<ExtractPlan> BuildExtractPlanAsync(string remoteRootPath)
+    {
+        var plan = new ExtractPlan();
+        await BuildExtractPlanRecursiveAsync(remoteRootPath, string.Empty, plan);
+        return plan;
+    }
+
+    private async Task BuildExtractPlanRecursiveAsync(string remoteFolderPath, string relativeFolderPath, ExtractPlan plan)
+    {
+        var children = await _mibConnectionService.GetChildrenAsync(remoteFolderPath);
+
+        foreach (var child in children)
+        {
+            if (child.IsDirectory)
+            {
+                string childRelativePath = CombineRelativePath(relativeFolderPath, child.Name);
+                plan.Directories.Add(childRelativePath);
+
+                await BuildExtractPlanRecursiveAsync(child.FullPath, childRelativePath, plan);
+            }
+            else if (child.EntryType == RemoteEntryType.File)
+            {
+                string fileRelativePath = CombineRelativePath(relativeFolderPath, child.Name);
+                ulong fileSize = child.Size > 0 ? (ulong)child.Size : 0UL;
+
+                plan.Files.Add(new ExtractFilePlan
+                {
+                    RemotePath = child.FullPath,
+                    RelativePath = fileRelativePath,
+                    Size = fileSize
+                });
+
+                plan.TotalBytes += fileSize;
+            }
+        }
+    }
+
     private static string FormatTransferSize(ulong bytes)
     {
         string[] units = ["B", "KB", "MB", "GB", "TB"];
@@ -663,7 +839,6 @@ public sealed class MainViewModel : ObservableObject
 
     private void RefreshCommands()
     {
-        _prepareWorkspaceCommand.RaiseCanExecuteChanged();
         _refreshCommand.RaiseCanExecuteChanged();
         _testConnectionCommand.RaiseCanExecuteChanged();
         _downloadCommand.RaiseCanExecuteChanged();

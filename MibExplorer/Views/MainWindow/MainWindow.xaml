@@ -20,12 +20,10 @@
               Background="{DynamicResource AppPanelBrush}"
               Foreground="{DynamicResource AppTextBrush}">
             <MenuItem Header="_File">
-                <MenuItem Header="_Prepare workspace"
-                          Command="{Binding PrepareWorkspaceCommand}"/>
                 <MenuItem Header="_Refresh current folder"
                           Command="{Binding RefreshCommand}"/>
                 <Separator/>
-                <MenuItem Header="E_xit"
+                <MenuItem Header="_Exit"
                           Click="Exit_Click"/>
             </MenuItem>
             <MenuItem Header="_Actions">
@@ -213,16 +211,11 @@
                                      Text="{Binding PrivateKeyPath}"
                                      ToolTip="{Binding PrivateKeyPath}"/>
 
-                            <UniformGrid Grid.Row="8"
-                                         Grid.ColumnSpan="3"
-                                         Columns="2"
-                                         Margin="0,8,0,0">
-                                <Button Margin="0,0,8,0"
-                                        Content="Connect"
-                                        Command="{Binding TestConnectionCommand}"/>
-                                <Button Content="Prepare workspace"
-                                        Command="{Binding PrepareWorkspaceCommand}"/>
-                            </UniformGrid>
+                            <Button Grid.Row="8"
+                                    Grid.ColumnSpan="3"
+                                    Margin="0,8,0,0"
+                                    Content="Connect"
+                                    Command="{Binding TestConnectionCommand}"/>
                         </Grid>
                     </GroupBox>
 
