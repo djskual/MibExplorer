@@ -128,9 +128,34 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel>
-                        <TextBlock Text="MIB connection"
-                                   FontSize="20"
-                                   FontWeight="SemiBold"/>
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left"
+                                       Text="MIB connection"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"/>
+                            <StackPanel DockPanel.Dock="Right"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Right">
+                                <Ellipse Width="10"
+                                         Height="10"
+                                         Margin="0,0,8,0">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#E35D5D"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsConnectedToMib}" Value="True">
+                                                    <Setter Property="Fill" Value="#5ED17D"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Text="{Binding ConnectionStateText}"
+                                           Foreground="{DynamicResource AppMutedTextBrush}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DockPanel>
                         <TextBlock Margin="0,6,0,0"
                                    Text="Connect to a prepared MIB over SSH, browse the remote filesystem and run file operations."
                                    TextWrapping="Wrap"
@@ -211,8 +236,8 @@
                             <Button Grid.Row="6"
                                     Grid.ColumnSpan="3"
                                     Margin="0,8,0,0"
-                                    Content="Connect"
-                                    Command="{Binding TestConnectionCommand}"/>
+                                    Content="{Binding ConnectionButtonText}"
+                                    Command="{Binding ConnectionCommand}"/>
                         </Grid>
                     </GroupBox>
 
@@ -300,7 +325,7 @@
                             <Run Text="{Binding SelectedItem.Name}" 
                                  FontWeight="SemiBold" />
                             <Run Text=" (" />
-                            <Run Text="{Binding SelectedItem.EntryType}" />
+                            <Run Text="{Binding SelectedItem.DisplayType, Mode=OneWay}" />
                             <Run Text=")" />
                         </TextBlock>
                     </Border>

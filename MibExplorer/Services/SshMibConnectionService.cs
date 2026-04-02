@@ -228,6 +228,48 @@ public sealed class SshMibConnectionService : IMibConnectionService
         }, cancellationToken);
     }
 
+    public async Task RenamePathAsync(
+    string remotePath,
+    string newName,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        if (string.IsNullOrWhiteSpace(remotePath))
+            throw new InvalidOperationException("Remote path is required.");
+
+        if (string.IsNullOrWhiteSpace(newName))
+            throw new InvalidOperationException("New name is required.");
+
+        if (newName.Contains('/') || newName.Contains('\\'))
+            throw new InvalidOperationException("New name must not contain path separators.");
+
+        if (newName == "." || newName == "..")
+            throw new InvalidOperationException("Invalid target name.");
+
+        string normalizedPath = remotePath.Replace('\\', '/');
+        int lastSlashIndex = normalizedPath.LastIndexOf('/');
+        string parentPath = lastSlashIndex <= 0 ? "/" : normalizedPath[..lastSlashIndex];
+        string targetPath = parentPath == "/"
+            ? "/" + newName
+            : parentPath + "/" + newName;
+
+        if (string.Equals(normalizedPath, targetPath, StringComparison.Ordinal))
+            return;
+
+        await RunWritableOperationAsync(remotePath, async ct =>
+        {
+            bool targetExists = await RemotePathExistsAsync(targetPath, ct);
+            if (targetExists)
+                throw new InvalidOperationException($"A file or folder named '{newName}' already exists in the target directory.");
+
+            await ExecuteCommandAsync(
+                $"mv {EscapeShellArg(normalizedPath)} {EscapeShellArg(targetPath)}",
+                ct);
+        }, cancellationToken);
+    }
+
     public async Task DeleteFileAsync(
     string remotePath,
     CancellationToken cancellationToken = default)

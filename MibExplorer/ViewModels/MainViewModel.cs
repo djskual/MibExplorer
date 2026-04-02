@@ -5,14 +5,15 @@ using MibExplorer.Services.Design;
 using MibExplorer.Settings;
 using MibExplorer.Views.Dialogs;
 using System.IO;
-using System.Collections.ObjectModel;
 using System.Windows;
-using System.ComponentModel;
 using System.Windows.Data;
-using Microsoft.Win32;
+using System.Windows.Threading;
+using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Win32;
 
 namespace MibExplorer.ViewModels;
 
@@ -26,7 +27,11 @@ public sealed class MainViewModel : ObservableObject
     private readonly RelayCommand _deleteCommand;
     private readonly RelayCommand _extractCommand;
     private readonly RelayCommand _replaceCommand;
-    private readonly RelayCommand _testConnectionCommand;
+
+    private readonly RelayCommand _connectionCommand;
+    private readonly DispatcherTimer _connectionMonitorTimer;
+    private bool _isConnectedToMib;
+    private bool _isConnectionProbeRunning;
 
     private string _host = "192.168.1.10";
     private string _port = "22";
@@ -66,17 +71,23 @@ public sealed class MainViewModel : ObservableObject
 
         _refreshCommand = new RelayCommand(
             async () => await RefreshSelectedFolderAsync(),
-            () => !IsBusy && _mibConnectionService.IsConnected && SelectedTreeNode is not null);
-        _testConnectionCommand = new RelayCommand(async () => await TestConnectionAsync(), () => !IsBusy);
+            () => !IsBusy && IsConnectedToMib && SelectedTreeNode is not null);
+        _connectionCommand = new RelayCommand(async () => await ToggleConnectionAsync(), () => !IsBusy);
         _downloadCommand = new RelayCommand(async () => await DownloadSelectedFileAsync(), () => CanRunFileAction);
         _uploadCommand = new RelayCommand(async () => await UploadFileToSelectedFolderAsync(), () => CanRunFolderAction);
-        _renameCommand = new RelayCommand(() => ShowPendingMessage("Rename"), () => CanRunItemAction);
+        _renameCommand = new RelayCommand(async () => await RenameSelectedItemAsync(), () => CanRunItemAction);
         _deleteCommand = new RelayCommand(async () => await DeleteSelectedFileAsync(), () => CanRunFileAction);
         _extractCommand = new RelayCommand(async () => await ExtractSelectedFolderAsync(), () => CanRunFolderAction);
         _replaceCommand = new RelayCommand(async () => await ReplaceSelectedFileAsync(), () => CanRunFileAction);
 
+        _connectionMonitorTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(4)
+        };
+        _connectionMonitorTimer.Tick += ConnectionMonitorTimer_Tick;
+
         RefreshCommand = _refreshCommand;
-        TestConnectionCommand = _testConnectionCommand;
+        ConnectionCommand = _connectionCommand;
         DownloadCommand = _downloadCommand;
         UploadCommand = _uploadCommand;
         RenameCommand = _renameCommand;
@@ -125,7 +136,25 @@ public sealed class MainViewModel : ObservableObject
 
     public RelayCommand RefreshCommand { get; }
 
-    public RelayCommand TestConnectionCommand { get; }
+    public bool IsConnectedToMib
+    {
+        get => _isConnectedToMib;
+        private set
+        {
+            if (SetProperty(ref _isConnectedToMib, value))
+            {
+                OnPropertyChanged(nameof(ConnectionButtonText));
+                OnPropertyChanged(nameof(ConnectionStateText));
+                RefreshCommands();
+            }
+        }
+    }
+
+    public string ConnectionButtonText => IsConnectedToMib ? "Disconnect" : "Connect";
+
+    public string ConnectionStateText => IsConnectedToMib ? "Connected" : "Disconnected";
+
+    public RelayCommand ConnectionCommand { get; }
 
     public RelayCommand DownloadCommand { get; }
 
@@ -286,17 +315,17 @@ public sealed class MainViewModel : ObservableObject
 
     public bool CanRunItemAction =>
         !IsBusy &&
-        _mibConnectionService.IsConnected &&
+        IsConnectedToMib &&
         SelectedItem is not null;
 
     public bool CanRunFolderAction =>
         !IsBusy &&
-        _mibConnectionService.IsConnected &&
+        IsConnectedToMib &&
         (SelectedItem?.IsDirectory ?? false);
 
     public bool CanRunFileAction =>
         !IsBusy &&
-        _mibConnectionService.IsConnected &&
+        IsConnectedToMib &&
         SelectedItem is not null &&
         !SelectedItem.IsDirectory;
 
@@ -387,7 +416,7 @@ public sealed class MainViewModel : ObservableObject
                 root.IsSelected = true;
 
                 ProgressValue = 100;
-                StatusMessage = "Workspace ready. Test the SSH connection to load the real MIB filesystem.";
+                StatusMessage = "Workspace ready. Connect to the MIB to load the real remote filesystem.";
             }
         }
         catch (Exception ex)
@@ -400,11 +429,22 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    private async Task TestConnectionAsync()
+    private async Task ToggleConnectionAsync()
+    {
+        if (IsConnectedToMib)
+        {
+            await DisconnectAsync();
+            return;
+        }
+
+        await ConnectAsync();
+    }
+
+    private async Task ConnectAsync()
     {
         try
         {
-            SetBusyState(true, "Testing SSH connection...", 25);
+            SetBusyState(true, "Connecting...", 25);
 
             string privateKeyPath = !string.IsNullOrWhiteSpace(PrivateKeyPath)
                 ? PrivateKeyPath
@@ -430,20 +470,86 @@ public sealed class MainViewModel : ObservableObject
             if (string.IsNullOrWhiteSpace(pwd))
                 pwd = "/";
 
-            ProgressValue = 80;
-
             await PrepareWorkspaceAsync();
+
+            IsConnectedToMib = true;
+            _connectionMonitorTimer.Start();
 
             StatusMessage = $"SSH connected successfully. Remote pwd: {pwd}";
         }
         catch (Exception ex)
         {
+            IsConnectedToMib = false;
+            _connectionMonitorTimer.Stop();
             StatusMessage = $"SSH connection failed: {ex.Message}";
         }
         finally
         {
             SetBusyState(false, "Ready", 0);
         }
+    }
+
+    private async Task DisconnectAsync()
+    {
+        try
+        {
+            SetBusyState(true, "Disconnecting...", 0);
+
+            _connectionMonitorTimer.Stop();
+
+            await _mibConnectionService.DisconnectAsync();
+            IsConnectedToMib = false;
+
+            await PrepareWorkspaceAsync();
+
+            StatusMessage = "Disconnected from MIB.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Disconnect failed: {ex.Message}";
+        }
+        finally
+        {
+            SetBusyState(false, "Ready", 0);
+        }
+    }
+
+    private async void ConnectionMonitorTimer_Tick(object? sender, EventArgs e)
+    {
+        if (!IsConnectedToMib || IsBusy || _isConnectionProbeRunning)
+            return;
+
+        _isConnectionProbeRunning = true;
+
+        try
+        {
+            await _mibConnectionService.ExecuteCommandAsync("pwd");
+        }
+        catch
+        {
+            await HandleConnectionLostAsync();
+        }
+        finally
+        {
+            _isConnectionProbeRunning = false;
+        }
+    }
+
+    private async Task HandleConnectionLostAsync()
+    {
+        _connectionMonitorTimer.Stop();
+
+        try
+        {
+            await _mibConnectionService.DisconnectAsync();
+        }
+        catch
+        {
+        }
+
+        IsConnectedToMib = false;
+        await PrepareWorkspaceAsync();
+        StatusMessage = "SSH connection lost.";
     }
 
     private async Task RefreshSelectedFolderAsync()
@@ -860,6 +966,77 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    private async Task RenameSelectedItemAsync()
+    {
+        if (!_mibConnectionService.IsConnected)
+        {
+            StatusMessage = "Not connected. Test the SSH connection first.";
+            return;
+        }
+
+        if (SelectedItem is null)
+        {
+            StatusMessage = "Select a file or folder to rename.";
+            return;
+        }
+
+        var item = SelectedItem;
+
+        if (!_mibConnectionService.CanWriteToPath(item.FullPath))
+        {
+            StatusMessage = "Path is not writable.";
+
+            AppMessageBox.Show(
+                $"This path cannot be modified.\n\n{item.FullPath}",
+                "Not allowed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+
+            return;
+        }
+
+        var dialog = new RenameItemWindow(item.Name)
+        {
+            Owner = Application.Current.MainWindow
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            StatusMessage = "Rename cancelled.";
+            return;
+        }
+
+        string newName = dialog.ResultName;
+
+        try
+        {
+            SetBusyState(true, $"Renaming {item.Name}...", 0);
+
+            await _mibConnectionService.RenamePathAsync(item.FullPath, newName);
+
+            StatusMessage = $"Renamed {item.FullPath} to {newName}";
+
+            if (SelectedTreeNode is not null)
+            {
+                await EnsureChildrenLoadedAsync(SelectedTreeNode, forceReload: true);
+                await PopulateCurrentFolderAsync(SelectedTreeNode);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Rename failed: {ex.Message}";
+            AppMessageBox.Show(
+                $"Failed to rename item.\n\n{ex.Message}",
+                "MibExplorer",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            SetBusyState(false, "Ready", 0);
+        }
+    }
+
     private async Task DeleteSelectedFileAsync()
     {
         if (!_mibConnectionService.IsConnected)
@@ -1255,7 +1432,7 @@ public sealed class MainViewModel : ObservableObject
     private void RefreshCommands()
     {
         _refreshCommand.RaiseCanExecuteChanged();
-        _testConnectionCommand.RaiseCanExecuteChanged();
+        _connectionCommand.RaiseCanExecuteChanged();
         _downloadCommand.RaiseCanExecuteChanged();
         _uploadCommand.RaiseCanExecuteChanged();
         _renameCommand.RaiseCanExecuteChanged();

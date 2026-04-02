@@ -126,6 +126,15 @@ public sealed class DesignMibConnectionService : IMibConnectionService
         return Task.CompletedTask;
     }
 
+    public Task RenamePathAsync(
+    string remotePath,
+    string newName,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.CompletedTask;
+    }
+
     public Task DeleteFileAsync(
     string remotePath,
     CancellationToken cancellationToken = default)

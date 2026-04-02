@@ -1,0 +1,59 @@
+<Window x:Class="MibExplorer.Views.Dialogs.RenameItemWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Rename Item"
+        Width="460"
+        Height="230"
+        MinWidth="460"
+        MinHeight="230"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource AppWindowBackgroundBrush}"
+        Foreground="{DynamicResource AppTextBrush}">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Rename Item"
+                   FontSize="18"
+                   FontWeight="SemiBold"/>
+
+        <TextBlock Grid.Row="2"
+                   Text="{Binding CurrentNameText}"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+        <StackPanel Grid.Row="4">
+            <TextBlock Text="New name"
+                       Margin="0,0,0,6"/>
+            <TextBox x:Name="NameTextBox"
+                     Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="5"
+                   Margin="0,8,0,0"
+                   Text="{Binding ValidationMessage}"
+                   Foreground="#E35D5D"
+                   TextWrapping="Wrap"/>
+
+        <StackPanel Grid.Row="6"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+            <Button Width="96"
+                    Margin="0,0,8,0"
+                    Content="Cancel"
+                    IsCancel="True"/>
+            <Button Width="96"
+                    Content="Rename"
+                    IsDefault="True"
+                    Click="Rename_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

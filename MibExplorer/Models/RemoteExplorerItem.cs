@@ -27,6 +27,14 @@ public sealed class RemoteExplorerItem : ObservableObject
         set => SetProperty(ref _fullPath, value);
     }
 
+    public string DisplayType => EntryType switch
+    {
+        RemoteEntryType.Directory => "Folder",
+        RemoteEntryType.File => "File",
+        RemoteEntryType.Symlink => "Symlink",
+        _ => "Unknown"
+    };
+
     public RemoteEntryType EntryType
     {
         get => _entryType;

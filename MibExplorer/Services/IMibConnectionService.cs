@@ -37,6 +37,11 @@ public interface IMibConnectionService : IDisposable
 
     bool CanWriteToPath(string remotePath);
 
+    Task RenamePathAsync(
+        string remotePath,
+        string newName,
+        CancellationToken cancellationToken = default);
+
     Task DeleteFileAsync(
         string remotePath,
         CancellationToken cancellationToken = default);
