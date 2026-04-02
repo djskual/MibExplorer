@@ -318,7 +318,7 @@
                             BorderBrush="{DynamicResource AppBorderBrush}"
                             BorderThickness="1"
                             CornerRadius="10"
-                            Visibility="{Binding SelectedItem, TargetNullValue=Collapsed}">
+                            Visibility="{Binding SelectedItemVisibility}">
                         <TextBlock FontSize="12"
                                    TextTrimming="CharacterEllipsis">
                             <Run Text="Selected: " />

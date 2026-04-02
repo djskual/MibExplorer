@@ -1,13 +1,34 @@
 # Release Notes
+
 ## Added
-- Explicit rename action for remote files and folders
-- Live SSH connection state indicator with automatic connect/disconnect button toggle
-- Added new App Icons
+- Introduced structured partial class architecture for `MainViewModel`
+- Introduced structured partial class architecture for `SshMibConnectionService`
+- Added dedicated internal models container for extract/mapping logic (`ExtractModels`)
 
 ## Improved
-- The main connection button now switches between Connect and Disconnect based on the current SSH session state
-- The application now monitors SSH connectivity and updates the UI when the remote connection is lost
+- Significantly improved code readability and maintainability
+- Reduced size and complexity of core files (`MainViewModel`, `SshMibConnectionService`)
+- Better separation of responsibilities across features:
+  - Connection
+  - Explorer
+  - Transfer
+  - Remote operations
+  - Extract
+  - Mapping
+- Prepared internal architecture for upcoming features:
+  - Folder upload (recursive)
+  - Mapping replay (dirty names support)
+  - Safe folder replace operations
 
-## Technical
-- Added remote rename support through the SSH service layer
-- Added periodic SSH heartbeat checks to keep connection state synchronized with the UI
+## Fixed
+- Restored original Explorer behavior after refactor:
+  - TreeView loading correctly restored
+  - ListView content population fixed
+- Fixed selection state issues affecting "Selected item" UI panel
+
+## Cleanup
+- Removed monolithic structure from `MainViewModel`
+- Removed monolithic structure from `SshMibConnectionService`
+- Eliminated duplicated helper methods
+- Reorganized internal extract and mapping models into a dedicated partial file
+- Cleaned unused or redundant code paths introduced during early development
