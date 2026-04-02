@@ -45,4 +45,21 @@ public interface IMibConnectionService : IDisposable
     Task DeleteFileAsync(
         string remotePath,
         CancellationToken cancellationToken = default);
+
+    Task RunWritableOperationAsync(
+        string remotePath,
+        Func<CancellationToken, Task> operation,
+        CancellationToken cancellationToken = default);
+
+    Task CreateDirectoryWithoutMountAsync(string remotePath, CancellationToken cancellationToken = default);
+
+    Task UploadFileWithoutMountAsync(
+        string localPath,
+        string remotePath,
+        IProgress<FileTransferProgressInfo>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    Task DeletePathWithoutMountAsync(string remotePath, CancellationToken cancellationToken = default);
+
+    Task MovePathWithoutMountAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken = default);
 }

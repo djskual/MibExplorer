@@ -221,4 +221,13 @@ public sealed partial class SshMibConnectionService
             }
         }, cancellationToken);
     }
+
+    public async Task UploadFileWithoutMountAsync(
+    string localPath,
+    string remotePath,
+    IProgress<FileTransferProgressInfo>? progress = null,
+    CancellationToken cancellationToken = default)
+    {
+        await UploadFileCoreAsync(localPath, remotePath, progress, cancellationToken);
+    }
 }

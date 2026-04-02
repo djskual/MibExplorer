@@ -60,7 +60,7 @@ public sealed partial class SshMibConnectionService
         }
     }
 
-    private async Task RunWritableOperationAsync(
+    public async Task RunWritableOperationAsync(
         string remotePath,
         Func<CancellationToken, Task> operation,
         CancellationToken cancellationToken = default)

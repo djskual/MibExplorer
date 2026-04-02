@@ -84,20 +84,20 @@ public sealed partial class MainViewModel
             return;
         }
 
-        if (SelectedItem is null || SelectedItem.IsDirectory)
+        if (SelectedItem is null)
         {
-            StatusMessage = "Select a file to delete.";
+            StatusMessage = "Select an item to delete.";
             return;
         }
 
-        var file = SelectedItem;
+        var item = SelectedItem;
 
-        if (!_mibConnectionService.CanWriteToPath(file.FullPath))
+        if (!_mibConnectionService.CanWriteToPath(item.FullPath))
         {
             StatusMessage = "Path is not writable.";
 
             AppMessageBox.Show(
-                $"This path cannot be modified.\n\n{file.FullPath}",
+                $"This path cannot be modified.\n\n{item.FullPath}",
                 "Not allowed",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
@@ -105,8 +105,10 @@ public sealed partial class MainViewModel
             return;
         }
 
+        string itemType = item.IsDirectory ? "folder" : "file";
+
         var result = AppMessageBox.Show(
-            $"Delete file?\n\n{file.FullPath}",
+            $"Delete {itemType}?\n\n{item.FullPath}",
             "Confirm delete",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
@@ -119,11 +121,11 @@ public sealed partial class MainViewModel
 
         try
         {
-            SetBusyState(true, $"Deleting {file.Name}...", 0);
+            SetBusyState(true, $"Deleting {item.Name}...", 0);
 
-            await _mibConnectionService.DeleteFileAsync(file.FullPath);
+            await _mibConnectionService.DeleteFileAsync(item.FullPath);
 
-            StatusMessage = $"Deleted {file.FullPath}";
+            StatusMessage = $"Deleted {item.FullPath}";
 
             if (SelectedTreeNode is not null)
             {
@@ -135,7 +137,7 @@ public sealed partial class MainViewModel
         {
             StatusMessage = $"Delete failed: {ex.Message}";
             AppMessageBox.Show(
-                $"Failed to delete file.\n\n{ex.Message}",
+                $"Failed to delete item.\n\n{ex.Message}",
                 "Error",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);

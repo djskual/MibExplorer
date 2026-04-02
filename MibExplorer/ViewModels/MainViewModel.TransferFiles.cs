@@ -150,6 +150,19 @@ public sealed partial class MainViewModel
 
             if (remoteExists)
             {
+                var result = AppMessageBox.Show(
+                                $"The file already exists:\n\n{remotePath}\n\n" +
+                                "Do you want to replace it?",
+                                "Replace file",
+                                MessageBoxButton.YesNo,
+                                MessageBoxImage.Warning);
+
+                if (result != MessageBoxResult.Yes)
+                {
+                    StatusMessage = "Upload cancelled.";
+                    return;
+                }
+
                 await _mibConnectionService.ReplaceFileAsync(localPath, remotePath, progress);
             }
             else
@@ -272,5 +285,142 @@ public sealed partial class MainViewModel
         {
             SetBusyState(false, "Ready", 0);
         }
+    }
+
+    private async Task UploadFolderAsync()
+    {
+        if (!_mibConnectionService.IsConnected)
+        {
+            StatusMessage = "Not connected.";
+            return;
+        }
+
+        if (SelectedTreeNode is null || !SelectedTreeNode.IsDirectory)
+        {
+            StatusMessage = "Select a target folder.";
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFolderDialog();
+        if (dialog.ShowDialog() != true)
+            return;
+
+        string localRoot = dialog.FolderName;
+        string folderName = new DirectoryInfo(localRoot).Name;
+
+        string remoteParent = SelectedTreeNode.FullPath.TrimEnd('/');
+        string remoteTarget = remoteParent + "/" + folderName;
+
+        try
+        {
+            SetBusyState(true, "Preparing upload...", 0);
+
+            bool targetExists = await _mibConnectionService.RemotePathExistsAsync(remoteTarget);
+
+            if (targetExists)
+            {
+                var result = AppMessageBox.Show(
+                    $"The folder already exists:\n\n{remoteTarget}\n\n" +
+                    "Replacing it will overwrite ALL its content.\n\n" +
+                    "Are you sure you want to continue?",
+                    "Replace folder",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result != MessageBoxResult.Yes)
+                {
+                    StatusMessage = "Upload cancelled.";
+                    return;
+                }
+
+                await ReplaceFolderSafeAsync(localRoot, remoteTarget);
+            }
+            else
+            {
+                await UploadFolderInternalAsync(localRoot, remoteTarget);
+            }
+
+            StatusMessage = "Folder upload completed.";
+            await RefreshSelectedFolderAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Upload failed: {ex.Message}";
+        }
+        finally
+        {
+            SetBusyState(false, "Ready", 0);
+        }
+    }
+
+    private async Task UploadFolderInternalAsync(string localRoot, string remoteTarget)
+    {
+        await _mibConnectionService.RunWritableOperationAsync(remoteTarget, async _ =>
+        {
+            await UploadFolderCoreAsync(localRoot, remoteTarget);
+        });
+    }
+
+    private async Task UploadFolderCoreAsync(string localRoot, string remoteTarget)
+    {
+        await EnsureRemoteDirectoryExistsAsync(remoteTarget);
+
+        var allFiles = Directory.GetFiles(localRoot, "*", SearchOption.AllDirectories)
+            .Where(file => !Path.GetFileName(file).Equals(".mibexplorer-map.json", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        int total = allFiles.Length;
+        int index = 0;
+
+        foreach (var file in allFiles)
+        {
+            index++;
+
+            string relative = Path.GetRelativePath(localRoot, file).Replace('\\', '/');
+            string remotePath = remoteTarget + "/" + relative;
+
+            string remoteDir = Path.GetDirectoryName(remotePath)!.Replace('\\', '/');
+
+            await EnsureRemoteDirectoryExistsAsync(remoteDir);
+            await _mibConnectionService.UploadFileWithoutMountAsync(file, remotePath);
+
+            ProgressValue = total == 0 ? 100 : (double)index / total * 100;
+            ProgressLabel = $"Uploading {index}/{total}";
+        }
+    }
+
+    private async Task ReplaceFolderSafeAsync(string localRoot, string remoteTarget)
+    {
+        string tempPath = remoteTarget + ".__mibexplorer_tmp__";
+        string backupPath = remoteTarget + ".__mibexplorer_bak__";
+
+        await _mibConnectionService.RunWritableOperationAsync(remoteTarget, async _ =>
+        {
+            // 1. Clean temp if exists
+            if (await _mibConnectionService.RemotePathExistsAsync(tempPath))
+                await _mibConnectionService.DeletePathWithoutMountAsync(tempPath);
+
+            // 2. Upload into temp
+            await UploadFolderCoreAsync(localRoot, tempPath);
+
+            // 3. Backup existing
+            if (await _mibConnectionService.RemotePathExistsAsync(remoteTarget))
+                await _mibConnectionService.MovePathWithoutMountAsync(remoteTarget, backupPath);
+
+            // 4. Move temp -> target
+            await _mibConnectionService.MovePathWithoutMountAsync(tempPath, remoteTarget);
+
+            // 5. Cleanup backup
+            if (await _mibConnectionService.RemotePathExistsAsync(backupPath))
+                await _mibConnectionService.DeletePathWithoutMountAsync(backupPath);
+        });
+    }
+
+    private async Task EnsureRemoteDirectoryExistsAsync(string remoteDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(remoteDirectory))
+            return;
+
+        await _mibConnectionService.CreateDirectoryWithoutMountAsync(remoteDirectory);
     }
 }

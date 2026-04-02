@@ -22,6 +22,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly RelayCommand _deleteCommand;
     private readonly RelayCommand _extractCommand;
     private readonly RelayCommand _replaceCommand;
+    private readonly RelayCommand _uploadFolderCommand;
 
     private readonly RelayCommand _connectionCommand;
     private readonly DispatcherTimer _connectionMonitorTimer;
@@ -71,9 +72,12 @@ public sealed partial class MainViewModel : ObservableObject
         _downloadCommand = new RelayCommand(async () => await DownloadSelectedFileAsync(), () => CanRunFileAction);
         _uploadCommand = new RelayCommand(async () => await UploadFileToSelectedFolderAsync(), () => CanRunFolderAction);
         _renameCommand = new RelayCommand(async () => await RenameSelectedItemAsync(), () => CanRunItemAction);
-        _deleteCommand = new RelayCommand(async () => await DeleteSelectedFileAsync(), () => CanRunFileAction);
+        _deleteCommand = new RelayCommand(async () => await DeleteSelectedFileAsync(), () => CanRunItemAction);
         _extractCommand = new RelayCommand(async () => await ExtractSelectedFolderAsync(), () => CanRunFolderAction);
         _replaceCommand = new RelayCommand(async () => await ReplaceSelectedFileAsync(), () => CanRunFileAction);
+        _uploadFolderCommand = new RelayCommand(
+            async () => await UploadFolderAsync(),
+            () => IsConnectedToMib && SelectedTreeNode is { IsDirectory: true } && !IsBusy);
 
         _connectionMonitorTimer = new DispatcherTimer
         {
@@ -162,6 +166,8 @@ public sealed partial class MainViewModel : ObservableObject
     public RelayCommand ExtractCommand { get; }
 
     public RelayCommand ReplaceCommand { get; }
+
+    public RelayCommand UploadFolderCommand => _uploadFolderCommand;
 
     public string Host
     {

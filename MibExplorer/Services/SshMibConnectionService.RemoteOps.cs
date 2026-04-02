@@ -45,8 +45,8 @@ public sealed partial class SshMibConnectionService
     }
 
     public async Task DeleteFileAsync(
-    string remotePath,
-    CancellationToken cancellationToken = default)
+        string remotePath,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         EnsureConnected();
@@ -57,7 +57,7 @@ public sealed partial class SshMibConnectionService
         await RunWritableOperationAsync(remotePath, async ct =>
         {
             await ExecuteCommandAsync(
-                $"rm -f {EscapeShellArg(remotePath)}",
+                $"rm -rf {EscapeShellArg(remotePath)}",
                 ct);
         }, cancellationToken);
     }
@@ -76,5 +76,34 @@ public sealed partial class SshMibConnectionService
         {
             return false;
         }
+    }
+
+    public async Task CreateDirectoryWithoutMountAsync(string remotePath, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        string escapedPath = EscapeShellArg(NormalizeRemotePath(remotePath));
+        await ExecuteCommandAsync($"mkdir -p {escapedPath}", cancellationToken);
+    }
+
+    public async Task DeletePathWithoutMountAsync(string remotePath, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        string escapedPath = EscapeShellArg(NormalizeRemotePath(remotePath));
+        await ExecuteCommandAsync($"rm -rf {escapedPath}", cancellationToken);
+    }
+
+    public async Task MovePathWithoutMountAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        string escapedSource = EscapeShellArg(NormalizeRemotePath(sourcePath));
+        string escapedDestination = EscapeShellArg(NormalizeRemotePath(destinationPath));
+
+        await ExecuteCommandAsync($"mv {escapedSource} {escapedDestination}", cancellationToken);
     }
 }

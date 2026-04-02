@@ -132,6 +132,7 @@ public sealed partial class MainViewModel
         _deleteCommand.RaiseCanExecuteChanged();
         _extractCommand.RaiseCanExecuteChanged();
         _replaceCommand.RaiseCanExecuteChanged();
+        _uploadFolderCommand.RaiseCanExecuteChanged();
 
         OnPropertyChanged(nameof(SelectedItem));
         OnPropertyChanged(nameof(SelectedItemVisibility));

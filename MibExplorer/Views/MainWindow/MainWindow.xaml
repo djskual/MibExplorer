@@ -247,7 +247,7 @@
                             <Button Margin="0,0,0,8" Content="Upload" Command="{Binding UploadCommand}"/>
                             <Button Margin="0,0,8,8" Content="Rename" Command="{Binding RenameCommand}"/>
                             <Button Margin="0,0,0,8" Content="Delete" Command="{Binding DeleteCommand}"/>
-                            <Button Margin="0,0,8,8" Content="Extract folder" Command="{Binding ExtractCommand}"/>
+                            <Button Margin="0,0,8,8" Content="Upload folder" Command="{Binding UploadFolderCommand}"/>
                             <Button Margin="0,0,0,8" Content="Replace" Command="{Binding ReplaceCommand}"/>
                         </UniformGrid>
                     </GroupBox>
@@ -282,7 +282,7 @@
 
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Width="120" Height="34" Margin="0,0,8,0" Content="Refresh" Command="{Binding RefreshCommand}"/>
-                            <Button Width="150" Height="34" Content="Extract current" Command="{Binding ExtractCommand}"/>
+                            <Button Width="150" Height="34" Content="Extract current folder" Command="{Binding ExtractCommand}"/>
                         </StackPanel>
                     </DockPanel>
 

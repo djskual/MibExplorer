@@ -181,6 +181,56 @@ public sealed class DesignMibConnectionService : IMibConnectionService
     {
     }
 
+    public Task RunWritableOperationAsync(
+    string remotePath,
+    Func<CancellationToken, Task> operation,
+    CancellationToken cancellationToken = default)
+    {
+        if (operation is null)
+            throw new ArgumentNullException(nameof(operation));
+
+        return operation(cancellationToken);
+    }
+
+    public Task CreateDirectoryWithoutMountAsync(string remotePath, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task UploadFileWithoutMountAsync(
+    string localPath,
+    string remotePath,
+    IProgress<FileTransferProgressInfo>? progress = null,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        ulong totalBytes = 0;
+        if (System.IO.File.Exists(localPath))
+            totalBytes = (ulong)new FileInfo(localPath).Length;
+
+        progress?.Report(new FileTransferProgressInfo
+        {
+            Operation = "Upload",
+            SourcePath = localPath,
+            DestinationPath = remotePath,
+            BytesTransferred = totalBytes,
+            TotalBytes = totalBytes
+        });
+
+        return Task.CompletedTask;
+    }
+
+    public Task DeletePathWithoutMountAsync(string remotePath, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task MovePathWithoutMountAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
     private static Dictionary<string, IReadOnlyList<RemoteExplorerItem>> BuildMap()
     {
         var map = new Dictionary<string, IReadOnlyList<RemoteExplorerItem>>(StringComparer.Ordinal);

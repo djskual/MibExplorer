@@ -1,34 +1,33 @@
 # Release Notes
 
 ## Added
-- Introduced structured partial class architecture for `MainViewModel`
-- Introduced structured partial class architecture for `SshMibConnectionService`
-- Added dedicated internal models container for extract/mapping logic (`ExtractModels`)
+
+- Recursive folder upload (Upload Folder)
+- Safe replace folder mechanism:
+  - temporary upload directory
+  - backup of existing folder
+  - atomic swap
+  - automatic cleanup
+- Confirmation dialog when replacing an existing folder
+- Support for recursive folder deletion
 
 ## Improved
-- Significantly improved code readability and maintainability
-- Reduced size and complexity of core files (`MainViewModel`, `SshMibConnectionService`)
-- Better separation of responsibilities across features:
-  - Connection
-  - Explorer
-  - Transfer
-  - Remote operations
-  - Extract
-  - Mapping
-- Prepared internal architecture for upcoming features:
-  - Folder upload (recursive)
-  - Mapping replay (dirty names support)
-  - Safe folder replace operations
+
+- File system write operations now fully respect RW/RO mount lifecycle
+- Stability of long operations (no unexpected read-only state during upload)
+- Upload process now ignores `.mibexplorer-map.json` files
+- Delete operation now works consistently for both files and folders
+- Improved user confirmation messages for destructive operations
 
 ## Fixed
-- Restored original Explorer behavior after refactor:
-  - TreeView loading correctly restored
-  - ListView content population fixed
-- Fixed selection state issues affecting "Selected item" UI panel
+
+- Fixed read-only filesystem errors during recursive upload
+- Fixed mount state issues during nested operations
+- Fixed progress reporting compatibility in design mode
+- Fixed inability to delete uploaded folders
 
 ## Cleanup
-- Removed monolithic structure from `MainViewModel`
-- Removed monolithic structure from `SshMibConnectionService`
-- Eliminated duplicated helper methods
-- Reorganized internal extract and mapping models into a dedicated partial file
-- Cleaned unused or redundant code paths introduced during early development
+
+- Introduced mount-safe internal operations (WithoutMount methods)
+- Simplified and stabilized upload/replace logic
+- Removed redundant mount cycles during recursive operations
