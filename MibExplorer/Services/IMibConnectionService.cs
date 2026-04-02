@@ -25,6 +25,16 @@ public interface IMibConnectionService : IDisposable
         IProgress<FileTransferProgressInfo>? progress = null,
         CancellationToken cancellationToken = default);
 
+    Task<bool> RemotePathExistsAsync(
+        string remotePath,
+        CancellationToken cancellationToken = default);
+
+    Task ReplaceFileAsync(
+        string localPath,
+        string remotePath,
+        IProgress<FileTransferProgressInfo>? progress = null,
+        CancellationToken cancellationToken = default);
+
     bool CanWriteToPath(string remotePath);
 
     Task DeleteFileAsync(

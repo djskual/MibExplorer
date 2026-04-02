@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private string? _pendingSortKey;
     private const string SshKeysFolderName = "Keys";
     private const string SshPrivateKeyFileName = "id_rsa";
+    private const double FineScrollPixelsPerDetent = 26.0;
 
     public MainWindow()
     {
@@ -660,6 +661,34 @@ public partial class MainWindow : Window
     {
         if (e.NewValue is RemoteExplorerItem item)
             ViewModel.SelectedTreeNode = item;
+    }
+
+    private void RemoteTreeView_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        ApplyFineVerticalScroll(RemoteTreeView, e);
+    }
+
+    private void CurrentFolderList_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        ApplyFineVerticalScroll(CurrentFolderList, e);
+    }
+
+    private void ApplyFineVerticalScroll(DependencyObject source, MouseWheelEventArgs e)
+    {
+        var scrollViewer = FindVisualChild<ScrollViewer>(source);
+        if (scrollViewer is null)
+            return;
+
+        double deltaSteps = e.Delta / 120.0;
+        double targetOffset = scrollViewer.VerticalOffset - (deltaSteps * FineScrollPixelsPerDetent);
+
+        if (targetOffset < 0)
+            targetOffset = 0;
+        else if (targetOffset > scrollViewer.ScrollableHeight)
+            targetOffset = scrollViewer.ScrollableHeight;
+
+        scrollViewer.ScrollToVerticalOffset(targetOffset);
+        e.Handled = true;
     }
 
     private void CurrentFolderList_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)

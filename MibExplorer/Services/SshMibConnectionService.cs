@@ -68,7 +68,86 @@ public sealed class SshMibConnectionService : IMibConnectionService
         }, cancellationToken);
     }
 
+    private async Task UploadFileCoreAsync(
+    string localPath,
+    string remotePath,
+    IProgress<FileTransferProgressInfo>? progress = null,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.IsNullOrWhiteSpace(localPath))
+            throw new InvalidOperationException("Local path is required.");
+
+        if (string.IsNullOrWhiteSpace(remotePath))
+            throw new InvalidOperationException("Remote path is required.");
+
+        if (!System.IO.File.Exists(localPath))
+            throw new FileNotFoundException("Local file not found.", localPath);
+
+        var connectionInfo = _sshClient?.ConnectionInfo
+            ?? throw new InvalidOperationException("SSH connection info is not available.");
+
+        await Task.Run(() =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            ulong totalBytes = (ulong)new FileInfo(localPath).Length;
+
+            using var scp = new ScpClient(connectionInfo);
+
+            scp.Uploading += (_, e) =>
+            {
+                progress?.Report(new FileTransferProgressInfo
+                {
+                    Operation = "Upload",
+                    SourcePath = localPath,
+                    DestinationPath = remotePath,
+                    BytesTransferred = (ulong)e.Uploaded,
+                    TotalBytes = (ulong)e.Size
+                });
+            };
+
+            scp.Connect();
+
+            try
+            {
+                using var localStream = System.IO.File.OpenRead(localPath);
+                scp.Upload(localStream, remotePath);
+
+                progress?.Report(new FileTransferProgressInfo
+                {
+                    Operation = "Upload",
+                    SourcePath = localPath,
+                    DestinationPath = remotePath,
+                    BytesTransferred = totalBytes,
+                    TotalBytes = totalBytes
+                });
+            }
+            finally
+            {
+                if (scp.IsConnected)
+                    scp.Disconnect();
+            }
+        }, cancellationToken);
+    }
+
     public async Task UploadFileAsync(
+    string localPath,
+    string remotePath,
+    IProgress<FileTransferProgressInfo>? progress = null,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        await RunWritableOperationAsync(remotePath, async ct =>
+        {
+            await UploadFileCoreAsync(localPath, remotePath, progress, ct);
+        }, cancellationToken);
+    }
+
+    public async Task ReplaceFileAsync(
     string localPath,
     string remotePath,
     IProgress<FileTransferProgressInfo>? progress = null,
@@ -86,53 +165,66 @@ public sealed class SshMibConnectionService : IMibConnectionService
         if (!System.IO.File.Exists(localPath))
             throw new FileNotFoundException("Local file not found.", localPath);
 
-        var connectionInfo = _sshClient?.ConnectionInfo
-            ?? throw new InvalidOperationException("SSH connection info is not available.");
+        string tempRemotePath = BuildTemporaryRemotePath(remotePath);
+        string backupRemotePath = BuildBackupRemotePath(remotePath);
 
         await RunWritableOperationAsync(remotePath, async ct =>
         {
-            await Task.Run(() =>
+            await ExecuteCommandAsync($"rm -f {EscapeShellArg(tempRemotePath)}", ct);
+            await ExecuteCommandAsync($"rm -f {EscapeShellArg(backupRemotePath)}", ct);
+
+            await UploadFileCoreAsync(localPath, tempRemotePath, progress, ct);
+
+            bool originalExists = await RemotePathExistsAsync(remotePath, ct);
+
+            if (originalExists)
             {
-                ct.ThrowIfCancellationRequested();
+                await ExecuteCommandAsync(
+                    $"mv -f {EscapeShellArg(remotePath)} {EscapeShellArg(backupRemotePath)}",
+                    ct);
+            }
 
-                ulong totalBytes = (ulong)new FileInfo(localPath).Length;
+            try
+            {
+                await ExecuteCommandAsync(
+                    $"mv -f {EscapeShellArg(tempRemotePath)} {EscapeShellArg(remotePath)}",
+                    ct);
 
-                using var scp = new ScpClient(connectionInfo);
-
-                scp.Uploading += (_, e) =>
+                await ExecuteCommandAsync(
+                    $"rm -f {EscapeShellArg(backupRemotePath)}",
+                    ct);
+            }
+            catch
+            {
+                if (await RemotePathExistsAsync(backupRemotePath, ct) &&
+                    !await RemotePathExistsAsync(remotePath, ct))
                 {
-                    progress?.Report(new FileTransferProgressInfo
+                    try
                     {
-                        Operation = "Upload",
-                        SourcePath = localPath,
-                        DestinationPath = remotePath,
-                        BytesTransferred = (ulong)e.Uploaded,
-                        TotalBytes = (ulong)e.Size
-                    });
-                };
+                        await ExecuteCommandAsync(
+                            $"mv -f {EscapeShellArg(backupRemotePath)} {EscapeShellArg(remotePath)}",
+                            ct);
+                    }
+                    catch
+                    {
+                        // Best effort restore only
+                    }
+                }
 
-                scp.Connect();
-
+                throw;
+            }
+            finally
+            {
                 try
                 {
-                    using var localStream = System.IO.File.OpenRead(localPath);
-                    scp.Upload(localStream, remotePath);
-
-                    progress?.Report(new FileTransferProgressInfo
-                    {
-                        Operation = "Upload",
-                        SourcePath = localPath,
-                        DestinationPath = remotePath,
-                        BytesTransferred = totalBytes,
-                        TotalBytes = totalBytes
-                    });
+                    await ExecuteCommandAsync(
+                        $"rm -f {EscapeShellArg(tempRemotePath)}",
+                        ct);
                 }
-                finally
+                catch
                 {
-                    if (scp.IsConnected)
-                        scp.Disconnect();
                 }
-            }, ct);
+            }
         }, cancellationToken);
     }
 
@@ -465,7 +557,7 @@ public sealed class SshMibConnectionService : IMibConnectionService
         return remotePath + ".__mibexplorer_bak__";
     }
 
-    private async Task<bool> RemotePathExistsAsync(string remotePath, CancellationToken cancellationToken = default)
+    public async Task<bool> RemotePathExistsAsync(string remotePath, CancellationToken cancellationToken = default)
     {
         try
         {

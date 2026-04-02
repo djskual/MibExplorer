@@ -25,6 +25,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly RelayCommand _renameCommand;
     private readonly RelayCommand _deleteCommand;
     private readonly RelayCommand _extractCommand;
+    private readonly RelayCommand _replaceCommand;
     private readonly RelayCommand _testConnectionCommand;
 
     private string _host = "192.168.1.10";
@@ -63,13 +64,16 @@ public sealed class MainViewModel : ObservableObject
         ActiveSortColumn = _currentSortColumn;
         IsSortAscending = _currentSortAscending;
 
-        _refreshCommand = new RelayCommand(async () => await RefreshSelectedFolderAsync(), () => !IsBusy);
+        _refreshCommand = new RelayCommand(
+            async () => await RefreshSelectedFolderAsync(),
+            () => !IsBusy && _mibConnectionService.IsConnected && SelectedTreeNode is not null);
         _testConnectionCommand = new RelayCommand(async () => await TestConnectionAsync(), () => !IsBusy);
         _downloadCommand = new RelayCommand(async () => await DownloadSelectedFileAsync(), () => CanRunFileAction);
         _uploadCommand = new RelayCommand(async () => await UploadFileToSelectedFolderAsync(), () => CanRunFolderAction);
         _renameCommand = new RelayCommand(() => ShowPendingMessage("Rename"), () => CanRunItemAction);
         _deleteCommand = new RelayCommand(async () => await DeleteSelectedFileAsync(), () => CanRunFileAction);
         _extractCommand = new RelayCommand(async () => await ExtractSelectedFolderAsync(), () => CanRunFolderAction);
+        _replaceCommand = new RelayCommand(async () => await ReplaceSelectedFileAsync(), () => CanRunFileAction);
 
         RefreshCommand = _refreshCommand;
         TestConnectionCommand = _testConnectionCommand;
@@ -78,6 +82,7 @@ public sealed class MainViewModel : ObservableObject
         RenameCommand = _renameCommand;
         DeleteCommand = _deleteCommand;
         ExtractCommand = _extractCommand;
+        ReplaceCommand = _replaceCommand;
 
         var settings = AppSettingsStore.Current;
 
@@ -131,6 +136,8 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand DeleteCommand { get; }
 
     public RelayCommand ExtractCommand { get; }
+
+    public RelayCommand ReplaceCommand { get; }
 
     public string Host
     {
@@ -277,11 +284,21 @@ public sealed class MainViewModel : ObservableObject
             ? "Folder selected. This is where upload and recursive extract will hook in."
             : "File selected. This is where download, rename and controlled edit will hook in.";
 
-    public bool CanRunItemAction => !IsBusy && SelectedItem is not null;
+    public bool CanRunItemAction =>
+        !IsBusy &&
+        _mibConnectionService.IsConnected &&
+        SelectedItem is not null;
 
-    public bool CanRunFolderAction => !IsBusy && (SelectedItem?.IsDirectory ?? false);
+    public bool CanRunFolderAction =>
+        !IsBusy &&
+        _mibConnectionService.IsConnected &&
+        (SelectedItem?.IsDirectory ?? false);
 
-    public bool CanRunFileAction => !IsBusy && SelectedItem is not null && !SelectedItem.IsDirectory;
+    public bool CanRunFileAction =>
+        !IsBusy &&
+        _mibConnectionService.IsConnected &&
+        SelectedItem is not null &&
+        !SelectedItem.IsDirectory;
 
     public string CurrentFolderLabel => SelectedTreeNode?.FullPath ?? "/";
 
@@ -692,8 +709,13 @@ public sealed class MainViewModel : ObservableObject
 
         try
         {
-            SetBusyState(true, $"Uploading {fileName}...", 0);
-            StatusMessage = $"Starting upload of {fileName}...";
+            bool remoteExists = await _mibConnectionService.RemotePathExistsAsync(remotePath);
+
+            string operationName = remoteExists ? "Replacing" : "Uploading";
+            string finalStatusVerb = remoteExists ? "Replaced" : "Uploaded";
+
+            SetBusyState(true, $"{operationName} {fileName}...", 0);
+            StatusMessage = $"Starting {operationName.ToLowerInvariant()} of {fileName}...";
 
             var progress = new Progress<FileTransferProgressInfo>(info =>
             {
@@ -702,21 +724,28 @@ public sealed class MainViewModel : ObservableObject
                     ProgressValue = info.Percentage;
                     ProgressLabel = $"{info.Percentage:0}%";
                     StatusMessage =
-                        $"Uploading {fileName}... " +
+                        $"{operationName} {fileName}... " +
                         $"{FormatTransferSize(info.BytesTransferred)} / {FormatTransferSize(info.TotalBytes!.Value)}";
                 }
                 else
                 {
                     ProgressLabel = "Working...";
-                    StatusMessage = $"Uploading {fileName}...";
+                    StatusMessage = $"{operationName} {fileName}...";
                 }
             });
 
-            await _mibConnectionService.UploadFileAsync(localPath, remotePath, progress);
+            if (remoteExists)
+            {
+                await _mibConnectionService.ReplaceFileAsync(localPath, remotePath, progress);
+            }
+            else
+            {
+                await _mibConnectionService.UploadFileAsync(localPath, remotePath, progress);
+            }
 
             ProgressValue = 100;
             ProgressLabel = "100%";
-            StatusMessage = $"Uploaded {localPath} to {remotePath}";
+            StatusMessage = $"{finalStatusVerb} {localPath} to {remotePath}";
 
             await EnsureChildrenLoadedAsync(selectedFolder, forceReload: true);
             await PopulateCurrentFolderAsync(selectedFolder);
@@ -726,6 +755,101 @@ public sealed class MainViewModel : ObservableObject
             StatusMessage = $"Upload failed: {ex.Message}";
             AppMessageBox.Show(
                 $"Failed to upload file.\n\n{ex.Message}",
+                "MibExplorer",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            SetBusyState(false, "Ready", 0);
+        }
+    }
+
+    private async Task ReplaceSelectedFileAsync()
+    {
+        if (!_mibConnectionService.IsConnected)
+        {
+            StatusMessage = "Not connected. Test the SSH connection first.";
+            return;
+        }
+
+        if (SelectedItem is null || SelectedItem.IsDirectory)
+        {
+            StatusMessage = "Select a file to replace.";
+            return;
+        }
+
+        var selectedFile = SelectedItem;
+
+        if (!_mibConnectionService.CanWriteToPath(selectedFile.FullPath))
+        {
+            StatusMessage = "Path is not writable.";
+
+            AppMessageBox.Show(
+                $"This path cannot be modified.\n\n{selectedFile.FullPath}",
+                "Not allowed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+
+            return;
+        }
+
+        var openDialog = new OpenFileDialog
+        {
+            Title = $"Select replacement file for {selectedFile.Name}",
+            CheckFileExists = true,
+            CheckPathExists = true,
+            Multiselect = false,
+            Filter = "All files (*.*)|*.*"
+        };
+
+        if (openDialog.ShowDialog() != true)
+        {
+            StatusMessage = "Replace cancelled.";
+            return;
+        }
+
+        string localPath = openDialog.FileName;
+
+        try
+        {
+            SetBusyState(true, $"Replacing {selectedFile.Name}...", 0);
+            StatusMessage = $"Starting replace of {selectedFile.Name}...";
+
+            var progress = new Progress<FileTransferProgressInfo>(info =>
+            {
+                if (info.HasKnownLength)
+                {
+                    ProgressValue = info.Percentage;
+                    ProgressLabel = $"{info.Percentage:0}%";
+                    StatusMessage =
+                        $"Replacing {selectedFile.Name}... " +
+                        $"{FormatTransferSize(info.BytesTransferred)} / {FormatTransferSize(info.TotalBytes!.Value)}";
+                }
+                else
+                {
+                    ProgressLabel = "Working...";
+                    StatusMessage = $"Replacing {selectedFile.Name}...";
+                }
+            });
+
+            await _mibConnectionService.ReplaceFileAsync(localPath, selectedFile.FullPath, progress);
+
+            ProgressValue = 100;
+            ProgressLabel = "100%";
+            StatusMessage = $"Replaced {selectedFile.FullPath} with {localPath}";
+
+            if (SelectedTreeNode is not null)
+            {
+                await EnsureChildrenLoadedAsync(SelectedTreeNode, forceReload: true);
+                await PopulateCurrentFolderAsync(SelectedTreeNode);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Replace failed: {ex.Message}";
+            AppMessageBox.Show(
+                $"Failed to replace file.\n\n{ex.Message}",
                 "MibExplorer",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
@@ -1137,6 +1261,7 @@ public sealed class MainViewModel : ObservableObject
         _renameCommand.RaiseCanExecuteChanged();
         _deleteCommand.RaiseCanExecuteChanged();
         _extractCommand.RaiseCanExecuteChanged();
+        _replaceCommand.RaiseCanExecuteChanged();
 
         OnPropertyChanged(nameof(CanRunItemAction));
         OnPropertyChanged(nameof(CanRunFolderAction));

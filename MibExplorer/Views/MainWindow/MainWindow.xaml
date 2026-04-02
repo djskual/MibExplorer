@@ -6,9 +6,9 @@
         xmlns:models="clr-namespace:MibExplorer.Models"
         mc:Ignorable="d"
         Title="MibExplorer"
-        Width="1180"
-        Height="860"
-        MinWidth="1040"
+        Width="1185"
+        Height="760"
+        MinWidth="1185"
         MinHeight="760"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource AppWindowBackgroundBrush}"
@@ -124,7 +124,6 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="12"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="12"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -153,8 +152,6 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="10"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="10"/>
-                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0"
@@ -166,6 +163,12 @@
                                      Grid.Column="0"
                                      Margin="0,22,10,0"
                                      Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <TextBlock Grid.Row="0"
+                                       Grid.Column="1"
+                                       Grid.ColumnSpan="3"
+                                       Text="Port"
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
 
                             <TextBox Grid.Row="0"
                                      Grid.Column="1"
@@ -185,33 +188,27 @@
 
                             <TextBlock Grid.Row="2"
                                        Grid.ColumnSpan="3"
-                                       Text="Need help? Toolbox Green Menu: production -&gt; mmx_prod -&gt; ip-setting_prod -&gt; IP-Address"
-                                       TextWrapping="Wrap"
-                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
-
-                            <TextBlock Grid.Row="4"
-                                       Grid.ColumnSpan="3"
                                        Text="Username"
                                        Foreground="{DynamicResource AppMutedTextBrush}"/>
 
-                            <TextBox Grid.Row="4"
+                            <TextBox Grid.Row="2"
                                      Grid.ColumnSpan="3"
                                      Margin="0,22,0,0"
                                      Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>
 
-                            <TextBlock Grid.Row="6"
+                            <TextBlock Grid.Row="4"
                                        Grid.ColumnSpan="3"
                                        Text="SSH private key"
                                        Foreground="{DynamicResource AppMutedTextBrush}"/>
 
-                            <TextBox Grid.Row="6"
+                            <TextBox Grid.Row="4"
                                      Grid.ColumnSpan="3"
                                      Margin="0,22,0,0"
                                      IsReadOnly="True"
                                      Text="{Binding PrivateKeyPath}"
                                      ToolTip="{Binding PrivateKeyPath}"/>
 
-                            <Button Grid.Row="8"
+                            <Button Grid.Row="6"
                                     Grid.ColumnSpan="3"
                                     Margin="0,8,0,0"
                                     Content="Connect"
@@ -225,35 +222,9 @@
                             <Button Margin="0,0,0,8" Content="Upload" Command="{Binding UploadCommand}"/>
                             <Button Margin="0,0,8,8" Content="Rename" Command="{Binding RenameCommand}"/>
                             <Button Margin="0,0,0,8" Content="Delete" Command="{Binding DeleteCommand}"/>
-                            <Button Margin="0,0,8,0" Content="Extract folder" Command="{Binding ExtractCommand}"/>
-                            <Button Margin="0,0,0,0" Content="Refresh" Command="{Binding RefreshCommand}"/>
+                            <Button Margin="0,0,8,8" Content="Extract folder" Command="{Binding ExtractCommand}"/>
+                            <Button Margin="0,0,0,8" Content="Replace" Command="{Binding ReplaceCommand}"/>
                         </UniformGrid>
-                    </GroupBox>
-
-                    <GroupBox Grid.Row="6" Header="Selected item">
-                        <StackPanel>
-                            <TextBlock Text="{Binding SelectedName}"
-                                       FontWeight="SemiBold"
-                                       FontSize="16"/>
-                            <TextBlock Margin="0,10,0,0" Text="Path" Foreground="{DynamicResource AppMutedTextBrush}"/>
-                            <TextBlock Text="{Binding SelectedPath}" TextWrapping="Wrap"/>
-                            <TextBlock Margin="0,10,0,0" Text="Type" Foreground="{DynamicResource AppMutedTextBrush}"/>
-                            <TextBlock Text="{Binding SelectedType}"/>
-                            <TextBlock Margin="0,10,0,0" Text="Size" Foreground="{DynamicResource AppMutedTextBrush}"/>
-                            <TextBlock Text="{Binding SelectedSize}"/>
-                            <TextBlock Margin="0,10,0,0" Text="Modified" Foreground="{DynamicResource AppMutedTextBrush}"/>
-                            <TextBlock Text="{Binding SelectedModifiedAt}"/>
-                            <Border Margin="0,14,0,0"
-                                    Padding="10"
-                                    Background="{DynamicResource AppPanelAltBrush}"
-                                    BorderBrush="{DynamicResource AppBorderBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="10">
-                                <TextBlock Text="{Binding SelectedHint}"
-                                           TextWrapping="Wrap"
-                                           Foreground="{DynamicResource AppMutedTextBrush}"/>
-                            </Border>
-                        </StackPanel>
                     </GroupBox>
                 </Grid>
             </Border>
@@ -267,6 +238,8 @@
                     Padding="14">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="12"/>
                         <RowDefinition Height="Auto"/>
@@ -314,13 +287,30 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </Border>
+                    <Border Grid.Row="4"
+                            Padding="10,6"
+                            Background="{DynamicResource AppPanelAltBrush}"
+                            BorderBrush="{DynamicResource AppBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Visibility="{Binding SelectedItem, TargetNullValue=Collapsed}">
+                        <TextBlock FontSize="12"
+                                   TextTrimming="CharacterEllipsis">
+                            <Run Text="Selected: " />
+                            <Run Text="{Binding SelectedItem.Name}" 
+                                 FontWeight="SemiBold" />
+                            <Run Text=" (" />
+                            <Run Text="{Binding SelectedItem.EntryType}" />
+                            <Run Text=")" />
+                        </TextBlock>
+                    </Border>
                 </Grid>
             </Border>
 
             <Grid Grid.Column="2"
                   Grid.Row="2">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="330"/>
+                    <ColumnDefinition Width="370"/>
                     <ColumnDefinition Width="10"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
@@ -351,6 +341,7 @@
                             <TreeView x:Name="RemoteTreeView"
                                       ItemsSource="{Binding RootNodes}"
                                       SelectedItemChanged="RemoteTreeView_OnSelectedItemChanged"
+                                      PreviewMouseWheel="RemoteTreeView_OnPreviewMouseWheel"
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       ScrollViewer.CanContentScroll="False">
@@ -407,6 +398,7 @@
                                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto"
                                           ScrollViewer.CanContentScroll="False"
+                                          PreviewMouseWheel="CurrentFolderList_OnPreviewMouseWheel"
                                           MouseDoubleClick="CurrentFolderList_OnMouseDoubleClick">
                                     <ListView.View>
                                         <GridView>

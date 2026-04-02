@@ -85,6 +85,47 @@ public sealed class DesignMibConnectionService : IMibConnectionService
         return Task.CompletedTask;
     }
 
+    public Task<bool> RemotePathExistsAsync(
+    string remotePath,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(false);
+    }
+
+    public Task ReplaceFileAsync(
+    string localPath,
+    string remotePath,
+    IProgress<FileTransferProgressInfo>? progress = null,
+    CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        ulong totalBytes = 0;
+        if (System.IO.File.Exists(localPath))
+            totalBytes = (ulong)new FileInfo(localPath).Length;
+
+        progress?.Report(new FileTransferProgressInfo
+        {
+            Operation = "Replace",
+            SourcePath = localPath,
+            DestinationPath = remotePath,
+            BytesTransferred = 0,
+            TotalBytes = totalBytes
+        });
+
+        progress?.Report(new FileTransferProgressInfo
+        {
+            Operation = "Replace",
+            SourcePath = localPath,
+            DestinationPath = remotePath,
+            BytesTransferred = totalBytes,
+            TotalBytes = totalBytes
+        });
+
+        return Task.CompletedTask;
+    }
+
     public Task DeleteFileAsync(
     string remotePath,
     CancellationToken cancellationToken = default)
