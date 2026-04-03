@@ -7,9 +7,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MibExplorer", "MibExplorer\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Éléments de solution", "Éléments de solution", "{9C8CB701-102D-CF49-A3E0-89AC09D42C2C}"
 	ProjectSection(SolutionItems) = preProject
-		README.txt = README.txt
 		release.ps1 = release.ps1
+		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		docs\MibExplorer.png = docs\MibExplorer.png
 	EndProjectSection
 EndProject
 Global
@@ -25,6 +30,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {9C8CB701-102D-CF49-A3E0-89AC09D42C2C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D349ABC2-3462-48D9-B5FD-688ABAFA7C20}

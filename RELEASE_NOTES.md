@@ -1,33 +1,86 @@
-# Release Notes
+﻿# MibExplorer v0.1.0
 
-## Added
+## 🚀 First stable release
 
-- Recursive folder upload (Upload Folder)
-- Safe replace folder mechanism:
-  - temporary upload directory
-  - backup of existing folder
-  - atomic swap
-  - automatic cleanup
-- Confirmation dialog when replacing an existing folder
-- Support for recursive folder deletion
+This version marks the first stable release of MibExplorer, with a fully functional file explorer over SSH for MIB2 / MIB2.5 systems.
 
-## Improved
+---
 
-- File system write operations now fully respect RW/RO mount lifecycle
-- Stability of long operations (no unexpected read-only state during upload)
-- Upload process now ignores `.mibexplorer-map.json` files
-- Delete operation now works consistently for both files and folders
-- Improved user confirmation messages for destructive operations
+## ✨ New features
 
-## Fixed
+### 📁 Folder upload with name mapping
+- Added support for uploading folders with correct Linux filename restoration
+- Uses `.mibexplorer-map.json` generated during extraction
+- Ensures full round-trip integrity (extract → modify → re-upload)
 
-- Fixed read-only filesystem errors during recursive upload
-- Fixed mount state issues during nested operations
-- Fixed progress reporting compatibility in design mode
-- Fixed inability to delete uploaded folders
+### 🧠 Smart mapping generation
+- Mapping file is now created **only when needed**
+- No unnecessary JSON files for clean folders
 
-## Cleanup
+### 🖱️ Context menus
+- Added right-click support in:
+  - TreeView (folders)
+  - ListView (files & folders)
+- Context-aware actions (auto enable/disable)
+- Automatic selection on right-click
 
-- Introduced mount-safe internal operations (WithoutMount methods)
-- Simplified and stabilized upload/replace logic
-- Removed redundant mount cycles during recursive operations
+---
+
+## 🔧 Improvements
+
+### 🌳 TreeView behavior
+- TreeView now stays synchronized with ListView navigation
+- Expands and selects correct nodes when navigating from ListView
+- Lazy loading added on node expansion (fixes "Loading..." placeholder issue)
+
+### 📂 Explorer refresh
+- Fixed selection refresh issues after operations
+- Actions now correctly update when selecting items
+- No more need to change folder to refresh state
+
+### 🧭 Navigation consistency
+- Double-click navigation now fully synced with TreeView
+- Cleaner and more predictable navigation flow
+
+### 🧾 Menu improvements
+- Menu items aligned with available features
+- Added missing actions:
+  - Upload folder
+  - Replace
+- Reorganized menus:
+  - `Connection Help` moved to `Help`
+- Renamed "Planned actions" → "Actions"
+
+### 🎨 UI fixes
+- Fixed TreeView visual regression (restored default WPF style)
+- Improved overall UI consistency
+
+---
+
+## 🛠️ Stability
+
+- Safer handling of selection state
+- Improved robustness of folder operations
+- Better separation between UI state and filesystem operations
+
+---
+
+## 📌 Notes
+
+- `.mibexplorer-map.json` is automatically ignored during upload
+- No changes are made to the MIB unless explicitly requested by the user
+- All operations remain safe (no unintended filesystem writes)
+
+---
+
+## 🔜 Next steps
+
+- SD card bootstrap (SSH + WiFi auto setup)
+- Guided operations (backup, skin install, etc.)
+- MibExplorerAgent for enhanced safety and performance
+
+---
+
+## 🙌 Thanks
+
+This release focuses on stability, predictability, and usability — laying the foundation for future advanced features.

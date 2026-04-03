@@ -5,6 +5,7 @@ using MibExplorer.Views.Dialogs;
 using MibExplorer.Services;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
@@ -668,6 +669,39 @@ public partial class MainWindow : Window
         ApplyFineVerticalScroll(RemoteTreeView, e);
     }
 
+    private void RemoteTreeView_OnPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var treeViewItem = FindVisualParent<TreeViewItem>(e.OriginalSource as DependencyObject);
+        if (treeViewItem?.DataContext is not RemoteExplorerItem item)
+            return;
+
+        item.IsSelected = true;
+        treeViewItem.Focus();
+        e.Handled = true;
+    }
+
+    private void CurrentFolderList_OnPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var listViewItem = FindVisualParent<ListViewItem>(e.OriginalSource as DependencyObject);
+        if (listViewItem?.DataContext is not RemoteExplorerItem item)
+            return;
+
+        CurrentFolderList.SelectedItem = item;
+        listViewItem.Focus();
+        e.Handled = true;
+    }
+
+    private async void RemoteTreeViewItem_OnExpanded(object sender, RoutedEventArgs e)
+    {
+        if (e.OriginalSource is not TreeViewItem treeViewItem)
+            return;
+
+        if (treeViewItem.DataContext is not RemoteExplorerItem item)
+            return;
+
+        await ViewModel.EnsureTreeNodeChildrenLoadedAsync(item);
+    }
+
     private void CurrentFolderList_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         ApplyFineVerticalScroll(CurrentFolderList, e);
@@ -699,7 +733,27 @@ public partial class MainWindow : Window
         if (!item.IsDirectory)
             return;
 
-        ViewModel.SelectedTreeNode = item;
+        var currentTreeNode = ViewModel.SelectedTreeNode;
+        if (currentTreeNode is null)
+            return;
+
+        currentTreeNode.IsExpanded = true;
+
+        var matchingTreeNode = currentTreeNode.Children
+            .FirstOrDefault(child => string.Equals(child.FullPath, item.FullPath, StringComparison.Ordinal));
+
+        if (matchingTreeNode is null)
+        {
+            ViewModel.SelectedTreeNode = item;
+            return;
+        }
+
+        currentTreeNode.IsSelected = false;
+
+        matchingTreeNode.IsSelected = true;
+        matchingTreeNode.IsExpanded = true;
+
+        ViewModel.SelectedTreeNode = matchingTreeNode;
     }
 
     private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

@@ -306,7 +306,8 @@ public sealed partial class MainViewModel
             return;
 
         string localRoot = dialog.FolderName;
-        string folderName = new DirectoryInfo(localRoot).Name;
+        string folderName = await TryGetMappedRootFolderNameAsync(localRoot)
+            ?? new DirectoryInfo(localRoot).Name;
 
         string remoteParent = SelectedTreeNode.FullPath.TrimEnd('/');
         string remoteTarget = remoteParent + "/" + folderName;
@@ -365,6 +366,21 @@ public sealed partial class MainViewModel
     {
         await EnsureRemoteDirectoryExistsAsync(remoteTarget);
 
+        Dictionary<string, ExtractMapEntry> replayEntries = await LoadUploadReplayEntriesAsync(localRoot);
+
+        var allDirectories = Directory.GetDirectories(localRoot, "*", SearchOption.AllDirectories)
+            .Select(directory => Path.GetRelativePath(localRoot, directory).Replace('\\', '/'))
+            .OrderBy(path => path.Count(c => c == '/'))
+            .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        foreach (string directory in allDirectories)
+        {
+            string remoteRelativeDirectory = ResolveUploadRemoteRelativePath(directory, replayEntries);
+            string remoteDirectory = remoteTarget + "/" + remoteRelativeDirectory;
+            await EnsureRemoteDirectoryExistsAsync(remoteDirectory);
+        }
+
         var allFiles = Directory.GetFiles(localRoot, "*", SearchOption.AllDirectories)
             .Where(file => !Path.GetFileName(file).Equals(".mibexplorer-map.json", StringComparison.OrdinalIgnoreCase))
             .ToArray();
@@ -377,7 +393,8 @@ public sealed partial class MainViewModel
             index++;
 
             string relative = Path.GetRelativePath(localRoot, file).Replace('\\', '/');
-            string remotePath = remoteTarget + "/" + relative;
+            string remoteRelativePath = ResolveUploadRemoteRelativePath(relative, replayEntries);
+            string remotePath = remoteTarget + "/" + remoteRelativePath;
 
             string remoteDir = Path.GetDirectoryName(remotePath)!.Replace('\\', '/');
 

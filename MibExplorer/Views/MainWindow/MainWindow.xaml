@@ -16,9 +16,9 @@
 
     <DockPanel>
         <Menu x:Name="MainMenu"
-              DockPanel.Dock="Top"
-              Background="{DynamicResource AppPanelBrush}"
-              Foreground="{DynamicResource AppTextBrush}">
+      DockPanel.Dock="Top"
+      Background="{DynamicResource AppPanelBrush}"
+      Foreground="{DynamicResource AppTextBrush}">
             <MenuItem Header="_File">
                 <MenuItem Header="_Refresh current folder"
                           Command="{Binding RefreshCommand}"/>
@@ -26,28 +26,42 @@
                 <MenuItem Header="_Exit"
                           Click="Exit_Click"/>
             </MenuItem>
+
             <MenuItem Header="_Actions">
-                <MenuItem Header="_Download"
+                <MenuItem Header="_Download file"
                           Command="{Binding DownloadCommand}"/>
-                <MenuItem Header="_Upload"
+                <MenuItem Header="_Upload file"
                           Command="{Binding UploadCommand}"/>
+                <MenuItem Header="Upload _folder"
+                          Command="{Binding UploadFolderCommand}"/>
+                <Separator/>
+                <MenuItem Header="_Replace file"
+                          Command="{Binding ReplaceCommand}"/>
                 <MenuItem Header="_Rename"
                           Command="{Binding RenameCommand}"/>
                 <MenuItem Header="_Delete"
                           Command="{Binding DeleteCommand}"/>
+                <Separator/>
                 <MenuItem Header="_Extract folder"
                           Command="{Binding ExtractCommand}"/>
             </MenuItem>
+
             <MenuItem Header="_Tools">
-                <MenuItem Header="_Generate SSH Keys..." Click="GenerateSshKeys_Click"/>
-                <MenuItem Header="_Connection Help..." Click="ConnectionHelp_Click"/>
+                <MenuItem Header="_Generate SSH Keys..."
+                          Click="GenerateSshKeys_Click"/>
                 <Separator/>
-                <MenuItem Header="_Settings..." Click="Settings_Click"/>
+                <MenuItem Header="_Settings..."
+                          Click="Settings_Click"/>
             </MenuItem>
+
             <MenuItem Header="_Help">
-                <MenuItem Header="_Check for updates" Click="CheckUpdate_Click"/>
+                <MenuItem Header="_Connection Help..."
+                          Click="ConnectionHelp_Click"/>
+                <MenuItem Header="_Check for updates"
+                          Click="CheckUpdate_Click"/>
                 <Separator/>
-                <MenuItem Header="_About" Click="About_Click"/>
+                <MenuItem Header="_About"
+                          Click="About_Click"/>
             </MenuItem>
         </Menu>
 
@@ -241,7 +255,7 @@
                         </Grid>
                     </GroupBox>
 
-                    <GroupBox Grid.Row="4" Header="Planned actions">
+                    <GroupBox Grid.Row="4" Header="Actions">
                         <UniformGrid Columns="2" Rows="3" Margin="0">
                             <Button Margin="0,0,8,8" Content="Download" Command="{Binding DownloadCommand}"/>
                             <Button Margin="0,0,0,8" Content="Upload" Command="{Binding UploadCommand}"/>
@@ -367,12 +381,40 @@
                                       ItemsSource="{Binding RootNodes}"
                                       SelectedItemChanged="RemoteTreeView_OnSelectedItemChanged"
                                       PreviewMouseWheel="RemoteTreeView_OnPreviewMouseWheel"
+                                      PreviewMouseRightButtonDown="RemoteTreeView_OnPreviewMouseRightButtonDown"
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       ScrollViewer.CanContentScroll="False">
+                                <TreeView.ItemContainerStyle>
+                                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                        <EventSetter Event="Expanded" Handler="RemoteTreeViewItem_OnExpanded"/>
+                                    </Style>
+                                </TreeView.ItemContainerStyle>
+                                <TreeView.ContextMenu>
+                                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                        <MenuItem Header="_Upload file"
+                                                  Command="{Binding UploadCommand}"/>
+                                        <MenuItem Header="Upload _folder"
+                                                  Command="{Binding UploadFolderCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="_Rename"
+                                                  Command="{Binding RenameCommand}"/>
+                                        <MenuItem Header="_Delete"
+                                                  Command="{Binding DeleteCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="_Extract folder"
+                                                  Command="{Binding ExtractCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="_Refresh current folder"
+                                                  Command="{Binding RefreshCommand}"/>
+                                    </ContextMenu>
+                                </TreeView.ContextMenu>
+
                                 <TreeView.Resources>
                                     <HierarchicalDataTemplate DataType="{x:Type models:RemoteExplorerItem}"
-                                                  ItemsSource="{Binding Children}">
+                                                              ItemsSource="{Binding Children}">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding Glyph}" Margin="0,0,8,0"/>
                                             <TextBlock Text="{Binding Name}"/>
@@ -424,7 +466,28 @@
                                           ScrollViewer.VerticalScrollBarVisibility="Auto"
                                           ScrollViewer.CanContentScroll="False"
                                           PreviewMouseWheel="CurrentFolderList_OnPreviewMouseWheel"
+                                          PreviewMouseRightButtonDown="CurrentFolderList_OnPreviewMouseRightButtonDown"
                                           MouseDoubleClick="CurrentFolderList_OnMouseDoubleClick">
+                                    <ListView.ContextMenu>
+                                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                            <MenuItem Header="_Download file"
+                                                      Command="{Binding DownloadCommand}"/>
+                                            <MenuItem Header="_Upload file"
+                                                      Command="{Binding UploadCommand}"/>
+                                            <MenuItem Header="Upload _folder"
+                                                      Command="{Binding UploadFolderCommand}"/>
+                                            <Separator/>
+                                            <MenuItem Header="_Replace file"
+                                                      Command="{Binding ReplaceCommand}"/>
+                                            <MenuItem Header="_Rename"
+                                                      Command="{Binding RenameCommand}"/>
+                                            <MenuItem Header="_Delete"
+                                                      Command="{Binding DeleteCommand}"/>
+                                            <Separator/>
+                                            <MenuItem Header="_Extract folder"
+                                                      Command="{Binding ExtractCommand}"/>
+                                        </ContextMenu>
+                                    </ListView.ContextMenu>
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn Width="44" Header="">

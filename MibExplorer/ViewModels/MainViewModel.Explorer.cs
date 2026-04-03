@@ -71,12 +71,15 @@ public sealed partial class MainViewModel
         {
             var children = await _mibConnectionService.GetChildrenAsync(node.FullPath);
 
+            SelectedListItem = null;
+
             CurrentFolderItems.Clear();
 
             foreach (var child in children)
                 CurrentFolderItems.Add(child);
 
             ApplySort();
+            CurrentFolderItemsView.Refresh();
         }
         catch (Exception ex)
         {
@@ -168,5 +171,10 @@ public sealed partial class MainViewModel
         Breadcrumbs.Add("/");
         foreach (var segment in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
             Breadcrumbs.Add(segment);
+    }
+
+    public async Task EnsureTreeNodeChildrenLoadedAsync(RemoteExplorerItem node)
+    {
+        await EnsureChildrenLoadedAsync(node);
     }
 }
