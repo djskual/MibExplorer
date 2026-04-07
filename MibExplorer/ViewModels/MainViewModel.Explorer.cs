@@ -61,7 +61,7 @@ public sealed partial class MainViewModel
 
     private async Task PopulateCurrentFolderAsync(RemoteExplorerItem node)
     {
-        if (!node.IsDirectory)
+        if (!node.IsNavigable)
             return;
 
         if (!_mibConnectionService.IsConnected)
@@ -121,7 +121,7 @@ public sealed partial class MainViewModel
 
     private async Task EnsureChildrenLoadedAsync(RemoteExplorerItem node, bool forceReload = false)
     {
-        if (!node.IsDirectory)
+        if (!node.IsNavigable)
             return;
 
         if (!_mibConnectionService.IsConnected)
@@ -137,7 +137,7 @@ public sealed partial class MainViewModel
             node.Children.Clear();
 
             foreach (var child in children
-                .Where(x => x.IsDirectory)
+                .Where(x => x.IsNavigable)
                 .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
             {
                 child.Children.Add(new RemoteExplorerItem

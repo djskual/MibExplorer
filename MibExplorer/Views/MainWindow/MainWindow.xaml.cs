@@ -64,6 +64,66 @@ public partial class MainWindow : Window
         };
     }
 
+    private void CreateMibSshSdUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        var message =
+            @"This tool creates a dedicated SD update package
+            for your MIB.
+
+            Planned content:
+
+            - RSA public key (id_rsa.pub)
+            - Embedded SSHD payload
+            - Final SWDL script
+            - SSH install script
+            - ZIP generated next to the app
+
+            User flow:
+
+            1. Click OK to build the package
+            2. Copy ZIP content to SD card
+            3. Insert SD into MIB and run update
+            4. After reboot, connect to MIB Wi-Fi
+            5. Read Default Gateway on your PC
+            6. Use it as SSH IP in MibExplorer
+
+            Notes:
+
+            - id_rsa is stored in the Keys folder
+            - Public key is generated for the package
+            - SD update embeds the public key
+            - SWDL format, encoding and hashes OK";
+
+        var result = AppMessageBox.Show(
+            message,
+            "Create MIB SSH SD Update",
+            MessageBoxButton.OKCancel,
+            MessageBoxImage.Information);
+
+        if (result != MessageBoxResult.OK)
+            return;
+
+        try
+        {
+            var builder = new SdUpdatePackageBuilder();
+            string packagePath = builder.BuildPackage();
+
+            AppMessageBox.Show(
+                $"SD update package created successfully:{Environment.NewLine}{Environment.NewLine}{packagePath}{Environment.NewLine}{Environment.NewLine}The ZIP file was created next to the application executable.",
+                "MIB SSH SD Update",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            AppMessageBox.Show(
+                $"Failed to create SD update package.{Environment.NewLine}{Environment.NewLine}{ex.Message}",
+                "MIB SSH SD Update",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
     private async void GenerateSshKeys_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -90,13 +150,12 @@ public partial class MainWindow : Window
                 this,
                 "SSH key pair successfully generated.\n\n" +
                 "Files created:\n" +
-                "- id_rsa\n" +
-                "- id_rsa.pub\n\n" +
-                "Next steps:\n" +
-                "1. Copy id_rsa.pub to the Toolbox SD card Custom folder.\n" +
-                "2. On the MIB, open Toolbox / Green Menu.\n" +
-                "3. Run customization -> advanced -> Install SSHD service.\n" +
-                "4. Keep id_rsa on this PC for MibExplorer SSH login.\n\n" +
+                "- Keys\\id_rsa\n" +
+                "- Keys\\id_rsa.pub\n\n" +
+                "Important:\n" +
+                "- MibExplorer keeps id_rsa for SSH login on this PC\n" +
+                "- id_rsa.pub is used when building the SD update package\n" +
+                "- the SD update package itself will embed the public key automatically\n\n" +
                 "The key folder will now open.",
                 "SSH Keys",
                 MessageBoxButton.OK,
@@ -120,34 +179,71 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ConnectionHelp_Click(object sender, RoutedEventArgs e)
+    private void DetectMibGateway_Click(object sender, RoutedEventArgs e)
     {
-        AppMessageBox.Show(
+        var confirmResult = AppMessageBox.Show(
             this,
-            "How to connect to a prepared MIB\n\n" +
-            "1. Make sure Toolbox is already installed on the MIB.\n" +
-            "2. Generate SSH keys from Tools -> Generate SSH Keys.\n" +
-            "3. Copy id_rsa.pub to the Toolbox SD card Custom folder.\n" +
-            "4. On the MIB, run:\n" +
-            "   customization -> advanced -> Install SSHD service\n\n" +
-            "How to find the SSH IP address\n" +
-            "Open the Green Menu and go to:\n" +
-            "production -> mmx_prod -> ip-setting_prod -> IP-Address\n\n" +
-            "Use the correct interface:\n" +
-            "- mlan0 = Wi-Fi client\n" +
-            "- uap0 = hotspot\n" +
-            "- en0 = Ethernet\n\n" +
-            "Connection values for MibExplorer\n" +
-            "- Host = the IP shown on the MIB\n" +
-            "- Port = 22\n" +
-            "- Username = root\n" +
-            "- Private key = the path configured in Settings\n" +
-            "  default: Keys\\id_rsa\n\n" +
-            "Tip:\n" +
-            "Your PC must be on the same network as the MIB.",
-            "Connection Help",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
+            "Automatic MIB IP detection\n\n" +
+            "Make sure your PC is connected to the MIB Wi-Fi hotspot before continuing.\n\n" +
+            "MibExplorer will try to detect the hotspot network and use its default gateway as the SSH host.\n\n" +
+            "Continue?",
+            "Detect MIB IP",
+            MessageBoxButton.OKCancel,
+            MessageBoxImage.Question);
+
+        if (confirmResult != MessageBoxResult.OK)
+            return;
+
+        try
+        {
+            var result = MibNetworkHelper.TryDetectMibGateway();
+
+            if (result == null)
+            {
+                AppMessageBox.Show(
+                    this,
+                    "MibExplorer could not detect the MIB hotspot automatically.\n\n" +
+                    "What to check:\n" +
+                    "- Connect your PC to the MIB Wi-Fi hotspot\n" +
+                    "- Wait a few seconds for Windows to get an IPv4 address\n" +
+                    "- Make sure the hotspot network is active\n\n" +
+                    "Expected pattern:\n" +
+                    "- DNS suffix often contains: mibhigh\n" +
+                    "- Local IPv4 is usually in the 10.173.189.x range\n" +
+                    "- Default Gateway is usually the MIB IP to use for SSH",
+                    "Detect MIB IP",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                return;
+            }
+
+            ViewModel.Host = result.GatewayIp;
+            ViewModel.Port = "22";
+
+            AppMessageBox.Show(
+                this,
+                "MIB hotspot detected successfully.\n\n" +
+                $"Host: {result.GatewayIp}\n" +
+                "Port: 22\n" +
+                $"Local IPv4: {result.LocalIpv4}\n" +
+                $"Interface: {result.InterfaceName}\n" +
+                (!string.IsNullOrWhiteSpace(result.DnsSuffix)
+                    ? $"DNS suffix: {result.DnsSuffix}\n"
+                    : string.Empty),
+                "Detect MIB IP",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            AppMessageBox.Show(
+                this,
+                $"Failed to detect the MIB IP automatically.\n\n{ex.Message}",
+                "Detect MIB IP",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void Settings_Click(object sender, RoutedEventArgs e)
@@ -730,7 +826,7 @@ public partial class MainWindow : Window
         if (sender is not ListView listView || listView.SelectedItem is not RemoteExplorerItem item)
             return;
 
-        if (!item.IsDirectory)
+        if (!item.IsNavigable)
             return;
 
         var currentTreeNode = ViewModel.SelectedTreeNode;

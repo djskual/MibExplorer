@@ -105,7 +105,16 @@ if (Test-Path $PublishDir) {
 }
 
 Write-Step "Publishing application"
-dotnet publish $ProjectPath -c Release -r win-x64 --self-contained false -p:DebugType=None -p:DebugSymbols=false
+dotnet publish $ProjectPath `
+  -c Release `
+  -r win-x64 `
+  --self-contained true `
+  -p:PublishSingleFile=true `
+  -p:IncludeNativeLibrariesForSelfExtract=true `
+  -p:EnableCompressionInSingleFile=true `
+  -p:PublishTrimmed=false `
+  -p:DebugType=None `
+  -p:DebugSymbols=false
 if ($LASTEXITCODE -ne 0) {
     Fail "dotnet publish failed."
 }
@@ -116,6 +125,9 @@ if (-not (Test-Path $PublishDir)) {
 
 Write-Step "Writing git-tag.txt"
 Set-Content -Path (Join-Path $PublishDir "git-tag.txt") -Value $Tag -NoNewLine
+
+Write-Step "Removing unnecessary publish files"
+Get-ChildItem $PublishDir -Filter "*.pdb" -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
 Write-Step "Creating zip"
 Compress-Archive -Path "$PublishDir\*" -DestinationPath $ZipPath

@@ -47,6 +47,8 @@
             </MenuItem>
 
             <MenuItem Header="_Tools">
+                <MenuItem Header="Create MIB SSH SD _Update..."
+                          Click="CreateMibSshSdUpdate_Click"/>
                 <MenuItem Header="_Generate SSH Keys..."
                           Click="GenerateSshKeys_Click"/>
                 <Separator/>
@@ -55,8 +57,8 @@
             </MenuItem>
 
             <MenuItem Header="_Help">
-                <MenuItem Header="_Connection Help..."
-                          Click="ConnectionHelp_Click"/>
+                <MenuItem Header="_Detect MIB IP..."
+                          Click="DetectMibGateway_Click"/>
                 <MenuItem Header="_Check for updates"
                           Click="CheckUpdate_Click"/>
                 <Separator/>
@@ -222,8 +224,8 @@
                                     Padding="0"
                                     VerticalAlignment="Top"
                                     Content="?"
-                                    Click="ConnectionHelp_Click"
-                                    ToolTip="How to find the MIB SSH IP address"/>
+                                    Click="DetectMibGateway_Click"
+                                    ToolTip="Detect the MIB SSH IP automatically"/>
 
                             <TextBlock Grid.Row="2"
                                        Grid.ColumnSpan="3"

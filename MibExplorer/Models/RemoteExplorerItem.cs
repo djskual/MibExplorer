@@ -51,6 +51,8 @@ public sealed class RemoteExplorerItem : ObservableObject
 
     public bool IsDirectory => EntryType == RemoteEntryType.Directory;
 
+    public bool IsNavigable => EntryType == RemoteEntryType.Directory || EntryType == RemoteEntryType.Symlink;
+
     public long Size
     {
         get => _size;
