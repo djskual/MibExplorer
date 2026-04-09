@@ -2,206 +2,250 @@
 
 ![MibExplorer screenshot](docs/MibExplorer.png)
 
-**MibExplorer** is a WPF (.NET 8) application for exploring and managing files on **Volkswagen MIB2 / MIB2.5** systems over SSH.
+**MibExplorer** is a WPF (.NET 8) application designed to interact with **Volkswagen MIB2 / MIB2.5** systems over SSH.
 
-It provides a graphical interface to browse the remote filesystem, transfer files and folders, perform safe replace operations, and work around Linux filenames that are not directly compatible with Windows.
-
----
-
-## Features
-
-### Remote file explorer
-- Browse the MIB filesystem with a synchronized **TreeView + ListView**
-- Lazy loading for remote folders
-- Double-click navigation
-- Right-click context menus for files and folders
-
-### File operations
-- Download file
-- Upload file
-- Rename file or folder
-- Delete file or folder
-- Refresh current folder
-
-### Folder operations
-- Extract folder locally
-- Upload folder recursively
-- Safe folder replace with:
-  - temporary upload
-  - backup
-  - atomic swap
-  - cleanup
-
-### Smart filename mapping
-- Handles Linux filenames that are invalid on Windows
-- Generates `.mibexplorer-map.json` only when needed
-- Restores original remote names when re-uploading extracted folders
-- Ensures reliable **extract → modify → re-upload** workflow
-
-### SSH key utilities
-- Generate RSA key pair directly from the application
-- Use generated keys for new SSH setups
-- Support existing private keys for already prepared MIB systems
+It provides both a **graphical file explorer** and a **complete SSH lifecycle management system**, including installation, update, and removal of SSH directly from the application.
 
 ---
 
-## Safety
+# ✨ Key Features
 
-MibExplorer is designed to keep filesystem operations as safe as possible.
+## 📁 Remote File Explorer
 
-- Remote write operations are performed with controlled RW/RO remount handling
-- Safe replace avoids destructive direct overwrite operations
-- Folder uploads support filename replay for sanitized names
-- `.mibexplorer-map.json` is never uploaded to the MIB
-- No operation is executed unless explicitly triggered by the user
-
----
-
-## Requirements
-
-- Windows 10 or Windows 11
-- .NET 8 Runtime
-- A Volkswagen MIB2 / MIB2.5 unit with SSH access available
+* Full remote filesystem browsing (TreeView + ListView)
+* Lazy loading for performance
+* Context menu operations (files & folders)
+* Symlink support (navigation + visibility)
+* Hidden files support
 
 ---
 
-## SSH setup
+## 🔁 File & Folder Operations
 
-MibExplorer connects to the MIB over SSH using an RSA private key.
+* Download / upload files
+* Rename / delete files and folders
+* Recursive folder upload
+* Folder extraction
+* **Safe folder replace**:
 
-There are currently two main scenarios.
-
-### 1. New setup: generate keys from MibExplorer
-If your MIB is not yet prepared, MibExplorer can generate a new RSA key pair for you.
-
-Typical workflow:
-1. Open **Tools > Generate SSH Keys**
-2. Generate a new key pair
-3. Keep the **private key** on your PC
-4. Copy the **public key** (`.pub`) to the MIB during your SSH enable/install process
-5. Use the generated private key in MibExplorer to connect
-
-This is the recommended approach for new setups because it gives you a dedicated key pair for the application.
-
-### 2. Existing setup: use your current private key
-If your MIB is already configured for SSH, you do **not** need to generate new keys.
-
-You can simply use the private key that already matches the public key installed on the MIB.
-
-Typical workflow:
-1. Make sure SSH is already working on the MIB
-2. Locate the private key on your PC
-3. In MibExplorer, select that private key
-4. Connect to the MIB normally
-
-This is the recommended approach for users whose MIB is already prepared.
+  * temporary upload
+  * backup
+  * atomic swap
+  * cleanup
 
 ---
 
-## Connecting to the MIB
+## 🧠 Smart Filename Mapping
 
-Basic connection flow:
-
-1. Start MibExplorer
-2. Enter the MIB IP address
-3. Select your RSA private key
-4. Connect over SSH
-5. Browse and manage the filesystem
-
-If the connection fails, verify:
-- the MIB IP address
-- SSH availability on the MIB
-- that the selected private key matches the public key installed on the MIB
-- that the MIB and PC are on the same network
+* Handles Linux filenames incompatible with Windows
+* Generates `.mibexplorer-map.json` only when required
+* Restores original filenames on re-upload
+* Enables safe **extract → edit → re-upload** workflows
 
 ---
 
-## Working with existing SSH-enabled MIB systems
+# 🔐 SSH Management (Core Feature)
 
-If your MIB is already configured with SSH access through another method or tool, MibExplorer can still be used directly.
-
-You only need:
-- the MIB IP address
-- the matching private key
-
-No reinstallation is required as long as SSH access is already available and your key is accepted by the MIB.
+MibExplorer provides a **complete SSH lifecycle system** for MIB devices.
 
 ---
 
-## Folder extraction and filename replay
+## 📦 SSH Installation (via SD SWDL)
 
-Some files on the MIB may use Linux-valid names that are not valid on Windows.
+* Generates a full SWDL-compatible SD package
+* No external tools required
+* Includes:
 
-To preserve those names safely:
+  * SSH payload (sshd)
+  * public key (GEM)
+  * scripts and checksums
 
-- folder extraction sanitizes invalid local names when necessary
-- MibExplorer creates `.mibexplorer-map.json` only if at least one name had to be adapted
-- when uploading that folder again, MibExplorer replays the original remote Linux names automatically
+### Install process:
 
-This makes it possible to:
-- extract a folder from the MIB
-- edit it locally on Windows
-- upload it back without breaking original filenames
+* Deploys SSH to MIB filesystem
+* Patches `startup.sh` safely (with backup)
+* Configures:
 
----
+  * inetd (SSH service)
+  * firewall (pf*.conf)
+* Uses boot-time finalizer (`finish_ssh_boot.sh`)
+* Generates host keys on first boot
+* Logs execution to SD card
 
-## Current capabilities
+### Cleanup:
 
-MibExplorer currently supports:
-
-- stable SSH connection
-- remote filesystem navigation
-- file download/upload
-- file and folder rename
-- file and folder delete
-- folder extraction
-- recursive folder upload
-- safe folder replace
-- filename mapping replay
-- synchronized TreeView/ListView navigation
-- context menus for file and folder operations
+* Removes SWDL temporary files
+* Removes `MibExplorer.info` (FileCopyInfo)
 
 ---
 
-## Planned next steps
+## 🔁 SSH Key Update (No reinstall)
 
-Planned future improvements include:
-
-- SD card bootstrap package generation
-- automatic SSH/Wi-Fi setup workflow
-- guided operations
-- MibExplorerAgent for local operation execution on the MIB side
+* Replaces only `authorized_keys`
+* No payload reinstall
+* No system modification
+* Fast and safe
 
 ---
 
-## Notes
+## 🧹 SSH Uninstall (via SD)
 
-- This project is focused on practicality, safety, and usability
-- It is intended for users already familiar with MIB filesystem access and SSH-based workflows
-- Some future features are planned to simplify first-time setup
+* Full uninstall using SWDL package
+* Safe post-reboot cleanup
+* Removes:
+
+  * SSH payload
+  * `/root/.ssh`
+  * `authorized_keys`
+  * `/root/scp`
+  * `/root/.profile`
+* Restores:
+
+  * `inetd.conf`
+  * firewall rules
+* Removes:
+
+  * SWDL artifacts
+  * `MibExplorer.info`
+* Keeps `startup.sh` hook intentionally
 
 ---
 
-## Disclaimer
+## ⚡ Direct SSH Uninstall (No SD Required)
+
+* Uninstall SSH directly from MibExplorer
+* Requires active SSH connection
+
+### Behavior:
+
+* Removes:
+
+  * SSH payload
+  * `/root/.ssh`
+  * defensive cleanup of `/root/.sshd`
+  * `authorized_keys`
+  * `scp`
+  * `.profile`
+
+* Restores:
+
+  * `inetd.conf` (backup or fallback)
+  * firewall rules
+
+* Cleans:
+
+  * SWDL artifacts
+  * `MibExplorer.info`
+
+### Notes:
+
+* SSH session may remain active until reboot
+* Reboot is recommended after uninstall
+* `startup.sh` hook is preserved
+
+---
+
+# 🌐 Automatic MIB IP Detection
+
+* Detects active Wi-Fi interface (MIB hotspot)
+* Works without internet access
+* Uses:
+
+  * default gateway
+  * or DHCP fallback
+* Validates IP via SSH (port 22)
+
+👉 Eliminates false detections and improves reliability
+
+---
+
+# 🛡️ Safety & Design
+
+MibExplorer is built with a strong focus on **safety and reversibility**:
+
+* Controlled RW/RO remount handling
+* Atomic file operations
+* Backup-based restore logic
+* Defensive cleanup mechanisms
+* No automatic destructive actions
+* Full user control over operations
+
+---
+
+# 🔌 Requirements
+
+* Windows 10 / 11
+* .NET 8 Runtime
+* Volkswagen MIB2 / MIB2.5 with SSH capability
+
+---
+
+# 🔑 SSH Setup
+
+## New setup
+
+1. Tools → Generate SSH Keys
+2. Install SSH via SD package
+3. Connect using generated private key
+
+---
+
+## Existing setup
+
+* Use your existing private key
+* No reinstall required
+
+---
+
+# 🔗 Connecting to MIB
+
+1. Connect PC to MIB Wi-Fi hotspot
+2. Use auto-detect (recommended) or enter IP manually
+3. Select private key
+4. Connect
+
+---
+
+# 📦 Current Capabilities
+
+* SSH install / update / uninstall (SD + direct)
+* Remote filesystem explorer
+* File & folder operations
+* Safe replace system
+* Smart filename mapping
+* IP auto-detection with validation
+
+---
+
+# 🧩 Roadmap
+
+Planned improvements:
+
+* Integrated SSH setup wizard
+* MIB Wi-Fi helper / onboarding
+* Advanced diagnostics tools
+* MIB-side helper agent
+
+---
+
+# ⚠️ Disclaimer
 
 This tool is intended for advanced users.
 
-Modifying files on a MIB system always carries risk.  
-You are responsible for what you do with your device.
-
-Use it carefully and at your own risk.
+Modifying a MIB system always carries risk.
+You are responsible for any changes made to your device.
 
 ---
 
-## Acknowledgements
+# 🙏 Acknowledgements
 
-This project is inspired by the MIB modding ecosystem and by community tools such as:
+Inspired by the MIB modding ecosystem:
 
-- MIB2Toolbox
-- MoreIncredibleBash
+* MIB2Toolbox
+* MoreIncredibleBash
 
 ---
 
-## License
+# 📄 License
 
-License to be defined.
+To be defined.
