@@ -4,7 +4,10 @@
 
 **MibExplorer** is a WPF (.NET 8) application designed to interact with **Volkswagen MIB2 / MIB2.5** systems over SSH.
 
-It provides both a **graphical file explorer** and a **complete SSH lifecycle management system**, including installation, update, and removal of SSH directly from the application.
+It provides:
+- a **graphical file explorer**
+- a **complete SSH lifecycle management system**
+- and an **interactive remote shell console**
 
 ---
 
@@ -41,6 +44,52 @@ It provides both a **graphical file explorer** and a **complete SSH lifecycle ma
 * Generates `.mibexplorer-map.json` only when required
 * Restores original filenames on re-upload
 * Enables safe **extract → edit → re-upload** workflows
+
+---
+
+## 🖥️ Remote Shell Console
+
+MibExplorer includes a **built-in interactive remote shell console**.
+
+---
+
+### Features
+
+* Real persistent SSH shell session (no command emulation)
+* Interactive command execution
+* Live remote output display
+* Command history navigation (Up / Down)
+* Clear console (`Ctrl + L`)
+* Copy all output
+* Save console log to file
+* Themed context menu
+* Single console instance management
+
+---
+
+### Console Rendering
+
+* Terminal-like prompt and command flow
+* Prompt-aware formatting:
+  * user/host (cyan)
+  * path (light blue)
+* Distinct colors for:
+  * commands (white)
+  * normal output (light gray)
+  * errors (red)
+  * warnings (orange)
+  * system messages `[shell]` (blue, italic)
+* Clean spacing and improved readability
+* Output trimming to prevent memory overflow
+
+---
+
+### Behavior
+
+* Detects SSH connection loss in real time
+* Automatically disables input when disconnected
+* Keeps log available after disconnection
+* Fully integrated with MibExplorer theme and UI
 
 ---
 
@@ -213,6 +262,7 @@ MibExplorer is built with a strong focus on **safety and reversibility**:
 * File & folder operations
 * Safe replace system
 * Smart filename mapping
+* Remote shell console
 * IP auto-detection with validation
 
 ---
