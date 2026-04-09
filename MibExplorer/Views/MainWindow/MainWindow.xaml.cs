@@ -124,6 +124,68 @@ public partial class MainWindow : Window
         }
     }
 
+    private void CreateMibSshSdUninstall_Click(object sender, RoutedEventArgs e)
+    {
+        var message =
+            @"This tool creates a dedicated SD uninstall package
+for your MIB.
+
+Planned content:
+
+- SWDL uninstall trigger package
+- Dummy trigger file
+- Final SWDL script
+- SSH uninstall script
+- Boot finisher script
+- ZIP generated next to the app
+
+User flow:
+
+1. Click OK to build the uninstall package
+2. Copy ZIP content to SD card
+3. Insert SD into MIB and run update
+4. Reboot the unit
+5. Let finish_ssh_boot.sh complete the cleanup after boot
+6. Check logs on the same SD card
+
+Notes:
+
+- This package removes the SSH payload
+- It restores backed up system config when available
+- startup.sh hook is intentionally kept
+- Logging is written to the same SD used for SWDL
+- SWDL format, encoding and hashes OK";
+
+        var result = AppMessageBox.Show(
+            message,
+            "Create MIB SSH SD Uninstall",
+            MessageBoxButton.OKCancel,
+            MessageBoxImage.Information);
+
+        if (result != MessageBoxResult.OK)
+            return;
+
+        try
+        {
+            var builder = new SdUninstallPackageBuilder();
+            string packagePath = builder.BuildPackage();
+
+            AppMessageBox.Show(
+                $"SD uninstall package created successfully:{Environment.NewLine}{Environment.NewLine}{packagePath}{Environment.NewLine}{Environment.NewLine}The ZIP file was created next to the application executable.",
+                "MIB SSH SD Uninstall",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            AppMessageBox.Show(
+                $"Failed to create SD uninstall package.{Environment.NewLine}{Environment.NewLine}{ex.Message}",
+                "MIB SSH SD Uninstall",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
     private async void GenerateSshKeys_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -179,13 +241,14 @@ public partial class MainWindow : Window
         }
     }
 
-    private void DetectMibGateway_Click(object sender, RoutedEventArgs e)
+    private async void DetectMibGateway_Click(object sender, RoutedEventArgs e)
     {
         var confirmResult = AppMessageBox.Show(
             this,
             "Automatic MIB IP detection\n\n" +
             "Make sure your PC is connected to the MIB Wi-Fi hotspot before continuing.\n\n" +
-            "MibExplorer will try to detect the hotspot network and use its default gateway as the SSH host.\n\n" +
+            "MibExplorer will inspect the active Wi-Fi network and use its default gateway as the SSH host.\n\n" +
+            "Internet access is not required.\n\n" +
             "Continue?",
             "Detect MIB IP",
             MessageBoxButton.OKCancel,
@@ -196,7 +259,7 @@ public partial class MainWindow : Window
 
         try
         {
-            var result = MibNetworkHelper.TryDetectMibGateway();
+            var result = await MibNetworkHelper.TryDetectMibGatewayAsync();
 
             if (result == null)
             {
@@ -208,9 +271,10 @@ public partial class MainWindow : Window
                     "- Wait a few seconds for Windows to get an IPv4 address\n" +
                     "- Make sure the hotspot network is active\n\n" +
                     "Expected pattern:\n" +
-                    "- DNS suffix often contains: mibhigh\n" +
                     "- Local IPv4 is usually in the 10.173.189.x range\n" +
-                    "- Default Gateway is usually the MIB IP to use for SSH",
+                    "- Default Gateway is usually the MIB IP to use for SSH\n" +
+                    "- Internet access is NOT required\n" +
+                    "- SSH must be installed and reachable on port 22",
                     "Detect MIB IP",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);

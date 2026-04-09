@@ -372,6 +372,9 @@ PF_GLOB=""/mnt/system/etc/pf*.conf""
 PF_MAIN=""/mnt/system/etc/pf.mlan0.conf""
 SELF_SCRIPT=""/mnt/app/eso/hmi/engdefs/scripts/ssh/finish_ssh_boot.sh""
 SDINFO_FILE=""$SSH_DIR/finish_boot_sd_path.txt""
+EFS_PERSIST=""/net/rcc/mnt/efs-persist""
+FILECOPYINFO_DIR=""$EFS_PERSIST/SWDL/FileCopyInfo""
+MIBEXPLORER_INFO_FILE=""$FILECOPYINFO_DIR/MibExplorer.info""
 
 RUNTIME_SD=""""
 LOG=""/tmp/finish_ssh_boot.log""
@@ -421,6 +424,7 @@ waitfor /dev/ptyp0 20 >> ""$LOG"" 2>&1
 
 mount -uw /net/mmx/mnt/system >> ""$LOG"" 2>&1
 mount -uw /net/mmx/mnt/app >> ""$LOG"" 2>&1
+mount -uw ""$EFS_PERSIST"" >> ""$LOG"" 2>&1
 
 sed -ir 's:\r$::g' ""$SSH_DIR/usr/sbin/start_sshd"" >> ""$LOG"" 2>&1
 sed -ir 's:\r$::g' ""$SSH_DIR/etc/banner.txt"" >> ""$LOG"" 2>&1
@@ -501,6 +505,18 @@ sleep 1
 inetd >> ""$LOG"" 2>&1
 echo ""inetd restart attempted"" >> ""$LOG""
 
+# Remove our SWDL FileCopyInfo entry
+if [ -f ""$MIBEXPLORER_INFO_FILE"" ]; then
+    rm -f ""$MIBEXPLORER_INFO_FILE"" >> ""$LOG"" 2>&1
+    if [ -f ""$MIBEXPLORER_INFO_FILE"" ]; then
+        echo ""Failed to remove $MIBEXPLORER_INFO_FILE"" >> ""$LOG""
+    else
+        echo ""Removed $MIBEXPLORER_INFO_FILE"" >> ""$LOG""
+    fi
+else
+    echo ""No MibExplorer.info found in FileCopyInfo"" >> ""$LOG""
+fi
+
 if [ -f ""$SSH_DIR/etc/ssh_host_dsa_key"" ] && \
    [ -f ""$SSH_DIR/etc/ssh_host_rsa_key"" ] && \
    [ -f ""$SSH_DIR/etc/ssh_host_key"" ] && \
@@ -518,6 +534,7 @@ fi
 
 mount -ur /net/mmx/mnt/system >> ""$LOG"" 2>&1
 mount -ur /net/mmx/mnt/app >> ""$LOG"" 2>&1
+mount -ur ""$EFS_PERSIST"" >> ""$LOG"" 2>&1
 
 echo ""=== finish_ssh_boot end ==="" >> ""$LOG""
 

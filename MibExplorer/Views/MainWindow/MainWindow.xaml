@@ -49,6 +49,8 @@
             <MenuItem Header="_Tools">
                 <MenuItem Header="Create MIB SSH SD _Update..."
                           Click="CreateMibSshSdUpdate_Click"/>
+                <MenuItem Header="Create MIB SSH SD _Uninstall..."
+                          Click="CreateMibSshSdUninstall_Click"/>
                 <MenuItem Header="_Generate SSH Keys..."
                           Click="GenerateSshKeys_Click"/>
                 <Separator/>
