@@ -11,4 +11,12 @@ public sealed partial class SshMibConnectionService : IMibConnectionService
     private SshClient? _sshClient;
 
     public bool IsConnected => _sshClient?.IsConnected == true;
+
+    public event EventHandler<bool>? ConnectionStateChanged;
+
+    private void RaiseConnectionStateChanged(bool isConnected)
+    {
+        ConnectionStateChanged?.Invoke(this, isConnected);
+    }
 }
+

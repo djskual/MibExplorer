@@ -20,6 +20,7 @@ namespace MibExplorer.Views.MainWindow;
 
 public partial class MainWindow : Window
 {
+    private ShellConsoleWindow? _shellConsoleWindow; 
     private MainViewModel ViewModel => (MainViewModel)DataContext;
     private bool _isSortingFromHeader;
     private string? _pendingSortKey;
@@ -62,6 +63,73 @@ public partial class MainWindow : Window
                 settings.LastPublicKeyExportPath = ViewModel.PublicKeyExportPath;
             }));
         };
+    }
+
+    private void RemoteShellConsoleMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        OpenRemoteShellWindow();
+    }
+
+    private void OpenRemoteShellWindow()
+    {
+        if (_shellConsoleWindow is not null)
+        {
+            if (_shellConsoleWindow.WindowState == WindowState.Minimized)
+                _shellConsoleWindow.WindowState = WindowState.Normal;
+
+            _shellConsoleWindow.Show();
+            _shellConsoleWindow.Activate();
+            _shellConsoleWindow.Focus();
+            return;
+        }
+
+        if (DataContext is not MainViewModel mainViewModel)
+        {
+            AppMessageBox.Show(this,
+                "Main view model is unavailable.",
+                "Remote Shell Console",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        if (!mainViewModel.ConnectionService.IsConnected)
+        {
+            AppMessageBox.Show(this,
+                "You must connect to the MIB before opening the shell console.",
+                "Remote Shell Console",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        var viewModel = new ShellConsoleViewModel(mainViewModel.ConnectionService);
+        var window = new ShellConsoleWindow(viewModel);
+
+        window.Width = 980;
+        window.Height = 650;
+
+        double left = Left + Math.Max(0, (ActualWidth - window.Width) / 2);
+        double top = Top + Math.Max(0, (ActualHeight - window.Height) / 2);
+
+        window.Left = left;
+        window.Top = top;
+
+        window.Closed += ShellConsoleWindow_Closed;
+
+        _shellConsoleWindow = window;
+
+        window.Show();
+        window.Activate();
+    }
+
+    private void ShellConsoleWindow_Closed(object? sender, EventArgs e)
+    {
+        if (_shellConsoleWindow is not null)
+        {
+            _shellConsoleWindow.Closed -= ShellConsoleWindow_Closed;
+            _shellConsoleWindow = null;
+        }
     }
 
     private void CreateMibSshSdUpdate_Click(object sender, RoutedEventArgs e)

@@ -58,6 +58,9 @@
                 <MenuItem Header="_Generate SSH Keys..."
                           Click="GenerateSshKeys_Click"/>
                 <Separator/>
+                <MenuItem Header="_Remote Shell Console"
+                          Click="RemoteShellConsoleMenuItem_Click"/>
+                <Separator/>
                 <MenuItem Header="_Settings..."
                           Click="Settings_Click"/>
             </MenuItem>

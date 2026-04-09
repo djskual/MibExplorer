@@ -6,6 +6,7 @@ namespace MibExplorer.Services.Design;
 public sealed class DesignMibConnectionService : IMibConnectionService
 {
     private readonly Dictionary<string, IReadOnlyList<RemoteExplorerItem>> _map;
+    public event EventHandler<bool>? ConnectionStateChanged;
 
     public DesignMibConnectionService()
     {
@@ -151,11 +152,13 @@ public sealed class DesignMibConnectionService : IMibConnectionService
     public Task ConnectAsync(ConnectionSettings settings, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        ConnectionStateChanged?.Invoke(this, true);
         return Task.CompletedTask;
     }
 
     public Task DisconnectAsync()
     {
+        ConnectionStateChanged?.Invoke(this, false);
         return Task.CompletedTask;
     }
 
@@ -163,6 +166,18 @@ public sealed class DesignMibConnectionService : IMibConnectionService
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult("design-mode");
+    }
+
+    public Task<bool> ProbeConnectionAsync(TimeSpan timeout, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(true);
+    }
+
+    public Task<IRemoteShellSession> CreateShellSessionAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult<IRemoteShellSession>(new DesignRemoteShellSession());
     }
 
     public Task<IReadOnlyList<RemoteExplorerItem>> GetRootEntriesAsync(CancellationToken cancellationToken = default)

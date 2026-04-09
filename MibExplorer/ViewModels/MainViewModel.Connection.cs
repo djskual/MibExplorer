@@ -98,11 +98,21 @@ public sealed partial class MainViewModel
         try
         {
             _isConnectionProbeRunning = true;
-            await _mibConnectionService.ExecuteCommandAsync("pwd");
-        }
-        catch
-        {
+
+            bool isAlive = await _mibConnectionService.ProbeConnectionAsync(TimeSpan.FromSeconds(3));
+            if (isAlive)
+                return;
+
             _connectionMonitorTimer.Stop();
+
+            try
+            {
+                await _mibConnectionService.DisconnectAsync();
+            }
+            catch
+            {
+            }
+
             IsConnectedToMib = false;
             StatusMessage = "Connection lost.";
             await PrepareWorkspaceAsync();

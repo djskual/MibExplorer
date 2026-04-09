@@ -77,6 +77,8 @@ public sealed partial class SshMibConnectionService
             throw;
         }
 
+        RaiseConnectionStateChanged(true);
+
         return Task.CompletedTask;
     }
 
@@ -106,6 +108,40 @@ public sealed partial class SshMibConnectionService
         return Task.FromResult(result);
     }
 
+    public Task<bool> ProbeConnectionAsync(TimeSpan timeout, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (_sshClient is null || !_sshClient.IsConnected)
+            return Task.FromResult(false);
+
+        try
+        {
+            using var cmd = _sshClient.CreateCommand("pwd");
+            cmd.CommandTimeout = timeout;
+
+            _ = cmd.Execute();
+
+            if (cmd.ExitStatus != 0)
+                return Task.FromResult(false);
+
+            return Task.FromResult(true);
+        }
+        catch
+        {
+            return Task.FromResult(false);
+        }
+    }
+
+    public Task<IRemoteShellSession> CreateShellSessionAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        var session = new SshRemoteShellSession(_sshClient!);
+        return Task.FromResult<IRemoteShellSession>(session);
+    }
+
     public void Dispose()
     {
         DisconnectInternal();
@@ -131,6 +167,7 @@ public sealed partial class SshMibConnectionService
         {
             _sshClient.Dispose();
             _sshClient = null;
+            RaiseConnectionStateChanged(false);
         }
     }
 }
