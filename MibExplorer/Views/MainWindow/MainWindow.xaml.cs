@@ -186,6 +186,121 @@ Notes:
         }
     }
 
+    private async void UninstallSshFromMib_Click(object sender, RoutedEventArgs e)
+    {
+        if (!ViewModel.IsConnectedToMib)
+        {
+            AppMessageBox.Show(
+                this,
+                "You must be connected to the MIB over SSH before using direct uninstall.",
+                "Uninstall SSH from MIB",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        var confirmResult = AppMessageBox.Show(
+            this,
+            "Direct SSH uninstall\n\n" +
+            "This action will remove the SSH installation from the connected MIB without using an SD package.\n\n" +
+            "What will be removed/restored:\n" +
+            "- SSH payload\n" +
+            "- /root/.ssh and defensive cleanup of /root/.sshd\n" +
+            "- authorized_keys\n" +
+            "- /root/scp\n" +
+            "- /root/.profile\n" +
+            "- inetd.conf restored from backup when available\n" +
+            "- firewall pf*.conf restored from backup when available\n" +
+            "- MibExplorer.info removed from SWDL FileCopyInfo\n\n" +
+            "Important:\n" +
+            "- startup.sh hook will be kept intentionally\n" +
+            "- A reboot is recommended after uninstall\n" +
+            "- The current SSH session may stop after cleanup\n\n" +
+            "Continue?",
+            "Uninstall SSH from MIB",
+            MessageBoxButton.OKCancel,
+            MessageBoxImage.Warning);
+
+        if (confirmResult != MessageBoxResult.OK)
+            return;
+
+        try
+        {
+            string command =
+                "export PATH=/proc/boot:/bin:/usr/bin:/usr/sbin:/sbin:/mnt/app/media/gracenote/bin:/mnt/app/armle/bin:/mnt/app/armle/sbin:/mnt/app/armle/usr/bin:/mnt/app/armle/usr/sbin:$PATH; " +
+                "SSH_DIR=/net/mmx/mnt/app/eso/hmi/engdefs/scripts/ssh; " +
+                "ROOT_HOME=/mnt/app/root; " +
+                "ROOT_SSH_DIR=$ROOT_HOME/.ssh; " +
+                "ROOT_SSHD_DIR=$ROOT_HOME/.sshd; " +
+                "ROOT_AUTH_KEYS=$ROOT_SSH_DIR/authorized_keys; " +
+                "ROOT_PROFILE=$ROOT_HOME/.profile; " +
+                "ROOT_SCP=$ROOT_HOME/scp; " +
+                "INETD_CONF=/mnt/system/etc/inetd.conf; " +
+                "INETD_CONF_BU=/mnt/system/etc/inetd.conf.bu; " +
+                "EFS_PERSIST=/net/rcc/mnt/efs-persist; " +
+                "FILECOPYINFO_DIR=$EFS_PERSIST/SWDL/FileCopyInfo; " +
+                "MIBEXPLORER_INFO_FILE=$FILECOPYINFO_DIR/MibExplorer.info; " +
+                "mount -uw /mnt/system; " +
+                "mount -uw /mnt/app; " +
+                "mount -uw $EFS_PERSIST; " +
+                "if [ -f \"$INETD_CONF_BU\" ]; then " +
+                "  mv -f \"$INETD_CONF_BU\" \"$INETD_CONF\"; " +
+                "elif [ -f \"$INETD_CONF\" ]; then " +
+                "  cp -p \"$INETD_CONF\" \"$INETD_CONF.mibexplorer.tmp\" && " +
+                "  sed -i -r 's:^.*start_sshd.*\\n*::p' \"$INETD_CONF.mibexplorer.tmp\" && " +
+                "  cp -p \"$INETD_CONF.mibexplorer.tmp\" \"$INETD_CONF\"; " +
+                "  rm -f \"$INETD_CONF.mibexplorer.tmp\"; " +
+                "fi; " +
+                "for PF in /mnt/system/etc/pf*.conf; do " +
+                "  if [ -f \"${PF}.bu\" ]; then mv -f \"${PF}.bu\" \"$PF\"; fi; " +
+                "done; " +
+                "if [ -f /mnt/system/etc/pf.mlan0.conf ]; then /mnt/app/armle/sbin/pfctl -F all -f /mnt/system/etc/pf.mlan0.conf >/dev/null 2>&1; fi; " +
+                "slay -v inetd >/dev/null 2>&1; " +
+                "sleep 1; " +
+                "inetd >/dev/null 2>&1; " +
+                "rm -f \"$ROOT_AUTH_KEYS\"; " +
+                "rm -f \"$ROOT_PROFILE\"; " +
+                "rm -f \"$ROOT_SCP\"; " +
+                "rm -rf \"$ROOT_SSH_DIR\"; " +
+                "rm -rf \"$ROOT_SSHD_DIR\"; " +
+                "rm -f /net/mmx/mnt/app/eso/hmi/engdefs/id_rsa.pub; " +
+                "rm -f /net/mmx/mnt/app/eso/hmi/engdefs/id_rsa.pub.checksum; " +
+                "rm -f /net/mmx/mnt/app/eso/hmi/engdefs/id_rsa.pub.fileinfo; " +
+                "rm -f /net/mmx/mnt/app/eso/hmi/engdefs/dummy.txt; " +
+                "rm -f /net/mmx/mnt/app/eso/hmi/engdefs/dummy.txt.checksum; " +
+                "rm -f /net/mmx/mnt/app/eso/hmi/engdefs/dummy.txt.fileinfo; " +
+                "rm -f \"$MIBEXPLORER_INFO_FILE\"; " +
+                "rm -rf \"$SSH_DIR\"; " +
+                "mount -ur $EFS_PERSIST; " +
+                "mount -ur /mnt/app; " +
+                "mount -ur /mnt/system; " +
+                "echo OK";
+
+            await ViewModel.ConnectionService.ExecuteCommandAsync(command);
+
+            AppMessageBox.Show(
+                this,
+                "SSH uninstall command completed.\n\n" +
+                "What to do next:\n" +
+                "- Reboot the MIB\n" +
+                "- After reboot, SSH should be removed\n" +
+                "- startup.sh hook remains intentionally in place\n\n" +
+                "If the current SSH session drops after cleanup, this is expected.",
+                "Uninstall SSH from MIB",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            AppMessageBox.Show(
+                this,
+                $"Direct SSH uninstall failed.\n\n{ex.Message}",
+                "Uninstall SSH from MIB",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
     private async void GenerateSshKeys_Click(object sender, RoutedEventArgs e)
     {
         try

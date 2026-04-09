@@ -47,10 +47,14 @@
             </MenuItem>
 
             <MenuItem Header="_Tools">
-                <MenuItem Header="Create MIB SSH SD _Update..."
+                <MenuItem Header="_Create MIB SSH SD Update..."
                           Click="CreateMibSshSdUpdate_Click"/>
-                <MenuItem Header="Create MIB SSH SD _Uninstall..."
+                <MenuItem Header="_Create MIB SSH SD Uninstall..."
                           Click="CreateMibSshSdUninstall_Click"/>
+                <Separator/>
+                <MenuItem Header="_Uninstall SSH from connected MIB..."
+                          Click="UninstallSshFromMib_Click"/>
+                <Separator/>
                 <MenuItem Header="_Generate SSH Keys..."
                           Click="GenerateSshKeys_Click"/>
                 <Separator/>

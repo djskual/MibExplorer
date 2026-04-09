@@ -52,6 +52,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
     }
 
+    public IMibConnectionService ConnectionService => _mibConnectionService;
+
     public MainViewModel(IMibConnectionService mibConnectionService)
     {
         _mibConnectionService = mibConnectionService;

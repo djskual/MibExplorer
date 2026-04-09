@@ -121,6 +121,50 @@ MibExplorer now supports full SSH removal via SWDL.
 
 ---
 
+## ⚡ NEW: Direct SSH Uninstall (No SD Required)
+
+MibExplorer now supports removing SSH directly from a connected MIB.
+
+### Behavior:
+
+* No SD card required
+* Uses existing SSH connection
+* Executes uninstall script directly on the MIB
+
+### Removes:
+
+* SSH payload
+* `/root/.ssh`
+* Defensive cleanup of `/root/.sshd`
+* `authorized_keys`
+* `scp` wrapper
+* root `.profile`
+
+### Restores:
+
+* `inetd.conf` (from `.bu` or cleaned)
+* firewall rules (`pf*.conf`)
+
+### Cleans:
+
+* SWDL artifacts (`id_rsa.pub*`, `dummy.txt*`)
+* SWDL version tracking:
+  * `MibExplorer.info`
+
+### Notes:
+
+* Current SSH session may remain active until reboot
+* Reboot is recommended after uninstall
+* `startup.sh` hook is intentionally preserved
+
+### Use case:
+
+* Quick uninstall without SD card
+* Maintenance or cleanup
+* Fully online workflow
+
+---
+
 ## 💾 SD Update Reliability Improvements
 
 * Automatic SD card detection (sda0 / sdb0)
@@ -193,9 +237,9 @@ Improved and fully reliable automatic detection of the MIB SSH IP.
 ## ⚠️ Notes
 
 * PC must be connected to MIB Wi-Fi hotspot for IP detection
-* Gateway IP is used for SSH access
+* Detected MIB IP is validated via SSH (port 22)
 * A reboot is required after install/uninstall
-* If SSH is broken, use uninstall + reinstall SD workflow
+* If SSH is broken, use SD uninstall + reinstall workflow
 
 ---
 
