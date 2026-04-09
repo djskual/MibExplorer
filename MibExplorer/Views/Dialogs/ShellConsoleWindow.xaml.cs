@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Documents;
 using MibExplorer.ViewModels;
 
 namespace MibExplorer.Views.Dialogs;
@@ -15,6 +16,8 @@ public partial class ShellConsoleWindow : Window
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         DataContext = _viewModel;
 
+        _viewModel.AttachDocument(OutputRichTextBox.Document);
+
         Loaded += ShellConsoleWindow_Loaded;
     }
 
@@ -28,7 +31,7 @@ public partial class ShellConsoleWindow : Window
         await _viewModel.InitializeAsync();
 
         CommandTextBox.Focus();
-        OutputTextBox.ScrollToEnd();
+        OutputRichTextBox.ScrollToEnd();
     }
 
     private void ShellConsoleWindow_Activated(object? sender, EventArgs e)
@@ -86,7 +89,7 @@ public partial class ShellConsoleWindow : Window
     {
         if (e.PropertyName == nameof(ShellConsoleViewModel.OutputText))
         {
-            Dispatcher.BeginInvoke(new Action(() => OutputTextBox.ScrollToEnd()));
+            Dispatcher.BeginInvoke(new Action(() => OutputRichTextBox.ScrollToEnd()));
         }
     }
 

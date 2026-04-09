@@ -1,6 +1,8 @@
 ﻿using Microsoft.Win32;
 using System.Windows;
 using System.IO;
+using System.Windows.Documents;
+using System.Windows.Media;
 using MibExplorer.Core;
 using MibExplorer.Services;
 
@@ -16,6 +18,8 @@ public sealed class ShellConsoleViewModel : ObservableObject, IDisposable
     private readonly List<string> _history = new();
     private int _historyIndex = -1;
     private bool _disposed;
+    private FlowDocument? _document;
+    private Paragraph? _currentParagraph;
 
     private string _outputText = string.Empty;
     private string _currentCommand = string.Empty;
@@ -96,6 +100,14 @@ public sealed class ShellConsoleViewModel : ObservableObject, IDisposable
     public RelayCommand SaveLogCommand { get; }
 
     public RelayCommand SendCommand { get; }
+
+    public void AttachDocument(FlowDocument document)
+    {
+        _document = document ?? throw new ArgumentNullException(nameof(document));
+        _document.PagePadding = new Thickness(0);
+        _document.Blocks.Clear();
+        _currentParagraph = null;
+    }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -291,12 +303,16 @@ public sealed class ShellConsoleViewModel : ObservableObject, IDisposable
 
         string updated = OutputText + text;
         OutputText = TrimOutputIfNeeded(updated);
+
+        AppendFormattedText(text);
     }
 
     private void AppendOutputLine(string line)
     {
         string updated = OutputText + line + Environment.NewLine;
         OutputText = TrimOutputIfNeeded(updated);
+
+        AppendFormattedSystemLine(line + Environment.NewLine);
     }
 
     private static string TrimOutputIfNeeded(string text)
@@ -319,6 +335,199 @@ public sealed class ShellConsoleViewModel : ObservableObject, IDisposable
     private void ClearOutput()
     {
         OutputText = string.Empty;
+        _document?.Blocks.Clear();
+        _currentParagraph = null;
+    }
+
+    private void AppendFormattedText(string text)
+    {
+        if (_document is null || string.IsNullOrEmpty(text))
+            return;
+
+        string normalized = text.Replace("\r\n", "\n");
+
+        int start = 0;
+
+        for (int i = 0; i < normalized.Length; i++)
+        {
+            if (normalized[i] != '\n')
+                continue;
+
+            string segment = normalized.Substring(start, i - start);
+            AppendFormattedSegment(segment, endLine: true);
+            start = i + 1;
+        }
+
+        if (start < normalized.Length)
+        {
+            string segment = normalized[start..];
+            AppendFormattedSegment(segment, endLine: false);
+        }
+
+        TrimDocumentIfNeeded();
+    }
+
+    private void AppendFormattedSystemLine(string line)
+    {
+        if (_document is null)
+            return;
+
+        _currentParagraph = null;
+
+        var paragraph = new Paragraph
+        {
+            Margin = new Thickness(0),
+            LineHeight = 16
+        };
+
+        var run = new Run(line)
+        {
+            Foreground = GetBrushForSystemLine(line),
+            FontStyle = FontStyles.Italic
+        };
+
+        paragraph.Inlines.Add(run);
+        _document.Blocks.Add(paragraph);
+
+        TrimDocumentIfNeeded();
+    }
+
+    private void AppendFormattedSegment(string text, bool endLine)
+    {
+        if (_document is null)
+            return;
+
+        if (_currentParagraph is null)
+        {
+            _currentParagraph = new Paragraph
+            {
+                Margin = new Thickness(0),
+                LineHeight = 16
+            };
+
+            _document.Blocks.Add(_currentParagraph);
+        }
+
+        if (!string.IsNullOrEmpty(text))
+        {
+            if (TryAppendPromptSegments(text))
+                return;
+
+            var run = new Run(text)
+            {
+                Foreground = GetBrushForPromptOrOutput(text)
+            };
+
+            _currentParagraph.Inlines.Add(run);
+        }
+
+        if (endLine)
+        {
+            _currentParagraph = null;
+        }
+    }
+
+    private bool TryAppendPromptSegments(string text)
+    {
+        if (_currentParagraph is null)
+            return false;
+
+        string trimmed = text.TrimEnd();
+
+        if (!IsPromptText(trimmed))
+            return false;
+
+        int colonIndex = trimmed.IndexOf(':');
+        if (colonIndex <= 0)
+            return false;
+
+        string left = trimmed.Substring(0, colonIndex + 1);
+        string right = trimmed.Substring(colonIndex + 1);
+
+        string path = right.TrimEnd('>', '#', '$');
+        string symbol = right.Substring(path.Length);
+
+        var brushUser = new SolidColorBrush(Color.FromRgb(110, 210, 255));
+        var brushPath = new SolidColorBrush(Color.FromRgb(160, 200, 255));
+
+        _currentParagraph.Inlines.Add(new Run(left)
+        {
+            Foreground = brushUser
+        });
+
+        _currentParagraph.Inlines.Add(new Run(path)
+        {
+            Foreground = brushPath
+        });
+
+        _currentParagraph.Inlines.Add(new Run(symbol + " ")
+        {
+            Foreground = brushUser
+        });
+
+        return true;
+    }
+
+    private Brush GetBrushForPromptOrOutput(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return new SolidColorBrush(Color.FromRgb(230, 230, 230));
+
+        string lower = text.ToLowerInvariant();
+
+        if (lower.Contains("error") ||
+            lower.Contains("not found") ||
+            lower.Contains("failed") ||
+            lower.Contains("cannot execute") ||
+            lower.Contains("no such file") ||
+            lower.Contains("permission denied"))
+        {
+            return new SolidColorBrush(Color.FromRgb(255, 110, 90));
+        }
+
+        if (lower.Contains("warning"))
+            return new SolidColorBrush(Color.FromRgb(255, 196, 96));
+
+        if (IsPromptText(text))
+            return new SolidColorBrush(Color.FromRgb(110, 210, 255));
+
+        return new SolidColorBrush(Color.FromRgb(210, 210, 210));
+    }
+
+    private Brush GetBrushForSystemLine(string line)
+    {
+        string lower = line.ToLowerInvariant();
+
+        if (lower.StartsWith("[shell] output trimmed"))
+            return new SolidColorBrush(Color.FromRgb(255, 196, 96));
+
+        if (lower.StartsWith("[shell]"))
+            return new SolidColorBrush(Color.FromRgb(140, 190, 255));
+
+        return new SolidColorBrush(Color.FromRgb(220, 220, 220));
+    }
+
+    private static bool IsPromptText(string text)
+    {
+        string trimmed = text.TrimEnd();
+
+        if (!trimmed.Contains("@") || !trimmed.Contains(":"))
+            return false;
+
+        return trimmed.EndsWith(">") || trimmed.EndsWith("#") || trimmed.EndsWith("$");
+    }
+
+    private void TrimDocumentIfNeeded()
+    {
+        if (_document is null)
+            return;
+
+        const int maxBlocks = 2000;
+
+        while (_document.Blocks.Count > maxBlocks && _document.Blocks.FirstBlock is not null)
+        {
+            _document.Blocks.Remove(_document.Blocks.FirstBlock);
+        }
     }
 
     private void CopyAllOutput()
