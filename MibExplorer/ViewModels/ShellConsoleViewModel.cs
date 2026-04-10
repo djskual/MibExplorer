@@ -174,6 +174,26 @@ public sealed class ShellConsoleViewModel : ObservableObject, IDisposable
         }
     }
 
+    public async Task SendCommandDirectAsync(string command)
+    {
+        ThrowIfDisposed();
+
+        if (string.IsNullOrWhiteSpace(command))
+            return;
+
+        if (_shellSession is null || !_shellSession.IsOpen || !IsConnected)
+            return;
+
+        try
+        {
+            await _shellSession.SendCommandAsync(command);
+        }
+        catch (Exception ex)
+        {
+            AppendOutputLine($"[shell error] {ex.Message}");
+        }
+    }
+
     public void BrowseHistoryUp()
     {
         if (_history.Count == 0)

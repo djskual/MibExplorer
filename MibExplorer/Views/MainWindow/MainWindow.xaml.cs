@@ -123,6 +123,65 @@ public partial class MainWindow : Window
         window.Activate();
     }
 
+    private async Task OpenRemoteShellWindowWithPathAsync(string remotePath)
+    {
+        if (_shellConsoleWindow is null)
+        {
+            OpenRemoteShellWindow();
+        }
+        else
+        {
+            if (_shellConsoleWindow.WindowState == WindowState.Minimized)
+                _shellConsoleWindow.WindowState = WindowState.Normal;
+
+            _shellConsoleWindow.Show();
+            _shellConsoleWindow.Activate();
+            _shellConsoleWindow.Focus();
+        }
+
+        if (_shellConsoleWindow?.DataContext is not ShellConsoleViewModel vm)
+            return;
+
+        string safePath = remotePath.Replace("\"", "\\\"");
+
+        for (int i = 0; i < 20; i++)
+        {
+            if (vm.IsConnected)
+                break;
+
+            await Task.Delay(100);
+        }
+
+        if (!vm.IsConnected)
+            return;
+
+        await vm.SendCommandDirectAsync($"cd \"{safePath}\"");
+    }
+
+    private static string GetShellTargetPath(RemoteExplorerItem item)
+    {
+        if (item.IsDirectory || item.IsNavigable)
+            return item.FullPath;
+
+        string path = item.FullPath;
+        int lastSlash = path.LastIndexOf('/');
+
+        if (lastSlash <= 0)
+            return "/";
+
+        return path.Substring(0, lastSlash);
+    }
+
+    private async void OpenInShellMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        var item = ViewModel.SelectedItem ?? ViewModel.SelectedTreeNode;
+        if (item is null)
+            return;
+
+        string targetPath = GetShellTargetPath(item);
+        await OpenRemoteShellWindowWithPathAsync(targetPath);
+    }
+
     private void ShellConsoleWindow_Closed(object? sender, EventArgs e)
     {
         if (_shellConsoleWindow is not null)

@@ -410,6 +410,9 @@
                                         <MenuItem Header="Upload _folder"
                                                   Command="{Binding UploadFolderCommand}"/>
                                         <Separator/>
+                                        <MenuItem Header="Open in _Shell"
+                                                  Click="OpenInShellMenuItem_Click"/>
+                                        <Separator/>
                                         <MenuItem Header="_Rename"
                                                   Command="{Binding RenameCommand}"/>
                                         <MenuItem Header="_Delete"
@@ -487,6 +490,9 @@
                                                       Command="{Binding UploadCommand}"/>
                                             <MenuItem Header="Upload _folder"
                                                       Command="{Binding UploadFolderCommand}"/>
+                                            <Separator/>
+                                            <MenuItem Header="Open in _Shell"
+                                                      Click="OpenInShellMenuItem_Click"/>
                                             <Separator/>
                                             <MenuItem Header="_Replace file"
                                                       Command="{Binding ReplaceCommand}"/>

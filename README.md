@@ -49,6 +49,8 @@ It provides:
 
 ## 🖥️ Remote Shell Console
 
+![MibExplorer shell](docs/shell.png)
+
 MibExplorer includes a **built-in interactive remote shell console**.
 
 ---
@@ -90,6 +92,15 @@ MibExplorer includes a **built-in interactive remote shell console**.
 * Automatically disables input when disconnected
 * Keeps log available after disconnection
 * Fully integrated with MibExplorer theme and UI
+
+---
+
+### Integration
+
+* Open folders directly from the file explorer
+* Right-click → **Open in Shell**
+* Automatically navigates to the selected path
+
 
 ---
 
