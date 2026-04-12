@@ -15,11 +15,24 @@ public sealed class DesignMibConnectionService : IMibConnectionService
 
     public bool IsConnected => true;
 
+    public Task<string> ReadRemoteTextFileAsync(
+        string remotePath,
+        CancellationToken cancellationToken = default)
+    {
+        string fakeContent =
+            $"[Design Mode]\n\n" +
+            $"File: {remotePath}\n\n" +
+            $"This is a mock content used at design-time.\n" +
+            $"No real SSH connection is performed.";
+
+        return Task.FromResult(fakeContent);
+    }
+
     public Task DownloadFileAsync(
-    string remotePath,
-    string localPath,
-    IProgress<FileTransferProgressInfo>? progress = null,
-    CancellationToken cancellationToken = default)
+        string remotePath,
+        string localPath,
+        IProgress<FileTransferProgressInfo>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -54,10 +67,10 @@ public sealed class DesignMibConnectionService : IMibConnectionService
     }
 
     public Task UploadFileAsync(
-    string localPath,
-    string remotePath,
-    IProgress<FileTransferProgressInfo>? progress = null,
-    CancellationToken cancellationToken = default)
+        string localPath,
+        string remotePath,
+        IProgress<FileTransferProgressInfo>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -87,18 +100,18 @@ public sealed class DesignMibConnectionService : IMibConnectionService
     }
 
     public Task<bool> RemotePathExistsAsync(
-    string remotePath,
-    CancellationToken cancellationToken = default)
+        string remotePath,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(false);
     }
 
     public Task ReplaceFileAsync(
-    string localPath,
-    string remotePath,
-    IProgress<FileTransferProgressInfo>? progress = null,
-    CancellationToken cancellationToken = default)
+        string localPath,
+        string remotePath,
+        IProgress<FileTransferProgressInfo>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -128,17 +141,17 @@ public sealed class DesignMibConnectionService : IMibConnectionService
     }
 
     public Task RenamePathAsync(
-    string remotePath,
-    string newName,
-    CancellationToken cancellationToken = default)
+        string remotePath,
+        string newName,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.CompletedTask;
     }
 
     public Task DeleteFileAsync(
-    string remotePath,
-    CancellationToken cancellationToken = default)
+        string remotePath,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.CompletedTask;
@@ -197,9 +210,9 @@ public sealed class DesignMibConnectionService : IMibConnectionService
     }
 
     public Task RunWritableOperationAsync(
-    string remotePath,
-    Func<CancellationToken, Task> operation,
-    CancellationToken cancellationToken = default)
+        string remotePath,
+        Func<CancellationToken, Task> operation,
+        CancellationToken cancellationToken = default)
     {
         if (operation is null)
             throw new ArgumentNullException(nameof(operation));
@@ -213,10 +226,10 @@ public sealed class DesignMibConnectionService : IMibConnectionService
     }
 
     public Task UploadFileWithoutMountAsync(
-    string localPath,
-    string remotePath,
-    IProgress<FileTransferProgressInfo>? progress = null,
-    CancellationToken cancellationToken = default)
+        string localPath,
+        string remotePath,
+        IProgress<FileTransferProgressInfo>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 

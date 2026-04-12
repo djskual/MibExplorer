@@ -10,7 +10,7 @@
         Height="760"
         MinWidth="1185"
         MinHeight="760"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="Manual"
         Background="{DynamicResource AppWindowBackgroundBrush}"
         Foreground="{DynamicResource AppTextBrush}">
 
@@ -491,6 +491,9 @@
                                             <MenuItem Header="Upload _folder"
                                                       Command="{Binding UploadFolderCommand}"/>
                                             <Separator/>
+                                            <MenuItem Header="_Edit"
+                                                      Click="EditMenuItem_Click"
+                                                      IsEnabled="{Binding CanRunFileAction}"/>
                                             <MenuItem Header="Open in _Shell"
                                                       Click="OpenInShellMenuItem_Click"/>
                                             <Separator/>

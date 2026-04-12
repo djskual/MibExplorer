@@ -28,10 +28,43 @@ public partial class MainWindow : Window
     private const string SshPrivateKeyFileName = "id_rsa";
     private const double FineScrollPixelsPerDetent = 26.0;
 
+    private readonly Dictionary<string, FileEditorWindow> _openFileEditors = new(StringComparer.Ordinal);
+    private static readonly HashSet<string> BlockedEditorExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".zip",
+        ".7z",
+        ".rar",
+        ".tar",
+        ".gz",
+        ".bz2",
+
+        ".bin",
+        ".img",
+        ".iso",
+        ".dat",
+        ".pak",
+        ".sig",
+
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".bmp",
+        ".gif",
+        ".ico",
+
+        ".mcf",
+        ".gca",
+        ".res"
+    };
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = new MainViewModel(new SshMibConnectionService());
+
+        bool useDesignMode = false;
+
+        DataContext = useDesignMode
+            ? new MainViewModel()
+            : new MainViewModel(new SshMibConnectionService());
 
         Loaded += (_, _) => UpdateSortHeaderVisuals();
 
@@ -189,6 +222,83 @@ public partial class MainWindow : Window
             _shellConsoleWindow.Closed -= ShellConsoleWindow_Closed;
             _shellConsoleWindow = null;
         }
+    }
+
+    private static bool IsBlockedForTextEditor(string remotePath)
+    {
+        string extension = Path.GetExtension(remotePath);
+
+        if (string.IsNullOrWhiteSpace(extension))
+            return false;
+
+        return BlockedEditorExtensions.Contains(extension);
+    }
+
+    private bool TryGetFileEditorMode(string remotePath, out bool isReadOnly)
+    {
+        isReadOnly = false;
+
+        if (IsBlockedForTextEditor(remotePath))
+        {
+            AppMessageBox.Show(this,
+                "This file type is not supported by the remote text editor.",
+                "Remote File Editor",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return false;
+        }
+
+        if (!ViewModel.ConnectionService.CanWriteToPath(remotePath))
+            isReadOnly = true;
+
+        return true;
+    }
+
+    private void EditMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.SelectedListItem is not RemoteExplorerItem item)
+            return;
+
+        if (item.IsDirectory)
+            return;
+
+        OpenFileEditorWindow(item.FullPath);
+    }
+
+    private void OpenFileEditorWindow(string remotePath)
+    {
+        if (!TryGetFileEditorMode(remotePath, out bool isReadOnly))
+            return;
+
+        if (_openFileEditors.TryGetValue(remotePath, out FileEditorWindow? existingWindow))
+        {
+            if (existingWindow.WindowState == WindowState.Minimized)
+                existingWindow.WindowState = WindowState.Normal;
+
+            existingWindow.Show();
+            existingWindow.Activate();
+            existingWindow.Focus();
+            return;
+        }
+
+        var viewModel = new FileEditorViewModel(ViewModel.ConnectionService, remotePath, isReadOnly);
+        var window = new FileEditorWindow(viewModel);
+
+        double left = Left + Math.Max(0, (ActualWidth - window.Width) / 2);
+        double top = Top + Math.Max(0, (ActualHeight - window.Height) / 2);
+
+        window.Left = left;
+        window.Top = top;
+
+        _openFileEditors[remotePath] = window;
+
+        window.Closed += (_, _) =>
+        {
+            _openFileEditors.Remove(remotePath);
+        };
+
+        window.Show();
+        window.Activate();
     }
 
     private void CreateMibSshSdUpdate_Click(object sender, RoutedEventArgs e)
@@ -1133,7 +1243,10 @@ Notes:
             return;
 
         if (!item.IsNavigable)
+        {
+            OpenFileEditorWindow(item.FullPath);
             return;
+        }
 
         var currentTreeNode = ViewModel.SelectedTreeNode;
         if (currentTreeNode is null)

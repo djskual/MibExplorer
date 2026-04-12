@@ -104,6 +104,70 @@ MibExplorer includes a **built-in interactive remote shell console**.
 
 ---
 
+---
+
+## 🧑‍💻 Remote File Editor
+
+MibExplorer includes a built-in **remote file editor** for editing files directly on the MIB over SSH.
+
+### Features
+
+* Open files from explorer (double-click / context menu)
+* Full text editing over SSH
+* Explicit save with overwrite
+* Atomic save (temporary file + replace)
+* RW mount handling for writable paths
+* Read-only fallback for protected areas
+* Reload file support
+* Unsaved changes protection (Save / Discard / Cancel)
+
+---
+
+## 🔍 Advanced File Diff Viewer
+
+MibExplorer includes a powerful **side-by-side diff viewer** to validate changes before saving.
+
+### Features
+
+* Side-by-side comparison (Original vs Current)
+* Line-level and token-level diff
+* Accurate detection of:
+  * additions
+  * deletions
+  * modifications
+* Smart alignment using LCS-based algorithm
+* Automatic merging of similar add/remove pairs into modified lines
+* Git-like grouping of repeated change markers
+* Navigation between differences
+* Collapsible unchanged sections
+
+---
+
+### Diff Options
+
+* Ignore whitespace changes
+* Show invisible characters (spaces, tabs)
+* Collapse unchanged sections
+
+---
+
+### Whitespace Handling
+
+* Consistent tab rendering (tab size = 4)
+* Unified whitespace handling between editor and diff
+* Accurate alignment for column-based text
+* No mismatch between tabs and spaces rendering
+
+---
+
+### Behavior
+
+* No false "modified lines" after deletions
+* Stable diff even with complex edits
+* Designed for real-world MIB file structures
+
+---
+
 # 🔐 SSH Management (Core Feature)
 
 MibExplorer provides a **complete SSH lifecycle system** for MIB devices.
@@ -274,6 +338,8 @@ MibExplorer is built with a strong focus on **safety and reversibility**:
 * Safe replace system
 * Smart filename mapping
 * Remote shell console
+* Remote file editor
+* Advanced file diff viewer
 * IP auto-detection with validation
 
 ---
