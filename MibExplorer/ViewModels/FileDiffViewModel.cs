@@ -648,21 +648,34 @@ public sealed class FileDiffViewModel : ObservableObject
     {
         List<FileDiffSegmentViewModel> segments = new(tokens.Count);
         int visualColumn = 0;
+        int sourceOffset = 0;
 
         for (int i = 0; i < tokens.Count; i++)
         {
+            string sourceText = tokens[i].CompareText;
+
             string displayText = ExpandTextPreservingAlignment(
-                tokens[i].CompareText,
+                sourceText,
                 ref visualColumn,
                 showInvisibles);
 
             segments.Add(new FileDiffSegmentViewModel(
-                displayText,
-                unchangedFlags[i] ? unchangedKind : changedKind));
+                text: displayText,
+                kind: unchangedFlags[i] ? unchangedKind : changedKind,
+                sourceStart: sourceOffset,
+                sourceLength: sourceText.Length));
+
+            sourceOffset += sourceText.Length;
         }
 
         if (segments.Count == 0)
-            segments.Add(new FileDiffSegmentViewModel(string.Empty, FileDiffSegmentKind.Unchanged));
+        {
+            segments.Add(new FileDiffSegmentViewModel(
+                text: string.Empty,
+                kind: FileDiffSegmentKind.Unchanged,
+                sourceStart: 0,
+                sourceLength: 0));
+        }
 
         return new ReadOnlyCollection<FileDiffSegmentViewModel>(segments);
     }
@@ -775,14 +788,29 @@ public sealed class FileDiffLineViewModel
 public sealed class FileDiffSegmentViewModel
 {
     public FileDiffSegmentViewModel(string text, FileDiffSegmentKind kind)
+        : this(text, kind, 0, 0)
+    {
+    }
+
+    public FileDiffSegmentViewModel(
+        string text,
+        FileDiffSegmentKind kind,
+        int sourceStart,
+        int sourceLength)
     {
         Text = text ?? string.Empty;
         Kind = kind;
+        SourceStart = sourceStart;
+        SourceLength = sourceLength;
     }
 
     public string Text { get; }
 
     public FileDiffSegmentKind Kind { get; }
+
+    public int SourceStart { get; }
+
+    public int SourceLength { get; }
 }
 
 public enum FileDiffSegmentKind

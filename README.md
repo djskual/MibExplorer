@@ -49,7 +49,7 @@ It provides:
 
 ## 🖥️ Remote Shell Console
 
-![MibExplorer shell](docs/shell.png)
+![MibExplorer Shell](docs/Shell.png)
 
 MibExplorer includes a **built-in interactive remote shell console**.
 
@@ -104,9 +104,9 @@ MibExplorer includes a **built-in interactive remote shell console**.
 
 ---
 
----
-
 ## 🧑‍💻 Remote File Editor
+
+![MibExplorer FileEditor](docs/FileEditor.png)
 
 MibExplorer includes a built-in **remote file editor** for editing files directly on the MIB over SSH.
 
@@ -123,7 +123,32 @@ MibExplorer includes a built-in **remote file editor** for editing files directl
 
 ---
 
+### Inline Diff (New)
+
+The editor now includes a built-in **inline diff system**, allowing you to visualize changes directly inside the file.
+
+#### Features
+
+* Line-level highlighting (added / modified)
+* Inline token-level diff highlighting
+* Dedicated left gutter markers
+* Fully synchronized with the diff viewer
+* Toggle inline diff on/off instantly
+
+---
+
+### Diff Navigation
+
+* Navigate between changes directly inside the editor
+* Previous / Next controls
+* Live position indicator (n / total)
+* Caret-aware navigation behavior
+
+---
+
 ## 🔍 Advanced File Diff Viewer
+
+![MibExplorer FileDiff](docs/FileDiff.png)
 
 MibExplorer includes a powerful **side-by-side diff viewer** to validate changes before saving.
 
@@ -339,6 +364,8 @@ MibExplorer is built with a strong focus on **safety and reversibility**:
 * Smart filename mapping
 * Remote shell console
 * Remote file editor
+* Inline diff editor (line + token level)
+* Diff navigation inside editor
 * Advanced file diff viewer
 * IP auto-detection with validation
 

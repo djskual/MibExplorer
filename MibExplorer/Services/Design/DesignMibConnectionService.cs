@@ -16,9 +16,14 @@ public sealed class DesignMibConnectionService : IMibConnectionService
     public bool IsConnected => true;
 
     public Task<string> ReadRemoteTextFileAsync(
-        string remotePath,
-        CancellationToken cancellationToken = default)
+    string remotePath,
+    CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.Equals(remotePath, DesignInlineDiffSample.RemotePath, StringComparison.Ordinal))
+            return Task.FromResult(DesignInlineDiffSample.GetContent());
+
         string fakeContent =
             $"[Design Mode]\n\n" +
             $"File: {remotePath}\n\n" +
@@ -40,8 +45,9 @@ public sealed class DesignMibConnectionService : IMibConnectionService
         if (!string.IsNullOrWhiteSpace(directory))
             Directory.CreateDirectory(directory);
 
-        const string contentPrefix = "Design-mode download placeholder for: ";
-        string content = contentPrefix + remotePath;
+        string content = string.Equals(remotePath, DesignInlineDiffSample.RemotePath, StringComparison.Ordinal)
+            ? DesignInlineDiffSample.GetContent()
+            : "Design-mode download placeholder for: " + remotePath;
 
         progress?.Report(new FileTransferProgressInfo
         {
@@ -270,6 +276,7 @@ public sealed class DesignMibConnectionService : IMibConnectionService
             Dir("net", "/net"),
             Dir("tsd", "/tsd"),
             File("version.txt", "/version.txt", 1842),
+            File(DesignInlineDiffSample.FileName, DesignInlineDiffSample.RemotePath, 4096),
         ];
 
         map["/eso"] =

@@ -1,4 +1,4 @@
-<Window x:Class="MibExplorer.Views.Dialogs.FileEditorWindow"
+﻿<Window x:Class="MibExplorer.Views.Dialogs.FileEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
@@ -33,20 +33,70 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0">
-                    <TextBlock Text="Remote file editor"
-                               FontSize="20"
-                               FontWeight="SemiBold"/>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                    <TextBlock Margin="0,6,0,0"
-                               Text="{Binding RemotePath}"
-                               Foreground="{DynamicResource AppMutedTextBrush}"
-                               TextWrapping="Wrap"/>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Remote file editor"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"/>
 
-                    <TextBlock Margin="0,6,0,0"
-                               Text="{Binding ModeLabel}"
-                               Foreground="{DynamicResource AppSubTextBrush}"/>
-                </StackPanel>
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding RemotePath}"
+                                   Foreground="{DynamicResource AppMutedTextBrush}"
+                                   TextWrapping="Wrap"/>
+
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding ModeLabel}"
+                                   Foreground="{DynamicResource AppSubTextBrush}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1"
+                                VerticalAlignment="Top"
+                                Margin="16,2,0,0">
+                        <CheckBox x:Name="InlineDiffToggle"
+                                  HorizontalAlignment="Right"
+                                  Content="Inline diff"
+                                  Style="{StaticResource LabeledCheckBoxStyle}"
+                                  IsChecked="True"
+                                  Checked="InlineDiffToggle_Changed"
+                                  Unchecked="InlineDiffToggle_Changed"
+                                  ToolTip="Highlight added and modified lines directly in the editor."/>
+
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,8,0,0">
+                            <Button x:Name="PreviousDiffButton"
+                                    Width="24"
+                                    Height="24"
+                                    Margin="0,0,6,0"
+                                    Padding="0"
+                                    Content="◀"
+                                    Click="PreviousDiffButton_Click"
+                                    ToolTip="Go to previous difference"
+                                    IsEnabled="False"/>
+
+                            <Button x:Name="NextDiffButton"
+                                    Width="24"
+                                    Height="24"
+                                    Padding="0"
+                                    Content="▶"
+                                    Click="NextDiffButton_Click"
+                                    ToolTip="Go to next difference"
+                                    IsEnabled="False"/>
+                        </StackPanel>
+
+                        <TextBlock x:Name="DiffNavigationText"
+                                   Margin="0,6,0,0"
+                                   HorizontalAlignment="Right"
+                                   Text="0 / 0"
+                                   Foreground="{DynamicResource AppMutedTextBrush}"
+                                   FontSize="11"/>
+                    </StackPanel>
+                </Grid>
 
                 <Border Grid.Row="2"
                         Background="{DynamicResource AppPanelAltBrush}"
@@ -55,7 +105,7 @@
                         CornerRadius="12"
                         Padding="10">
                   <avalonedit:TextEditor x:Name="EditorTextBox"
-                                           ShowLineNumbers="False"
+                                           ShowLineNumbers="True"
                                            FontFamily="Consolas"
                                            FontSize="13"
                                            Background="Transparent"

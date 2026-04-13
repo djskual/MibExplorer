@@ -1,83 +1,91 @@
-﻿## ✨ Major Feature – Remote File Editor & Advanced Diff Viewer
+﻿### ✨ New — Inline Diff (Editor)
 
-This release introduces a **complete remote file editing workflow**, including a powerful **side-by-side diff viewer**.
+MibExplorer now includes a **fully integrated inline diff system** directly inside the remote file editor.
 
----
+This brings a VS Code-like experience for reviewing changes without leaving the editor.
 
-## 🧑‍💻 Remote File Editor (New)
+#### Features
 
-MibExplorer now allows you to **open, edit and save files directly on the MIB over SSH**.
+* Line-level highlighting (added / modified)
+* Inline token-level diff highlighting
+* Dedicated left gutter markers column
+* Fully synchronized with the diff engine
+* Toggle inline diff on/off instantly
 
-### Features
+#### Visual Improvements
 
-* Open files from the explorer (double-click or context menu)
-* Full text editing over SSH
-* Explicit save with overwrite
-* Atomic save (temporary file + replace)
-* RW mount handling for writable paths
-* Read-only mode for protected areas
-* Reload file support
-* Unsaved changes protection (Save / Discard / Cancel)
-
----
-
-## 🔍 Advanced Diff Viewer (New)
-
-Before saving changes, you can now **compare the original file with your modifications**.
-
-### Capabilities
-
-* Side-by-side comparison (Original vs Current)
-* Line-level and token-level diff
-* Accurate detection of:
-
-  * additions
-  * deletions
-  * modifications
-* Smart alignment using LCS-based algorithm
-* Automatic merging of similar add/remove pairs into modifications
-* Git-like grouping of repeated change markers
-* Navigation between differences
-* Collapsible unchanged sections
+* Consistent color scheme with the diff viewer
+* Clear separation between content and markers
+* Improved readability for large files
 
 ---
 
-## 🎛️ Diff Options
+### 🧭 New — Diff Navigation
 
-* Ignore whitespace changes
-* Show invisible characters (spaces, tabs)
-* Collapse unchanged sections
+Navigate between changes directly inside the editor.
 
----
+#### Features
 
-## 📏 Whitespace & Tab Handling
+* Previous / Next controls
+* Diff position indicator (`n / total`)
+* Smart navigation behavior:
 
-Major improvements to whitespace rendering:
-
-* Unified tab handling across editor and diff
-* Consistent tab size (4 spaces)
-* Correct visual alignment for column-based text
-* No mismatch between editor and diff rendering
+  * follows caret position
+  * correct behavior between diffs
+  * cyclic navigation
 
 ---
 
-## 🖥️ UI / UX Improvements
+### 🛠️ Improvements — Editor Behavior
 
-* Editor and diff windows are independent
-* Loading indicator with animation
-* Improved status feedback (loading / ready)
-* Better visual consistency across views
-
----
-
-## ✅ Result
-
-This update introduces a **safe, reliable and fully visual editing workflow**:
-
-* edit files directly on the MIB
-* validate changes before saving
-* trust the visual alignment and diff accuracy
+* Fixed horizontal scrolling issues
+* Removed artificial padding hacks
+* Correct caret positioning (End key & mouse clicks)
+* Improved trackpad scrolling behavior
+* Stable rendering with long lines and large files
 
 ---
 
-⚠️ Modifying MIB files can be risky. Always verify changes before applying them.
+### 🔍 Diff Engine Enhancements
+
+* Reuse of diff segments inside the editor
+* Extended segment model with source offsets
+* Fully backward compatible with existing diff viewer
+
+---
+
+### 🧱 Project Structure Improvements
+
+Improved internal structure for better readability and maintainability.
+
+#### Views
+
+* Introduced a dedicated `FileEditor` module
+* Moved:
+
+  * FileEditorWindow
+  * FileDiffWindow
+* Improved separation of concerns
+
+#### Services
+
+Reorganized into clear submodules:
+
+* `Connection`
+* `Shell`
+* `Packages`
+* `Security`
+* `Network`
+
+#### Dialogs
+
+* Extracted MessageBox system into a dedicated folder
+
+---
+
+### 🎯 Result
+
+* Cleaner architecture
+* Improved developer experience
+* Better feature separation
+* More scalable project structure
