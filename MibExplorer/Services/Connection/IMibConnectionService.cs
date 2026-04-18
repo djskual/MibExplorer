@@ -68,4 +68,8 @@ public interface IMibConnectionService : IDisposable
     Task DeletePathWithoutMountAsync(string remotePath, CancellationToken cancellationToken = default);
 
     Task MovePathWithoutMountAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken = default);
+
+    Task DownloadFilesBatchAsync(
+        IReadOnlyList<(string RemotePath, string LocalPath, IProgress<FileTransferProgressInfo>? Progress)> files,
+        CancellationToken cancellationToken = default);
 }

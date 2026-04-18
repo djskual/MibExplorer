@@ -4,6 +4,7 @@ using Microsoft.Win32;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using System.Collections.Generic;
 
 namespace MibExplorer.ViewModels;
 
@@ -68,13 +69,14 @@ public sealed partial class MainViewModel
                 return;
             }
 
-            ulong completedBytes = 0;
+            ulong completedBytesSeed = 0;
+            var batchItems = new List<(string RemotePath, string LocalPath, IProgress<FileTransferProgressInfo>? Progress)>();
 
             for (int i = 0; i < plan.Files.Count; i++)
             {
                 var file = plan.Files[i];
                 int fileIndex = i + 1;
-                ulong completedBeforeCurrentFile = completedBytes;
+                ulong completedBeforeCurrentFile = completedBytesSeed;
 
                 string localFilePath = Path.Combine(extractRoot, file.LocalRelativePath);
 
@@ -101,16 +103,16 @@ public sealed partial class MainViewModel
                     }
                 });
 
-                await _mibConnectionService.DownloadFileAsync(file.RemotePath, localFilePath, progress);
+                batchItems.Add((file.RemotePath, localFilePath, progress));
+                completedBytesSeed += file.Size;
+            }
 
-                completedBytes += file.Size;
+            await _mibConnectionService.DownloadFilesBatchAsync(batchItems);
 
-                if (plan.TotalBytes > 0)
-                {
-                    double percentage = Math.Clamp(completedBytes * 100d / plan.TotalBytes, 0d, 100d);
-                    ProgressValue = percentage;
-                    ProgressLabel = $"{percentage:0}%";
-                }
+            if (plan.TotalBytes > 0)
+            {
+                ProgressValue = 100;
+                ProgressLabel = "100%";
             }
 
             ProgressValue = 100;
@@ -159,7 +161,7 @@ public sealed partial class MainViewModel
 
                 await BuildExtractPlanRecursiveAsync(child.FullPath, remoteRelativeChildPath, plan);
             }
-            else if (child.EntryType == RemoteEntryType.File)
+            else if (child.EntryType == RemoteEntryType.File || child.EntryType == RemoteEntryType.Unknown)
             {
                 ulong fileSize = child.Size > 0 ? (ulong)child.Size : 0UL;
 

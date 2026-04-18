@@ -104,7 +104,8 @@ public sealed class RemoteExplorerItem : ObservableObject
         RemoteEntryType.Directory => "📁",
         RemoteEntryType.File => "📄",
         RemoteEntryType.Symlink => "🔗",
-        _ => "?",
+        RemoteEntryType.Unknown => "❔",
+        _ => "❔",
     };
 
     public string TypeLabel => EntryType switch

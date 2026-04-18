@@ -7,7 +7,10 @@
 It provides:
 - a **graphical file explorer**
 - a **complete SSH lifecycle management system**
-- and an **interactive remote shell console**
+- an **interactive remote shell console**
+- a **built-in remote file editor with inline diff**
+- an **advanced side-by-side file diff viewer**
+- and a **powerful Script Center for remote execution**
 
 ---
 
@@ -101,6 +104,70 @@ MibExplorer includes a **built-in interactive remote shell console**.
 * Right-click → **Open in Shell**
 * Automatically navigates to the selected path
 
+
+---
+
+## 🧩 Script Center
+
+![MibExplorer ScripCenter](docs/ScriptCenter.png)
+
+MibExplorer now includes a built-in **Script Center**, allowing you to execute custom scripts directly on the MIB over SSH.
+
+---
+
+### Features
+
+* Execute local scripts on the MIB
+* Supports:
+  * single scripts
+  * full script packages (folder with `run.sh`)
+* Automatic workflow:
+  * upload to remote `/tmp`
+  * set execution permissions
+  * execute script
+  * capture output
+  * automatic cleanup
+
+---
+
+### Execution Log
+
+* Real-time output streaming
+* Clear and structured log display
+* Copy log to clipboard
+* Clear log functionality
+* Displays remote execution workspace
+
+---
+
+### Behavior
+
+* Scripts are executed in an isolated temporary directory
+* No persistent modification unless explicitly done by the script
+* Automatic cleanup after execution
+* Exit code detection and reporting
+
+---
+
+### Integration
+
+* Fully integrated into MibExplorer UI
+* Uses existing SSH connection
+* Designed for advanced workflows:
+  * diagnostics
+  * reverse engineering
+  * system inspection
+  * SVM-related operations
+
+---
+
+### Notes
+
+* Scripts must be compatible with QNX shell environment
+* Limited toolset on MIB (no full GNU environment)
+* Line endings must be LF (`\n`)
+
+⚠️ Scripts are executed with root privileges on the MIB.
 
 ---
 
@@ -363,6 +430,7 @@ MibExplorer is built with a strong focus on **safety and reversibility**:
 * Safe replace system
 * Smart filename mapping
 * Remote shell console
+* Script Center (script execution on MIB)
 * Remote file editor
 * Inline diff editor (line + token level)
 * Diff navigation inside editor
@@ -379,6 +447,7 @@ Planned improvements:
 * MIB Wi-Fi helper / onboarding
 * Advanced diagnostics tools
 * MIB-side helper agent
+* Advanced Script Center features (automation, presets, tooling)
 
 ---
 

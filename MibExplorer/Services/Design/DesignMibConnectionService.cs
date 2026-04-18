@@ -72,6 +72,25 @@ public sealed class DesignMibConnectionService : IMibConnectionService
         return Task.CompletedTask;
     }
 
+    public async Task DownloadFilesBatchAsync(
+    IReadOnlyList<(string RemotePath, string LocalPath, IProgress<FileTransferProgressInfo>? Progress)> files,
+    CancellationToken cancellationToken = default)
+    {
+        if (files == null || files.Count == 0)
+            return;
+
+        foreach (var file in files)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            await DownloadFileAsync(
+                file.RemotePath,
+                file.LocalPath,
+                file.Progress,
+                cancellationToken);
+        }
+    }
+
     public Task UploadFileAsync(
         string localPath,
         string remotePath,

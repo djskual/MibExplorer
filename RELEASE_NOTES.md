@@ -1,91 +1,70 @@
-﻿### ✨ New — Inline Diff (Editor)
+﻿# Release Notes
 
-MibExplorer now includes a **fully integrated inline diff system** directly inside the remote file editor.
+## 🚀 Script Center Release
 
-This brings a VS Code-like experience for reviewing changes without leaving the editor.
-
-#### Features
-
-* Line-level highlighting (added / modified)
-* Inline token-level diff highlighting
-* Dedicated left gutter markers column
-* Fully synchronized with the diff engine
-* Toggle inline diff on/off instantly
-
-#### Visual Improvements
-
-* Consistent color scheme with the diff viewer
-* Clear separation between content and markers
-* Improved readability for large files
+This version introduces the first stable implementation of the **Script Center**, enabling direct execution of custom scripts on the MIB over SSH with a fully integrated workflow.
 
 ---
 
-### 🧭 New — Diff Navigation
+## ✨ Added
 
-Navigate between changes directly inside the editor.
+- **Script Center (stable release)**
+  - Run scripts directly on the MIB via SSH
+  - Automatic upload, execution, and cleanup
+  - Integrated execution log viewer
+  - Support for script packages (run.sh + binaries)
 
-#### Features
-
-* Previous / Next controls
-* Diff position indicator (`n / total`)
-* Smart navigation behavior:
-
-  * follows caret position
-  * correct behavior between diffs
-  * cyclic navigation
+- **Copy Log button**
+  - Quickly copy execution logs to clipboard
+  - Ideal for debugging and sharing results
 
 ---
 
-### 🛠️ Improvements — Editor Behavior
+## 🔧 Improved
 
-* Fixed horizontal scrolling issues
-* Removed artificial padding hacks
-* Correct caret positioning (End key & mouse clicks)
-* Improved trackpad scrolling behavior
-* Stable rendering with long lines and large files
+- Execution log clarity
+  - Added remote workspace path information
+  - More readable and structured output
 
----
+- Status feedback
+  - Displays currently running script name
 
-### 🔍 Diff Engine Enhancements
+- File extraction reliability
+  - Improved handling of QNX-specific file types
+  - Unknown entries are now properly downloaded
+  - No more missing files during recursive extraction
 
-* Reuse of diff segments inside the editor
-* Extended segment model with source offsets
-* Fully backward compatible with existing diff viewer
-
----
-
-### 🧱 Project Structure Improvements
-
-Improved internal structure for better readability and maintainability.
-
-#### Views
-
-* Introduced a dedicated `FileEditor` module
-* Moved:
-
-  * FileEditorWindow
-  * FileDiffWindow
-* Improved separation of concerns
-
-#### Services
-
-Reorganized into clear submodules:
-
-* `Connection`
-* `Shell`
-* `Packages`
-* `Security`
-* `Network`
-
-#### Dialogs
-
-* Extracted MessageBox system into a dedicated folder
+- Overall Script Center stability and UX polish
 
 ---
 
-### 🎯 Result
+## 🐛 Fixed
 
-* Cleaner architecture
-* Improved developer experience
-* Better feature separation
-* More scalable project structure
+- Large folder download issues
+  - Fixed incomplete extraction caused by unhandled entry types
+
+- Remote listing inconsistencies on QNX systems
+
+---
+
+## 🧹 Cleanup
+
+- Internal refactoring of Script Center commands and state handling
+- Minor UI adjustments for better usability
+
+---
+
+## 💡 Notes
+
+Script Center is now considered **stable and production-ready**.
+
+It provides a solid foundation for advanced workflows such as:
+- MIB diagnostics
+- SVM operations
+- Custom tooling deployment
+
+---
+
+Next steps will focus on:
+- deeper integration with advanced tools
+- further automation capabilities

@@ -1,0 +1,283 @@
+﻿<Window x:Class="MibExplorer.Views.Scripting.ScriptRunnerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
+        mc:Ignorable="d"
+        Title="Script Center"
+        Height="700"
+        Width="1100"
+        MinHeight="500"
+        MinWidth="800"
+        WindowStartupLocation="Manual"
+        Background="{DynamicResource AppWindowBackgroundBrush}">
+
+    <Window.Resources>
+        <Style x:Key="ScriptListBoxStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="{DynamicResource AppControlBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ScrollViewer Focusable="False"
+                                          Padding="{TemplateBinding Padding}">
+                                <ItemsPresenter />
+                            </ScrollViewer>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ScriptListBoxItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Root"
+                                Background="Transparent"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root"
+                                        Property="Background"
+                                        Value="{DynamicResource AppControlHoverBrush}" />
+                            </Trigger>
+
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Root"
+                                        Property="Background"
+                                        Value="{DynamicResource AppSelectionBrush}" />
+                            </Trigger>
+
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LogTextBoxStyle"
+               TargetType="TextBox"
+               BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="AcceptsTab" Value="True" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="IsReadOnly" Value="True" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16"
+          Background="{DynamicResource AppWindowBackgroundBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0">
+            <GroupBox Header="Scripts">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top">
+                        <TextBlock Text="Scripts folder:"
+                                   Margin="0,0,0,6"
+                                   FontWeight="SemiBold" />
+
+                        <TextBox Text="{Binding ScriptsFolderPath, Mode=OneWay}"
+                                 IsReadOnly="True"
+                                 ToolTip="{Binding ScriptsFolderPath}"
+                                 HorizontalScrollBarVisibility="Auto"
+                                 Margin="0,0,0,12" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Button Content="Browse..."
+                                    Width="80"
+                                    Margin="0,0,8,0"
+                                    Click="BrowseScriptsFolder_Click" />
+
+                            <Button Content="Open Folder"
+                                    Width="100"
+                                    Margin="0,0,8,0"
+                                    Command="{Binding OpenScriptsFolderCommand}" />
+
+                            <Button Content="Refresh"
+                                    Width="80"
+                                    Command="{Binding RefreshScriptsCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <ListBox ItemsSource="{Binding Scripts}"
+                             SelectedItem="{Binding SelectedScript}"
+                             MouseDoubleClick="ScriptsListBox_MouseDoubleClick"
+                             Style="{StaticResource ScriptListBoxStyle}"
+                             ItemContainerStyle="{StaticResource ScriptListBoxItemStyle}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding RelativePath}"
+                                               Margin="0,2,0,0"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"
+                                               FontSize="11" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </GroupBox>
+
+            <Border HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,16,14,0"
+                Padding="8,3"
+                CornerRadius="10"
+                Panel.ZIndex="10">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#7F7F7F" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsConnectedToMib}" Value="True">
+                                <Setter Property="Background" Value="#2E8B57" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+
+                <TextBlock Text="{Binding ConnectionStateText}"
+                       Foreground="White"
+                       FontSize="11"
+                       FontWeight="SemiBold" />
+            </Border>
+        </Grid>
+
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="16" />
+                <RowDefinition Height="240" />
+            </Grid.RowDefinitions>
+
+            <GroupBox Grid.Row="0" Header="Details">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="6" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="14" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="6" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="14" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="6" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="Name"
+                               FontWeight="SemiBold" />
+
+                    <TextBox Grid.Row="2"
+                             Text="{Binding SelectedScript.Name, Mode=OneWay}"
+                             IsReadOnly="True" />
+
+                    <TextBlock Grid.Row="4"
+                               Text="Local path"
+                               FontWeight="SemiBold" />
+
+                    <TextBox Grid.Row="6"
+                             Text="{Binding SelectedScript.LocalPath, Mode=OneWay}"
+                             IsReadOnly="True" />
+
+                    <TextBlock Grid.Row="8"
+                               Text="Description"
+                               FontWeight="SemiBold" />
+
+                    <TextBox Grid.Row="10"
+                             Text="{Binding SelectedScript.Description, Mode=OneWay}"
+                             IsReadOnly="True"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             MinHeight="60" />
+
+                    <StackPanel Grid.Row="12" Orientation="Horizontal">
+                        <Button Content="Run"
+                                Width="90"
+                                Margin="0,0,8,0"
+                                Command="{Binding RunScriptCommand}" />
+
+                        <Button Content="Open in Editor"
+                                Width="120"
+                                Margin="0,0,8,0"
+                                Click="OpenInEditor_Click"
+                                Command="{Binding OpenInEditorCommand}" />
+
+                        <Button Content="Copy Log"
+                                Width="90"
+                                Margin="0,0,8,0"
+                                Command="{Binding CopyLogCommand}" />
+
+                        <Button Content="Clear Log"
+                                Width="90"
+                                Command="{Binding ClearLogCommand}" />
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
+
+            <Grid Grid.Row="2">
+                <GroupBox Header="Execution Log">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="10" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0"
+                                   Text="{Binding StatusText}"
+                                   FontWeight="SemiBold" />
+
+                        <TextBox x:Name="ExecutionLogTextBox"
+                                 Grid.Row="2"
+                                 Text="{Binding OutputText, Mode=OneWay}"
+                                 Style="{StaticResource LogTextBoxStyle}" />
+                    </Grid>
+                </GroupBox>
+
+                <Image HorizontalAlignment="Right"
+                       VerticalAlignment="Top"
+                       Margin="0,18,16,0"
+                       Width="18"
+                       Height="18"
+                       Panel.ZIndex="10"
+                       Visibility="{Binding LoadingIndicatorVisibility}"
+                       gif:ImageBehavior.AnimatedSource="pack://application:,,,/Assets/throbber.gif"
+                       gif:ImageBehavior.RepeatBehavior="Forever"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

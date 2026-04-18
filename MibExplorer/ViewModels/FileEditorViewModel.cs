@@ -9,8 +9,10 @@ namespace MibExplorer.ViewModels;
 
 public sealed class FileEditorViewModel : ObservableObject
 {
-    private readonly IMibConnectionService _connectionService;
+    private readonly IMibConnectionService? _connectionService;
     private readonly RelayCommand _saveCommand;
+    private readonly bool _isLocalFile;
+    private readonly string _filePath;
 
     private string _editorText = string.Empty;
     private string _originalText = string.Empty;
@@ -26,11 +28,14 @@ public sealed class FileEditorViewModel : ObservableObject
     private string _lineEnding = "\n";
 
     public FileEditorViewModel(
-        IMibConnectionService connectionService,
-        string remotePath,
-        bool isReadOnly)
+    IMibConnectionService connectionService,
+    string remotePath,
+    bool isReadOnly)
     {
         _connectionService = connectionService ?? throw new ArgumentNullException(nameof(connectionService));
+        _isLocalFile = false;
+        _filePath = remotePath;
+
         RemotePath = remotePath;
         IsReadOnly = isReadOnly;
 
@@ -42,7 +47,29 @@ public sealed class FileEditorViewModel : ObservableObject
         SaveCommand = _saveCommand;
     }
 
+    public FileEditorViewModel(
+        string localPath,
+        bool isReadOnly)
+    {
+        if (string.IsNullOrWhiteSpace(localPath))
+            throw new ArgumentException("Local path is required.", nameof(localPath));
+
+        _isLocalFile = true;
+        _filePath = Path.GetFullPath(localPath);
+
+        RemotePath = _filePath;
+        IsReadOnly = isReadOnly;
+
+        BaseTitle = isReadOnly
+            ? $"File Editor (Read-only) - {_filePath}"
+            : $"File Editor - {_filePath}";
+
+        _saveCommand = new RelayCommand(async () => await SaveAsync(), () => CanSave);
+        SaveCommand = _saveCommand;
+    }
+
     public string RemotePath { get; }
+    public bool IsLocalFile => _isLocalFile;
 
     private readonly string BaseTitle;
 
@@ -153,16 +180,25 @@ public sealed class FileEditorViewModel : ObservableObject
         try
         {
             IsLoading = true;
-            StatusMessage = isReload
-                ? "Reloading remote file..."
-                : "Loading remote file...";
+            StatusMessage = _isLocalFile
+                ? (isReload ? "Reloading local file..." : "Loading local file...")
+                : (isReload ? "Reloading remote file..." : "Loading remote file...");
 
-            await _connectionService.DownloadFileAsync(
-                RemotePath,
-                tempFilePath,
-                cancellationToken: cancellationToken);
+            byte[] bytes;
 
-            byte[] bytes = await File.ReadAllBytesAsync(tempFilePath, cancellationToken);
+            if (_isLocalFile)
+            {
+                bytes = await File.ReadAllBytesAsync(_filePath, cancellationToken);
+            }
+            else
+            {
+                await _connectionService!.DownloadFileAsync(
+                    RemotePath,
+                    tempFilePath,
+                    cancellationToken: cancellationToken);
+
+                bytes = await File.ReadAllBytesAsync(tempFilePath, cancellationToken);
+            }
 
             (_documentEncoding, int preambleLength) = DetectEncoding(bytes);
 
@@ -181,17 +217,35 @@ public sealed class FileEditorViewModel : ObservableObject
             OnPropertyChanged(nameof(OriginalText));
             OnPropertyChanged(nameof(CanShowDiff));
 
-            if (isReload)
+            if (_isLocalFile)
             {
-                StatusMessage = IsReadOnly
-                    ? "Remote file reloaded. Read-only mode."
-                    : "Remote file reloaded.";
+                if (isReload)
+                {
+                    StatusMessage = IsReadOnly
+                        ? "Local file reloaded. Read-only mode."
+                        : "Local file reloaded.";
+                }
+                else
+                {
+                    StatusMessage = IsReadOnly
+                        ? "Local file loaded. Read-only mode."
+                        : "Local file loaded.";
+                }
             }
             else
             {
-                StatusMessage = IsReadOnly
-                    ? "Remote file loaded. Read-only mode."
-                    : "Remote file loaded.";
+                if (isReload)
+                {
+                    StatusMessage = IsReadOnly
+                        ? "Remote file reloaded. Read-only mode."
+                        : "Remote file reloaded.";
+                }
+                else
+                {
+                    StatusMessage = IsReadOnly
+                        ? "Remote file loaded. Read-only mode."
+                        : "Remote file loaded.";
+                }
             }
         }
         catch (Exception ex)
@@ -254,17 +308,24 @@ public sealed class FileEditorViewModel : ObservableObject
         try
         {
             IsSaving = true;
-            StatusMessage = "Saving remote file...";
+            StatusMessage = _isLocalFile ? "Saving local file..." : "Saving remote file...";
 
             string normalizedText = NormalizeLineEndings(EditorText, _lineEnding);
             byte[] bytes = EncodeText(normalizedText, _documentEncoding);
 
-            await File.WriteAllBytesAsync(tempFilePath, bytes, cancellationToken);
+            if (_isLocalFile)
+            {
+                await File.WriteAllBytesAsync(_filePath, bytes, cancellationToken);
+            }
+            else
+            {
+                await File.WriteAllBytesAsync(tempFilePath, bytes, cancellationToken);
 
-            await _connectionService.ReplaceFileAsync(
-                tempFilePath,
-                RemotePath,
-                cancellationToken: cancellationToken);
+                await _connectionService!.ReplaceFileAsync(
+                    tempFilePath,
+                    RemotePath,
+                    cancellationToken: cancellationToken);
+            }
 
             _isUpdatingDocumentState = true;
             EditorText = normalizedText;
@@ -275,7 +336,8 @@ public sealed class FileEditorViewModel : ObservableObject
             OnPropertyChanged(nameof(WindowTitle));
             OnPropertyChanged(nameof(OriginalText));
             OnPropertyChanged(nameof(CanShowDiff));
-            StatusMessage = "Remote file saved.";
+
+            StatusMessage = _isLocalFile ? "Local file saved." : "Remote file saved.";
         }
         catch (Exception ex)
         {

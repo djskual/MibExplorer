@@ -20,6 +20,8 @@ public sealed class AppSettings
     public string? LastWorkspaceFolder { get; set; }
     public string? LastPublicKeyExportPath { get; set; }
 
+    public string? ScriptsFolderPath { get; set; }
+
     public AppSettings Clone()
     {
         return new AppSettings
@@ -37,7 +39,8 @@ public sealed class AppSettings
             UsePrivateKey = UsePrivateKey,
             LastPrivateKeyPath = LastPrivateKeyPath,
             LastWorkspaceFolder = LastWorkspaceFolder,
-            LastPublicKeyExportPath = LastPublicKeyExportPath
+            LastPublicKeyExportPath = LastPublicKeyExportPath,
+            ScriptsFolderPath = ScriptsFolderPath
         };
     }
 
@@ -49,5 +52,6 @@ public sealed class AppSettings
         LastPrivateKeyPath = string.IsNullOrWhiteSpace(LastPrivateKeyPath) ? null : LastPrivateKeyPath.Trim();
         LastWorkspaceFolder = string.IsNullOrWhiteSpace(LastWorkspaceFolder) ? null : LastWorkspaceFolder.Trim();
         LastPublicKeyExportPath = string.IsNullOrWhiteSpace(LastPublicKeyExportPath) ? null : LastPublicKeyExportPath.Trim();
+        ScriptsFolderPath = string.IsNullOrWhiteSpace(ScriptsFolderPath) ? null : ScriptsFolderPath.Trim();
     }
 }

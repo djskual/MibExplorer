@@ -34,11 +34,20 @@ public sealed partial class SshMibConnectionService
             if (name.Contains(" -> "))
                 name = name.Split(" -> ")[0];
 
-            RemoteEntryType type = permissions[0] switch
+            char entryKind = permissions[0];
+
+            RemoteEntryType type = entryKind switch
             {
                 'd' => RemoteEntryType.Directory,
                 'l' => RemoteEntryType.Symlink,
                 '-' => RemoteEntryType.File,
+
+                // QNX / Unix special entries we want to treat as downloadable files
+                'c' => RemoteEntryType.File,
+                'b' => RemoteEntryType.File,
+                'p' => RemoteEntryType.File,
+                's' => RemoteEntryType.File,
+
                 _ => RemoteEntryType.Unknown
             };
 
@@ -54,7 +63,7 @@ public sealed partial class SshMibConnectionService
                 Name = name,
                 FullPath = fullPath,
                 EntryType = type,
-                Size = type == RemoteEntryType.File ? size : 0,
+                Size = type == RemoteEntryType.Directory ? 0 : size,
                 ModifiedAt = null
             });
         }

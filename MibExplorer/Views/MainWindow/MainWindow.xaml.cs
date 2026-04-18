@@ -1,8 +1,12 @@
 ﻿using MibExplorer.Models;
+using MibExplorer.Services;
+using MibExplorer.Services.Design;
+using MibExplorer.Services.Scripting;
 using MibExplorer.Settings;
 using MibExplorer.ViewModels;
 using MibExplorer.Views.Dialogs;
-using MibExplorer.Services;
+using MibExplorer.Views.Scripting;
+using Renci.SshNet.Common;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -14,13 +18,13 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Renci.SshNet.Common;
 
 namespace MibExplorer.Views.MainWindow;
 
 public partial class MainWindow : Window
 {
-    private ShellConsoleWindow? _shellConsoleWindow; 
+    private ShellConsoleWindow? _shellConsoleWindow;
+    private ScriptRunnerWindow? _scriptRunnerWindow;
     private MainViewModel ViewModel => (MainViewModel)DataContext;
     private bool _isSortingFromHeader;
     private string? _pendingSortKey;
@@ -96,6 +100,64 @@ public partial class MainWindow : Window
                 settings.LastPublicKeyExportPath = ViewModel.PublicKeyExportPath;
             }));
         };
+    }
+
+    private void ScriptCenterMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        OpenScriptRunnerWindow();
+    }
+
+    private void OpenScriptRunnerWindow()
+    {
+        if (_scriptRunnerWindow is not null)
+        {
+            if (_scriptRunnerWindow.WindowState == WindowState.Minimized)
+                _scriptRunnerWindow.WindowState = WindowState.Normal;
+
+            _scriptRunnerWindow.Show();
+            _scriptRunnerWindow.Activate();
+            _scriptRunnerWindow.Focus();
+            return;
+        }
+
+        IScriptCatalogService catalogService;
+        IScriptExecutionService executionService;
+
+        if (ViewModel.ConnectionService is DesignMibConnectionService)
+        {
+            catalogService = new DesignScriptCatalogService();
+            executionService = new DesignScriptExecutionService();
+        }
+        else
+        {
+            catalogService = new ScriptCatalogService();
+            executionService = new ScriptExecutionService(ViewModel.ConnectionService);
+        }
+
+        var scriptRunnerViewModel = new ScriptRunnerViewModel(
+            ViewModel.ConnectionService,
+            catalogService,
+            executionService);
+
+        var window = new ScriptRunnerWindow
+        {
+            DataContext = scriptRunnerViewModel,
+            Width = 1100,
+            Height = 700
+        };
+
+        double left = Left + Math.Max(0, (ActualWidth - window.Width) / 2);
+        double top = Top + Math.Max(0, (ActualHeight - window.Height) / 2);
+
+        window.Left = left;
+        window.Top = top;
+
+        window.Closed += (_, _) => _scriptRunnerWindow = null;
+
+        _scriptRunnerWindow = window;
+
+        window.Show();
+        window.Activate();
     }
 
     private void RemoteShellConsoleMenuItem_Click(object sender, RoutedEventArgs e)

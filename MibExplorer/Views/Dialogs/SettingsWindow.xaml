@@ -88,6 +88,7 @@
 
                         <ListBoxItem Content="General" IsSelected="True"/>
                         <ListBoxItem Content="Connection"/>
+                        <ListBoxItem Content="Scripts"/>
                         <ListBoxItem Content="Updates"/>
                     </ListBox>
                 </Border>
@@ -138,8 +139,48 @@
 
                         <TextBlock Text="Private key path"
                                    Foreground="{DynamicResource AppTextBrush}"/>
-                        <TextBox x:Name="PrivateKeyPathTextBox"
-                                 Margin="0,6,0,10"/>
+                        <Grid Margin="0,6,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="110" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox x:Name="PrivateKeyPathTextBox"
+                                     Grid.Column="0"/>
+
+                            <Button Grid.Column="2"
+                                    Content="Browse..."
+                                    Click="BrowsePrivateKey_Click"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel x:Name="ScriptsPanel" Visibility="Collapsed">
+                        <TextBlock Text="Scripts"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,14"/>
+
+                        <TextBlock Text="Scripts folder"
+                                   Foreground="{DynamicResource AppTextBrush}"/>
+                        <Grid Margin="0,6,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="110" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox x:Name="ScriptsFolderPathTextBox"
+                                     Grid.Column="0"/>
+
+                            <Button Grid.Column="2"
+                                    Content="Browse..."
+                                    Click="BrowseScriptsFolder_Click"/>
+                        </Grid>
+
+                        <TextBlock Foreground="{DynamicResource AppMutedTextBrush}"
+                                   Text="Leave empty to use the default Scripts folder next to the executable."
+                                   TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <StackPanel x:Name="UpdatesPanel" Visibility="Collapsed">
