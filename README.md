@@ -1,8 +1,14 @@
 ﻿# MibExplorer
 
-![MibExplorer screenshot](docs/MibExplorer.png)
+<p align="center">
+  <img src="docs/banner.png" alt="MibExplorer Banner" />
+</p>
 
-**MibExplorer** is a WPF (.NET 8) application designed to interact with **Volkswagen MIB2 / MIB2.5** systems over SSH.
+**MibExplorer** is a powerful WPF tool for exploring and controlling **Volkswagen MIB2/MIB2.5** systems over SSH.
+
+Built for advanced users, reverse engineering, and deep MIB system access.
+
+![MibExplorer screenshot](docs/MibExplorer.png)
 
 It provides:
 - a **graphical file explorer**
@@ -385,6 +391,19 @@ MibExplorer is built with a strong focus on **safety and reversibility**:
 * Defensive cleanup mechanisms
 * No automatic destructive actions
 * Full user control over operations
+
+---
+
+# 🧪 Script Examples
+
+Example scripts are available in the `Scripts/` folder.
+
+These demonstrate how to:
+- interact with MIB filesystem
+- extract diagnostic data
+- run SVM-related operations
+
+Scripts are designed for use with Script Center.
 
 ---
 
