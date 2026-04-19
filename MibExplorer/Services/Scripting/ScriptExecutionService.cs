@@ -130,15 +130,29 @@ public sealed class ScriptExecutionService : IScriptExecutionService
             var completion = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
             var buffer = new StringBuilder();
 
+            shellSession.Closed += (_, _) =>
+            {
+                completion.TrySetException(
+                    new InvalidOperationException("Remote shell session closed before exit code was received."));
+            };
+
             shellSession.TextReceived += (_, text) =>
             {
-                if (string.IsNullOrEmpty(text))
+                try
                 {
-                    return;
-                }
+                    if (string.IsNullOrEmpty(text))
+                    {
+                        return;
+                    }
 
-                buffer.Append(text);
-                ProcessBufferedText(buffer, onOutput, completion);
+                    buffer.Append(text);
+                    ProcessBufferedText(buffer, onOutput, completion);
+                }
+                catch (Exception ex)
+                {
+                    completion.TrySetException(
+                        new InvalidOperationException($"Shell output processing failed: {ex.Message}", ex));
+                }
             };
 
             await shellSession.SendCommandAsync(runCommand, cancellationToken);

@@ -226,13 +226,35 @@ public sealed class ScriptRunnerViewModel : ObservableObject
         }
         finally
         {
-            IsBusy = false;
+            if (Application.Current.Dispatcher.CheckAccess())
+            {
+                IsBusy = false;
+            }
+            else
+            {
+                Application.Current.Dispatcher.Invoke(() => IsBusy = false);
+            }
         }
     }
 
     private void AppendOutput(string line)
     {
-        OutputText += line + Environment.NewLine;
+        if (string.IsNullOrEmpty(line))
+            return;
+
+        void Append()
+        {
+            OutputText += line + Environment.NewLine;
+        }
+
+        if (Application.Current.Dispatcher.CheckAccess())
+        {
+            Append();
+        }
+        else
+        {
+            Application.Current.Dispatcher.Invoke(Append);
+        }
     }
 
     private void CopyLogToClipboard()
