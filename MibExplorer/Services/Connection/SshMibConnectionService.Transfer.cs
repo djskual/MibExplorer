@@ -249,6 +249,94 @@ public sealed partial class SshMibConnectionService
         }, cancellationToken);
     }
 
+    public async Task UploadFilesBatchWithoutMountAsync(
+        IReadOnlyList<(string LocalPath, string RemotePath, IProgress<FileTransferProgressInfo>? Progress)> files,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (files == null || files.Count == 0)
+            return;
+
+        var connectionInfo = _sshClient?.ConnectionInfo
+            ?? throw new InvalidOperationException("SSH connection info is not available.");
+
+        await _scpTransferSemaphore.WaitAsync(cancellationToken);
+        try
+        {
+            await Task.Run(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                using var scp = new ScpClient(connectionInfo);
+
+                ConnectScpWithRetry(scp, cancellationToken);
+
+                try
+                {
+                    foreach (var item in files)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        if (string.IsNullOrWhiteSpace(item.LocalPath))
+                            throw new InvalidOperationException("Local path is required.");
+
+                        if (string.IsNullOrWhiteSpace(item.RemotePath))
+                            throw new InvalidOperationException("Remote path is required.");
+
+                        if (!System.IO.File.Exists(item.LocalPath))
+                            throw new FileNotFoundException("Local file not found.", item.LocalPath);
+
+                        ulong totalBytes = (ulong)new FileInfo(item.LocalPath).Length;
+
+                        void OnUploading(object? _, ScpUploadEventArgs e)
+                        {
+                            item.Progress?.Report(new FileTransferProgressInfo
+                            {
+                                Operation = "Upload",
+                                SourcePath = item.LocalPath,
+                                DestinationPath = item.RemotePath,
+                                BytesTransferred = (ulong)e.Uploaded,
+                                TotalBytes = (ulong)e.Size
+                            });
+                        }
+
+                        scp.Uploading += OnUploading;
+                        try
+                        {
+                            using var localStream = System.IO.File.OpenRead(item.LocalPath);
+                            scp.Upload(localStream, item.RemotePath);
+
+                            item.Progress?.Report(new FileTransferProgressInfo
+                            {
+                                Operation = "Upload",
+                                SourcePath = item.LocalPath,
+                                DestinationPath = item.RemotePath,
+                                BytesTransferred = totalBytes,
+                                TotalBytes = totalBytes
+                            });
+                        }
+                        finally
+                        {
+                            scp.Uploading -= OnUploading;
+                        }
+                    }
+                }
+                finally
+                {
+                    if (scp.IsConnected)
+                        scp.Disconnect();
+
+                    Thread.Sleep(300);
+                }
+            }, cancellationToken);
+        }
+        finally
+        {
+            _scpTransferSemaphore.Release();
+        }
+    }
+
     public async Task ReplaceFileAsync(
         string localPath,
         string remotePath,

@@ -72,4 +72,8 @@ public interface IMibConnectionService : IDisposable
     Task DownloadFilesBatchAsync(
         IReadOnlyList<(string RemotePath, string LocalPath, IProgress<FileTransferProgressInfo>? Progress)> files,
         CancellationToken cancellationToken = default);
+
+    Task UploadFilesBatchWithoutMountAsync(
+        IReadOnlyList<(string LocalPath, string RemotePath, IProgress<FileTransferProgressInfo>? Progress)> files,
+        CancellationToken cancellationToken = default);
 }

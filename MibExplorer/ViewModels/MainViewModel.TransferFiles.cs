@@ -388,6 +388,8 @@ public sealed partial class MainViewModel
         int total = allFiles.Length;
         int index = 0;
 
+        var batchItems = new List<(string LocalPath, string RemotePath, IProgress<FileTransferProgressInfo>? Progress)>();
+
         foreach (var file in allFiles)
         {
             index++;
@@ -399,11 +401,18 @@ public sealed partial class MainViewModel
             string remoteDir = Path.GetDirectoryName(remotePath)!.Replace('\\', '/');
 
             await EnsureRemoteDirectoryExistsAsync(remoteDir);
-            await _mibConnectionService.UploadFileWithoutMountAsync(file, remotePath);
 
-            ProgressValue = total == 0 ? 100 : (double)index / total * 100;
-            ProgressLabel = $"Uploading {index}/{total}";
+            int fileIndex = index;
+            var progress = new Progress<FileTransferProgressInfo>(_ =>
+            {
+                ProgressValue = total == 0 ? 100 : (double)fileIndex / total * 100;
+                ProgressLabel = $"Uploading {fileIndex}/{total}";
+            });
+
+            batchItems.Add((file, remotePath, progress));
         }
+
+        await _mibConnectionService.UploadFilesBatchWithoutMountAsync(batchItems);
     }
 
     private async Task ReplaceFolderSafeAsync(string localRoot, string remoteTarget)
