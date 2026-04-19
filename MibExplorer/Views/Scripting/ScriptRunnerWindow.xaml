@@ -264,7 +264,8 @@
                         <TextBox x:Name="ExecutionLogTextBox"
                                  Grid.Row="2"
                                  Text="{Binding OutputText, Mode=OneWay}"
-                                 Style="{StaticResource LogTextBoxStyle}" />
+                                 Style="{StaticResource LogTextBoxStyle}"
+                                 TextChanged="ExecutionLogTextBox_TextChanged" />
                     </Grid>
                 </GroupBox>
 

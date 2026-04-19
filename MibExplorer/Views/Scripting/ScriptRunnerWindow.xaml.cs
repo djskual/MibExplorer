@@ -14,14 +14,32 @@ namespace MibExplorer.Views.Scripting;
 public partial class ScriptRunnerWindow : Window
 {
     private const double FineLogScrollPixelsPerDetent = 22.0;
+    private const double ExecutionLogBottomTolerance = 4.0;
 
     private readonly Dictionary<string, FileEditorWindow> _openLocalEditors = new(StringComparer.OrdinalIgnoreCase);
+
+    private ScrollViewer? _executionLogScrollViewer;
+    private bool _followExecutionLog = true;
+    private bool _executionLogAutoScrolling;
 
     public ScriptRunnerWindow()
     {
         InitializeComponent();
 
+        Loaded += ScriptRunnerWindow_Loaded;
         ExecutionLogTextBox.PreviewMouseWheel += ExecutionLogTextBox_PreviewMouseWheel;
+        ExecutionLogTextBox.TextChanged += ExecutionLogTextBox_TextChanged;
+    }
+
+    private void ScriptRunnerWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        _executionLogScrollViewer = FindVisualChild<ScrollViewer>(ExecutionLogTextBox);
+
+        if (_executionLogScrollViewer is not null)
+        {
+            _executionLogScrollViewer.ScrollChanged += ExecutionLogScrollViewer_ScrollChanged;
+            _followExecutionLog = IsExecutionLogNearBottom(_executionLogScrollViewer);
+        }
     }
 
     private void BrowseScriptsFolder_Click(object sender, RoutedEventArgs e)
@@ -111,6 +129,39 @@ public partial class ScriptRunnerWindow : Window
         OpenInEditor_Click(sender, e);
     }
 
+    private void ExecutionLogTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_followExecutionLog)
+            return;
+
+        ExecutionLogTextBox.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (_executionLogScrollViewer is null)
+                _executionLogScrollViewer = FindVisualChild<ScrollViewer>(ExecutionLogTextBox);
+
+            if (_executionLogScrollViewer is null)
+            {
+                ExecutionLogTextBox.ScrollToEnd();
+                return;
+            }
+
+            _executionLogAutoScrolling = true;
+            ExecutionLogTextBox.ScrollToEnd();
+            _executionLogAutoScrolling = false;
+        }), System.Windows.Threading.DispatcherPriority.Background);
+    }
+
+    private void ExecutionLogScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        if (_executionLogAutoScrolling)
+            return;
+
+        if (sender is not ScrollViewer scrollViewer)
+            return;
+
+        _followExecutionLog = IsExecutionLogNearBottom(scrollViewer);
+    }
+
     private void ExecutionLogTextBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         ApplyFineVerticalScroll(ExecutionLogTextBox, e);
@@ -132,6 +183,12 @@ public partial class ScriptRunnerWindow : Window
 
         scrollViewer.ScrollToVerticalOffset(targetOffset);
         e.Handled = true;
+    }
+
+    private static bool IsExecutionLogNearBottom(ScrollViewer scrollViewer)
+    {
+        return scrollViewer.VerticalOffset >=
+               scrollViewer.ScrollableHeight - ExecutionLogBottomTolerance;
     }
 
     private static T? FindVisualChild<T>(DependencyObject? parent) where T : DependencyObject
