@@ -385,8 +385,16 @@ public sealed partial class MainViewModel
             .Where(file => !Path.GetFileName(file).Equals(".mibexplorer-map.json", StringComparison.OrdinalIgnoreCase))
             .ToArray();
 
-        int total = allFiles.Length;
+        int totalFiles = allFiles.Length;
+        ulong totalBytes = 0;
+
+        foreach (var file in allFiles)
+        {
+            totalBytes += (ulong)new FileInfo(file).Length;
+        }
+
         int index = 0;
+        ulong completedBytesSeed = 0;
 
         var batchItems = new List<(string LocalPath, string RemotePath, IProgress<FileTransferProgressInfo>? Progress)>();
 
@@ -402,17 +410,41 @@ public sealed partial class MainViewModel
 
             await EnsureRemoteDirectoryExistsAsync(remoteDir);
 
+            ulong fileSize = (ulong)new FileInfo(file).Length;
+            ulong completedBeforeCurrentFile = completedBytesSeed;
             int fileIndex = index;
-            var progress = new Progress<FileTransferProgressInfo>(_ =>
+
+            var progress = new Progress<FileTransferProgressInfo>(info =>
             {
-                ProgressValue = total == 0 ? 100 : (double)fileIndex / total * 100;
-                ProgressLabel = $"Uploading {fileIndex}/{total}";
+                if (totalBytes > 0)
+                {
+                    ulong totalTransferred = completedBeforeCurrentFile + info.BytesTransferred;
+                    double percentage = Math.Clamp(totalTransferred * 100d / totalBytes, 0d, 100d);
+
+                    ProgressValue = percentage;
+                    ProgressLabel = $"{percentage:0}%";
+                    StatusMessage =
+                        $"Uploading {fileIndex}/{totalFiles}: {relative} " +
+                        $"({FormatTransferSize(totalTransferred)} / {FormatTransferSize(totalBytes)})";
+                }
+                else
+                {
+                    double percentage = totalFiles == 0 ? 100 : Math.Clamp((double)fileIndex / totalFiles * 100d, 0d, 100d);
+
+                    ProgressValue = percentage;
+                    ProgressLabel = $"{percentage:0}%";
+                    StatusMessage = $"Uploading {fileIndex}/{totalFiles}: {relative}";
+                }
             });
 
             batchItems.Add((file, remotePath, progress));
+            completedBytesSeed += fileSize;
         }
 
         await _mibConnectionService.UploadFilesBatchWithoutMountAsync(batchItems);
+
+        ProgressValue = 100;
+        ProgressLabel = "100%";
     }
 
     private async Task ReplaceFolderSafeAsync(string localRoot, string remoteTarget)
