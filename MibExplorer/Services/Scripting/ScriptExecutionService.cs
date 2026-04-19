@@ -62,9 +62,9 @@ public sealed class ScriptExecutionService : IScriptExecutionService
             };
         }
 
-        string remoteEntryPath;
-        string cleanupTargetPath;
-        string runCommand;
+        string remoteEntryPath = string.Empty;
+        string cleanupTargetPath = string.Empty;
+        string runCommand = string.Empty;
 
         try
         {
@@ -170,15 +170,10 @@ public sealed class ScriptExecutionService : IScriptExecutionService
         {
             try
             {
-                if (script.IsPackage)
+                if (!string.IsNullOrWhiteSpace(cleanupTargetPath))
                 {
-                    string remotePackageName = BuildRemoteDirectoryName(script.Name);
-                    await CleanupRemoteAsync($"{RemoteScriptsFolder}/{remotePackageName}", cancellationToken);
-                }
-                else
-                {
-                    string remoteFileName = BuildRemoteFileName(script.FileName);
-                    await CleanupRemoteAsync($"{RemoteScriptsFolder}/{remoteFileName}", cancellationToken);
+                    onOutput?.Invoke($"Cleaning remote workspace after failure: {cleanupTargetPath}");
+                    await CleanupRemoteAsync(cleanupTargetPath, cancellationToken);
                 }
             }
             catch
@@ -361,9 +356,9 @@ public sealed class ScriptExecutionService : IScriptExecutionService
     }
 
     private async Task UploadPackageFileAsync(
-    string localPath,
-    string remotePath,
-    CancellationToken cancellationToken)
+        string localPath,
+        string remotePath,
+        CancellationToken cancellationToken)
     {
         if (IsTextLikeFile(localPath))
         {
@@ -381,9 +376,9 @@ public sealed class ScriptExecutionService : IScriptExecutionService
     }
 
     private async Task UploadBinaryFileViaShellAsync(
-    string localPath,
-    string remotePath,
-    CancellationToken cancellationToken)
+        string localPath,
+        string remotePath,
+        CancellationToken cancellationToken)
     {
         await _connectionService.ExecuteCommandAsync(
             $": > {EscapeShellArg(remotePath)}",
@@ -402,9 +397,9 @@ public sealed class ScriptExecutionService : IScriptExecutionService
     }
 
     private async Task UploadTextFileViaShellAsync(
-    string localPath,
-    string remotePath,
-    CancellationToken cancellationToken)
+        string localPath,
+        string remotePath,
+        CancellationToken cancellationToken)
     {
         string content = await File.ReadAllTextAsync(localPath, cancellationToken);
 
