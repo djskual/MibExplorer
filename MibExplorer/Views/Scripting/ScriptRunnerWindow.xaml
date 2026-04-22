@@ -6,9 +6,9 @@
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
         mc:Ignorable="d"
         Title="Script Center"
-        Height="700"
+        Height="710"
         Width="1100"
-        MinHeight="500"
+        MinHeight="710"
         MinWidth="800"
         WindowStartupLocation="Manual"
         Background="{DynamicResource AppWindowBackgroundBrush}">
@@ -133,14 +133,55 @@
                              ItemContainerStyle="{StaticResource ScriptListBoxItemStyle}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Name}"
-                                               FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding RelativePath}"
-                                               Margin="0,2,0,0"
-                                               Foreground="{DynamicResource AppMutedTextBrush}"
-                                               FontSize="11" />
-                                </StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding RelativePath}"
+                                                   Margin="0,2,0,0"
+                                                   Foreground="{DynamicResource AppMutedTextBrush}"
+                                                   FontSize="11" />
+                                    </StackPanel>
+
+                                    <Border Grid.Column="1"
+                                            Margin="8,0,0,0"
+                                            Padding="8,2"
+                                            CornerRadius="10"
+                                            VerticalAlignment="Top">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#5A5A5A" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsReadOnlyType}" Value="True">
+                                                        <Setter Property="Background" Value="#2E8B57" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsApplyType}" Value="True">
+                                                        <Setter Property="Background" Value="#B8860B" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsDangerousType}" Value="True">
+                                                        <Setter Property="Background" Value="#B22222" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Margin="0,0,4,0"
+                                                       Foreground="White"
+                                                       FontSize="11"
+                                                       Text="●" />
+                                            <TextBlock Text="{Binding ScriptType}"
+                                                       Foreground="White"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
@@ -192,6 +233,10 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="6" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="14" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="6" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="18" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -206,25 +251,61 @@
                              IsReadOnly="True" />
 
                     <TextBlock Grid.Row="4"
+                               Text="Type"
+                               FontWeight="SemiBold" />
+
+                    <Border Grid.Row="6"
+                            Padding="8,4"
+                            CornerRadius="10"
+                            HorizontalAlignment="Left">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#5A5A5A" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedScript.IsReadOnlyType}" Value="True">
+                                        <Setter Property="Background" Value="#2E8B57" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SelectedScript.IsApplyType}" Value="True">
+                                        <Setter Property="Background" Value="#B8860B" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SelectedScript.IsDangerousType}" Value="True">
+                                        <Setter Property="Background" Value="#B22222" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="0,0,4,0"
+                                       Foreground="White"
+                                       FontSize="11"
+                                       Text="●" />
+                            <TextBlock Text="{Binding SelectedScript.ScriptType, Mode=OneWay}"
+                                       Foreground="White"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Grid.Row="8"
                                Text="Local path"
                                FontWeight="SemiBold" />
 
-                    <TextBox Grid.Row="6"
+                    <TextBox Grid.Row="10"
                              Text="{Binding SelectedScript.LocalPath, Mode=OneWay}"
                              IsReadOnly="True" />
 
-                    <TextBlock Grid.Row="8"
+                    <TextBlock Grid.Row="12"
                                Text="Description"
                                FontWeight="SemiBold" />
 
-                    <TextBox Grid.Row="10"
+                    <TextBox Grid.Row="14"
                              Text="{Binding SelectedScript.Description, Mode=OneWay}"
                              IsReadOnly="True"
                              TextWrapping="Wrap"
                              AcceptsReturn="True"
                              MinHeight="60" />
 
-                    <StackPanel Grid.Row="12" Orientation="Horizontal">
+                    <StackPanel Grid.Row="16" Orientation="Horizontal">
                         <Button Content="Run"
                                 Width="90"
                                 Margin="0,0,8,0"

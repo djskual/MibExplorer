@@ -1,7 +1,9 @@
 #!/bin/sh
-# Simple Script Center example
-# You can put until 3 Lines of commented text
-# Those 3 lines will be displayed in the Script Center as a description of the script
+
+# Type: ReadOnly
+# Example Single Script Center
+# Just say hello
+# you can use until 3 lines of description
 
 echo "=== Simple example start ==="
 echo "Working directory:"

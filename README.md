@@ -177,6 +177,42 @@ MibExplorer now includes a built-in **Script Center**, allowing you to execute c
 
 ---
 
+## 🧰 Script Center SDK
+
+MibExplorer provides a lightweight **Script Center SDK** to help create compatible and safe scripts.
+
+### What it includes
+
+- Script package template
+- Shared shell helper functions
+- Standardized logging and behavior
+- QNX-compatible utilities
+
+### Location
+
+The SDK template is available in:
+`Scripts/Examples/TemplatePackage/`
+
+### Goals
+
+- Simplify script creation
+- Ensure compatibility with MIB environment
+- Provide consistent logging and structure
+- Reduce errors and unsafe operations
+
+### Usage
+
+1. Copy the template package
+2. Rename it
+3. Implement your logic in `run.sh`
+4. Use SDK helpers for common operations
+
+### Contribution
+
+If you create useful scripts, feel free to submit a PR.
+
+---
+
 ## 🧑‍💻 Remote File Editor
 
 ![MibExplorer FileEditor](docs/FileEditor.png)
@@ -396,12 +432,16 @@ MibExplorer is built with a strong focus on **safety and reversibility**:
 
 # 🧪 Script Examples
 
-Example scripts are available in the `Scripts/` folder.
+Example scripts are available in the `Scripts/Examples/` folder.
 
 These demonstrate how to:
+- execute a single script with Script Center
+- execute a full script package (`run.sh`)
 - interact with MIB filesystem
 - extract diagnostic data
-- run SVM-related operations
+- build more advanced workflows
+
+Production-ready Script Center packages are available directly in the `Scripts/` folder.
 
 Scripts are designed for use with Script Center.
 
@@ -470,12 +510,9 @@ Planned improvements:
 
 ---
 
-# ⚠️ Disclaimer
+#  Disclaimer
 
-This tool is intended for advanced users.
 
-Modifying a MIB system always carries risk.
-You are responsible for any changes made to your device.
 
 ---
 
@@ -490,4 +527,15 @@ Inspired by the MIB modding ecosystem:
 
 # 📄 License
 
-To be defined.
+This project is licensed under the MIT License.
+
+# ⚠️ Disclaimer
+
+This software is provided for free.
+If you paid for it, you have been scammed.
+
+This tool is intended for advanced users.
+
+Modifying a MIB system always carries risk.
+You are responsible for any changes made to your device.
+Use at your own risk. No warranty is provided.

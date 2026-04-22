@@ -6,6 +6,7 @@ namespace MibExplorer.Services.Scripting;
 
 public sealed class ScriptCatalogService : IScriptCatalogService
 {
+    private sealed record ScriptHeaderInfo(string ScriptType, string Description);
     public string ScriptsFolderPath => ResolveScriptsFolderPath();
 
     public ScriptCatalogService()
@@ -60,6 +61,7 @@ public sealed class ScriptCatalogService : IScriptCatalogService
         string name = Path.GetFileNameWithoutExtension(file);
         string relativePath = Path.GetRelativePath(ScriptsFolderPath, file);
         string extension = Path.GetExtension(file);
+        ScriptHeaderInfo header = ReadHeaderInfo(file);
 
         return new ScriptItem
         {
@@ -67,11 +69,8 @@ public sealed class ScriptCatalogService : IScriptCatalogService
             FileName = fileName,
             LocalPath = file,
             RelativePath = relativePath,
-            Description = ReadDescription(file),
-            Category = "Custom",
-            IsUserScript = true,
-            IsRunnable = true,
-            Extension = extension,
+            Description = header.Description,
+            ScriptType = header.ScriptType,
             IsPackage = false,
             PackageRootPath = string.Empty
         };
@@ -81,6 +80,7 @@ public sealed class ScriptCatalogService : IScriptCatalogService
     {
         string name = Path.GetFileName(directory);
         string relativePath = Path.GetRelativePath(ScriptsFolderPath, runPath);
+        ScriptHeaderInfo header = ReadHeaderInfo(runPath);
 
         return new ScriptItem
         {
@@ -88,21 +88,18 @@ public sealed class ScriptCatalogService : IScriptCatalogService
             FileName = "run.sh",
             LocalPath = runPath,
             RelativePath = relativePath,
-            Description = ReadDescription(runPath),
-            Category = "Custom",
-            IsUserScript = true,
-            IsRunnable = true,
-            Extension = ".sh",
+            Description = header.Description,
+            ScriptType = header.ScriptType,
             IsPackage = true,
             PackageRootPath = directory
         };
     }
 
-    private static string ReadDescription(string path)
+    private static ScriptHeaderInfo ReadHeaderInfo(string path)
     {
         try
         {
-            var descriptionLines = new List<string>();
+            var commentLines = new List<string>();
 
             foreach (var rawLine in File.ReadLines(path))
             {
@@ -110,8 +107,8 @@ public sealed class ScriptCatalogService : IScriptCatalogService
 
                 if (string.IsNullOrWhiteSpace(line))
                 {
-                    if (descriptionLines.Count > 0)
-                        break;
+                    if (commentLines.Count > 0)
+                        continue;
 
                     continue;
                 }
@@ -124,9 +121,9 @@ public sealed class ScriptCatalogService : IScriptCatalogService
                     var text = line.TrimStart('#').Trim();
                     if (!string.IsNullOrWhiteSpace(text))
                     {
-                        descriptionLines.Add(text);
+                        commentLines.Add(text);
 
-                        if (descriptionLines.Count >= 3)
+                        if (commentLines.Count >= 4)
                             break;
 
                         continue;
@@ -136,13 +133,33 @@ public sealed class ScriptCatalogService : IScriptCatalogService
                 break;
             }
 
-            if (descriptionLines.Count > 0)
-                return string.Join(Environment.NewLine, descriptionLines);
+            if (commentLines.Count == 0)
+                return new ScriptHeaderInfo("Unknown", string.Empty);
+
+            string scriptType = "Unknown";
+            int descriptionStartIndex = 0;
+
+            string firstLine = commentLines[0];
+            if (firstLine.StartsWith("Type:", StringComparison.OrdinalIgnoreCase))
+            {
+                string parsedType = firstLine.Substring("Type:".Length).Trim();
+                if (!string.IsNullOrWhiteSpace(parsedType))
+                {
+                    scriptType = parsedType;
+                }
+
+                descriptionStartIndex = 1;
+            }
+
+            string description = string.Join(
+                Environment.NewLine,
+                commentLines.Skip(descriptionStartIndex).Take(3));
+
+            return new ScriptHeaderInfo(scriptType, description);
         }
         catch
         {
+            return new ScriptHeaderInfo("Unknown", string.Empty);
         }
-
-        return string.Empty;
     }
 }

@@ -1,10 +1,10 @@
-Script Center examples for MibExplorer
+Script Center Example for MibExplorer
 
 Contents:
-- Scripts/example.sh          -> simple script example
-- Scripts/Exemple/run.sh      -> package entry point example
-- Scripts/Exemple/scripts/... -> secondary helper scripts
-- Scripts/Exemple/data/...    -> data files used by the package
+- /SingleScript.sh          -> simple script example
+- /PackageScript/run.sh      -> package entry point example
+- /PackageScript/scripts/... -> secondary helper scripts
+- /PackageScript/data/...    -> data files used by the package
 
 How Script Center detects scripts:
 1. Any .sh file placed directly inside Scripts/ is shown as a simple script.

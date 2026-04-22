@@ -2,11 +2,13 @@
 using MibExplorer.Services.Scripting;
 using MibExplorer.Settings;
 using System.IO;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace MibExplorer.Services.Design;
 
 public sealed class DesignScriptCatalogService : IScriptCatalogService
 {
+    private sealed record ScriptHeaderInfo(string ScriptType, string Description); 
     public string ScriptsFolderPath => ResolveScriptsFolderPath();
 
     private static string ResolveScriptsFolderPath()
@@ -29,7 +31,9 @@ public sealed class DesignScriptCatalogService : IScriptCatalogService
 
         CreateIfMissing(Path.Combine(root, "dump_variant.sh"),
 @"#!/bin/sh
+# Type: ReadOnly
 # Dump current variant information
+# Design mode sample script
 echo ""[Design] dump_variant""
 echo ""Reading variant...""
 echo ""Done""");
@@ -41,7 +45,9 @@ echo ""Done""");
 
         CreateIfMissing(Path.Combine(packageRoot, "run.sh"),
 @"#!/bin/sh
+# Type: Apply
 # Design package demo
+# Demonstrates package execution in design mode
 echo ""[Design] package demo start""
 sh ./scripts/helper.sh
 echo ""Data file contents:""
@@ -76,11 +82,8 @@ echo ""[Design] helper script executed""");
                 FileName = "dump_variant.sh",
                 LocalPath = Path.Combine(ScriptsFolderPath, "dump_variant.sh"),
                 RelativePath = "dump_variant.sh",
-                Description = ReadDescription(Path.Combine(ScriptsFolderPath, "dump_variant.sh")),
-                Category = "Custom",
-                IsUserScript = true,
-                IsRunnable = true,
-                Extension = ".sh",
+                Description = ReadHeaderInfo(Path.Combine(ScriptsFolderPath, "dump_variant.sh")).Description,
+                ScriptType = ReadHeaderInfo(Path.Combine(ScriptsFolderPath, "dump_variant.sh")).ScriptType,
                 IsPackage = false,
                 PackageRootPath = string.Empty
             },
@@ -90,22 +93,19 @@ echo ""[Design] helper script executed""");
                 FileName = "run.sh",
                 LocalPath = Path.Combine(ScriptsFolderPath, "PackageDemo", "run.sh"),
                 RelativePath = @"PackageDemo\run.sh",
-                Description = ReadDescription(Path.Combine(ScriptsFolderPath, "PackageDemo", "run.sh")),
-                Category = "Custom",
-                IsUserScript = true,
-                IsRunnable = true,
-                Extension = ".sh",
+                Description = ReadHeaderInfo(Path.Combine(ScriptsFolderPath, "PackageDemo", "run.sh")).Description,
+                ScriptType = ReadHeaderInfo(Path.Combine(ScriptsFolderPath, "PackageDemo", "run.sh")).ScriptType,
                 IsPackage = true,
                 PackageRootPath = Path.Combine(ScriptsFolderPath, "PackageDemo")
             }
         };
     }
 
-    private static string ReadDescription(string path)
+    private static ScriptHeaderInfo ReadHeaderInfo(string path)
     {
         try
         {
-            var descriptionLines = new List<string>();
+            var commentLines = new List<string>();
 
             foreach (var rawLine in File.ReadLines(path))
             {
@@ -113,8 +113,8 @@ echo ""[Design] helper script executed""");
 
                 if (string.IsNullOrWhiteSpace(line))
                 {
-                    if (descriptionLines.Count > 0)
-                        break;
+                    if (commentLines.Count > 0)
+                        continue;
 
                     continue;
                 }
@@ -127,9 +127,9 @@ echo ""[Design] helper script executed""");
                     var text = line.TrimStart('#').Trim();
                     if (!string.IsNullOrWhiteSpace(text))
                     {
-                        descriptionLines.Add(text);
+                        commentLines.Add(text);
 
-                        if (descriptionLines.Count >= 3)
+                        if (commentLines.Count >= 4)
                             break;
 
                         continue;
@@ -139,13 +139,33 @@ echo ""[Design] helper script executed""");
                 break;
             }
 
-            if (descriptionLines.Count > 0)
-                return string.Join(Environment.NewLine, descriptionLines);
+            if (commentLines.Count == 0)
+                return new ScriptHeaderInfo("Unknown", string.Empty);
+
+            string scriptType = "Unknown";
+            int descriptionStartIndex = 0;
+
+            string firstLine = commentLines[0];
+            if (firstLine.StartsWith("Type:", StringComparison.OrdinalIgnoreCase))
+            {
+                string parsedType = firstLine.Substring("Type:".Length).Trim();
+                if (!string.IsNullOrWhiteSpace(parsedType))
+                {
+                    scriptType = parsedType;
+                }
+
+                descriptionStartIndex = 1;
+            }
+
+            string description = string.Join(
+                Environment.NewLine,
+                commentLines.Skip(descriptionStartIndex).Take(3));
+
+            return new ScriptHeaderInfo(scriptType, description);
         }
         catch
         {
+            return new ScriptHeaderInfo("Unknown", string.Empty);
         }
-
-        return string.Empty;
     }
 }

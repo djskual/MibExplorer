@@ -12,6 +12,9 @@ $ZipName      = "MibExplorer_$Tag" + "_win-x64.zip"
 $ZipPath      = Join-Path $ArtifactsDir $ZipName
 $ReleaseNotes = ".\RELEASE_NOTES.md"
 
+$ScriptsSource = ".\Scripts"
+$ScriptsDest   = Join-Path $PublishDir "Scripts"
+
 function Fail($msg) {
     Write-Host ""
     Write-Host "ERROR: $msg" -ForegroundColor Red
@@ -64,6 +67,11 @@ if (-not (Test-Path $ReleaseNotes)) {
 $notesContent = Get-Content $ReleaseNotes -Raw
 if ([string]::IsNullOrWhiteSpace($notesContent)) {
     Fail "RELEASE_NOTES.md is empty."
+}
+
+Write-Step "Checking scripts folder"
+if (-not (Test-Path $ScriptsSource)) {
+    Fail "Scripts folder not found: $ScriptsSource"
 }
 
 Write-Step "Checking that tag does not already exist"
@@ -128,6 +136,19 @@ Set-Content -Path (Join-Path $PublishDir "git-tag.txt") -Value $Tag -NoNewLine
 
 Write-Step "Removing unnecessary publish files"
 Get-ChildItem $PublishDir -Filter "*.pdb" -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+
+Write-Step "Copying Script Center packages"
+if (Test-Path $ScriptsDest) {
+    Remove-Item $ScriptsDest -Recurse -Force
+}
+
+New-Item -ItemType Directory -Force -Path $ScriptsDest | Out-Null
+
+Get-ChildItem $ScriptsSource | Where-Object {
+    $_.Name -ne "Examples"
+} | ForEach-Object {
+    Copy-Item $_.FullName $ScriptsDest -Recurse -Force
+}
 
 Write-Step "Creating zip"
 Compress-Archive -Path "$PublishDir\*" -DestinationPath $ZipPath
