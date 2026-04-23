@@ -2,8 +2,8 @@
     "PackagesScripts":  [
                             {
                                 "Name":  "SvmFix",
-                                "Version":  "1.0.0",
-                                "Sha256":  "301E5EF562388289EC02FD8237D0F95094299F6CCF19ADE34634ADA2586395A5"
+                                "Version":  "1.0.1",
+                                "Sha256":  "C62599F321EC7E70831AFEC64E591DFD55119F262939252C01E827C8F4901F8B"
                             }
                         ],
     "SingleScripts":  [
