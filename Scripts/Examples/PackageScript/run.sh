@@ -1,4 +1,7 @@
 #!/bin/sh
+
+# Type: ReadWrite
+# Version: 1.0.0
 # Example package entry point for Script Center
 # You can put until 3 Lines of commented text
 # Those 3 lines will be displayed in the Script Center as a description of the script

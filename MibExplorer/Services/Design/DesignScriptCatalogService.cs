@@ -8,7 +8,7 @@ namespace MibExplorer.Services.Design;
 
 public sealed class DesignScriptCatalogService : IScriptCatalogService
 {
-    private sealed record ScriptHeaderInfo(string ScriptType, string Description); 
+    private sealed record ScriptHeaderInfo(string ScriptType, string Version, string Description); 
     public string ScriptsFolderPath => ResolveScriptsFolderPath();
     public string OfficialScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Official");
     public string CustomScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Custom");
@@ -38,6 +38,7 @@ public sealed class DesignScriptCatalogService : IScriptCatalogService
         CreateIfMissing(Path.Combine(official, "dump_variant.sh"),
 @"#!/bin/sh
 # Type: ReadOnly
+# Version: 1.0.0
 # Dump current variant information
 # Design mode sample script
 echo ""[Design] dump_variant""
@@ -52,6 +53,7 @@ echo ""Done""");
         CreateIfMissing(Path.Combine(packageRoot, "run.sh"),
 @"#!/bin/sh
 # Type: Apply
+# Version: 1.0.0
 # Design package demo
 # Demonstrates package execution in design mode
 echo ""[Design] package demo start""
@@ -93,6 +95,7 @@ echo ""[Design] helper script executed""");
                 RelativePath = Path.Combine("Official", "dump_variant.sh"),
                 Description = ReadHeaderInfo(officialScript).Description,
                 ScriptType = ReadHeaderInfo(officialScript).ScriptType,
+                Version = ReadHeaderInfo(officialScript).Version,
                 IsPackage = false,
                 PackageRootPath = string.Empty,
                 IsOfficial = true
@@ -105,6 +108,7 @@ echo ""[Design] helper script executed""");
                 RelativePath = Path.Combine("Custom", "PackageDemo", "run.sh"),
                 Description = ReadHeaderInfo(customPackageRun).Description,
                 ScriptType = ReadHeaderInfo(customPackageRun).ScriptType,
+                Version = ReadHeaderInfo(customPackageRun).Version,
                 IsPackage = true,
                 PackageRootPath = Path.Combine(CustomScriptsFolderPath, "PackageDemo"),
                 IsOfficial = false
@@ -140,7 +144,7 @@ echo ""[Design] helper script executed""");
                     {
                         commentLines.Add(text);
 
-                        if (commentLines.Count >= 4)
+                        if (commentLines.Count >= 5)
                             break;
 
                         continue;
@@ -151,32 +155,39 @@ echo ""[Design] helper script executed""");
             }
 
             if (commentLines.Count == 0)
-                return new ScriptHeaderInfo("Unknown", string.Empty);
+                return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty);
 
             string scriptType = "Unknown";
+            string version = string.Empty;
             int descriptionStartIndex = 0;
 
-            string firstLine = commentLines[0];
-            if (firstLine.StartsWith("Type:", StringComparison.OrdinalIgnoreCase))
+            if (commentLines.Count > 0 && commentLines[0].StartsWith("Type:", StringComparison.OrdinalIgnoreCase))
             {
-                string parsedType = firstLine.Substring("Type:".Length).Trim();
+                string parsedType = commentLines[0].Substring("Type:".Length).Trim();
                 if (!string.IsNullOrWhiteSpace(parsedType))
-                {
                     scriptType = parsedType;
-                }
 
                 descriptionStartIndex = 1;
+            }
+
+            if (commentLines.Count > 1 && commentLines[1].StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
+            {
+                string parsedVersion = commentLines[1].Substring("Version:".Length).Trim();
+                if (!string.IsNullOrWhiteSpace(parsedVersion))
+                    version = parsedVersion;
+
+                descriptionStartIndex = 2;
             }
 
             string description = string.Join(
                 Environment.NewLine,
                 commentLines.Skip(descriptionStartIndex).Take(3));
 
-            return new ScriptHeaderInfo(scriptType, description);
+            return new ScriptHeaderInfo(scriptType, version, description);
         }
         catch
         {
-            return new ScriptHeaderInfo("Unknown", string.Empty);
+            return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty);
         }
     }
 }

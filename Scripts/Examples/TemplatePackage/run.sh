@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Type: ReadOnly
+# Version: 1.0.0
 # Example Script Center package using the MibExplorer SDK
 # Exports version.txt to the SD card
 # Demonstrates standard SDK helpers and workflow

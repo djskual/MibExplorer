@@ -1,6 +1,7 @@
 #!/bin/sh
 
-# Type: ReadOnly
+# Type: 
+# Version: 1.0.0
 # Example Single Script Center
 # Just say hello
 # you can use until 3 lines of description

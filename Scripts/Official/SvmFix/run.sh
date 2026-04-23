@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # Type: Apply
-# SvmFix v1.0 by DjSkual
+# Version: 1.0.0
+# SvmFix by DjSkual
 # Generates and applies CfgAck and SvmInfo on the MIB
 # Uses modifyE2P to finalize the SVM fix
 

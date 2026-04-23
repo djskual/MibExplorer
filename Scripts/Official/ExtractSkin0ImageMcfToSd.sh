@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Type: ReadOnly
+# Version: 1.0.0
 # Extracts images.mcf from skin0 to the SD card
 # Useful for quick backup and inspection of the default skin assets
 

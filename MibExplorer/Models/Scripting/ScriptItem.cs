@@ -14,6 +14,8 @@ public sealed class ScriptItem
 
     public string ScriptType { get; init; } = "Unknown";
 
+    public string Version { get; init; } = string.Empty;
+
     public bool IsPackage { get; init; }
 
     public string PackageRootPath { get; init; } = string.Empty;

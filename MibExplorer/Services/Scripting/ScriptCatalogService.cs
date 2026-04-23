@@ -6,7 +6,7 @@ namespace MibExplorer.Services.Scripting;
 
 public sealed class ScriptCatalogService : IScriptCatalogService
 {
-    private sealed record ScriptHeaderInfo(string ScriptType, string Description);
+    private sealed record ScriptHeaderInfo(string ScriptType, string Version, string Description);
     public string ScriptsFolderPath => ResolveScriptsFolderPath();
     public string OfficialScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Official");
     public string CustomScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Custom");
@@ -82,6 +82,7 @@ public sealed class ScriptCatalogService : IScriptCatalogService
             RelativePath = relativePath,
             Description = header.Description,
             ScriptType = header.ScriptType,
+            Version = header.Version,
             IsPackage = false,
             PackageRootPath = string.Empty,
             IsOfficial = isOfficial
@@ -102,6 +103,7 @@ public sealed class ScriptCatalogService : IScriptCatalogService
             RelativePath = relativePath,
             Description = header.Description,
             ScriptType = header.ScriptType,
+            Version = header.Version,
             IsPackage = true,
             PackageRootPath = directory,
             IsOfficial = isOfficial
@@ -136,7 +138,7 @@ public sealed class ScriptCatalogService : IScriptCatalogService
                     {
                         commentLines.Add(text);
 
-                        if (commentLines.Count >= 4)
+                        if (commentLines.Count >= 5)
                             break;
 
                         continue;
@@ -147,32 +149,39 @@ public sealed class ScriptCatalogService : IScriptCatalogService
             }
 
             if (commentLines.Count == 0)
-                return new ScriptHeaderInfo("Unknown", string.Empty);
+                return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty);
 
             string scriptType = "Unknown";
+            string version = string.Empty;
             int descriptionStartIndex = 0;
 
-            string firstLine = commentLines[0];
-            if (firstLine.StartsWith("Type:", StringComparison.OrdinalIgnoreCase))
+            if (commentLines.Count > 0 && commentLines[0].StartsWith("Type:", StringComparison.OrdinalIgnoreCase))
             {
-                string parsedType = firstLine.Substring("Type:".Length).Trim();
+                string parsedType = commentLines[0].Substring("Type:".Length).Trim();
                 if (!string.IsNullOrWhiteSpace(parsedType))
-                {
                     scriptType = parsedType;
-                }
 
                 descriptionStartIndex = 1;
+            }
+
+            if (commentLines.Count > 1 && commentLines[1].StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
+            {
+                string parsedVersion = commentLines[1].Substring("Version:".Length).Trim();
+                if (!string.IsNullOrWhiteSpace(parsedVersion))
+                    version = parsedVersion;
+
+                descriptionStartIndex = 2;
             }
 
             string description = string.Join(
                 Environment.NewLine,
                 commentLines.Skip(descriptionStartIndex).Take(3));
 
-            return new ScriptHeaderInfo(scriptType, description);
+            return new ScriptHeaderInfo(scriptType, version, description);
         }
         catch
         {
-            return new ScriptHeaderInfo("Unknown", string.Empty);
+            return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty);
         }
     }
 }
