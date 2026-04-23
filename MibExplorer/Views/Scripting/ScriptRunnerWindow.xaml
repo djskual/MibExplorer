@@ -109,78 +109,141 @@
                                  HorizontalScrollBarVisibility="Auto"
                                  Margin="0,0,0,12" />
 
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                            <Button Content="Browse..."
-                                    Width="80"
-                                    Margin="0,0,8,0"
+                        <Grid Margin="0,0,0,12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="8" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Row="0" Grid.Column="0"
+                                    Content="Browse..."
+                                    MinWidth="100"
                                     Click="BrowseScriptsFolder_Click" />
 
-                            <Button Content="Open Folder"
-                                    Width="100"
-                                    Margin="0,0,8,0"
+                            <Button Grid.Row="0" Grid.Column="2"
+                                    Content="Open Folder"
+                                    MinWidth="100"
                                     Command="{Binding OpenScriptsFolderCommand}" />
 
-                            <Button Content="Refresh"
-                                    Width="80"
+                            <Button Grid.Row="2" Grid.Column="0"
+                                    Content="Refresh"
+                                    MinWidth="100"
                                     Command="{Binding RefreshScriptsCommand}" />
-                        </StackPanel>
+
+                            <Button Grid.Row="2" Grid.Column="2"
+                                    Content="Update Official"
+                                    MinWidth="100"
+                                    Command="{Binding UpdateOfficialScriptsCommand}" />
+                        </Grid>
                     </StackPanel>
 
                     <ListBox ItemsSource="{Binding Scripts}"
                              SelectedItem="{Binding SelectedScript}"
                              MouseDoubleClick="ScriptsListBox_MouseDoubleClick"
                              Style="{StaticResource ScriptListBoxStyle}"
-                             ItemContainerStyle="{StaticResource ScriptListBoxItemStyle}">
+                             ItemContainerStyle="{StaticResource ScriptListBoxItemStyle}"
+                             HorizontalContentAlignment="Stretch"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Grid>
+                                <Grid HorizontalAlignment="Stretch">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
 
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{Binding Name}"
-                                                   FontWeight="SemiBold" />
+                                    <!-- Left side: official badge + name + path -->
+                                    <StackPanel Grid.Column="0"
+                                                Margin="0,0,8,0">
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Official badge -->
+                                            <TextBlock Grid.Column="0"
+                                                       Margin="0,0,6,0"
+                                                       Foreground="#22C55E"
+                                                       FontSize="12"
+                                                       Text="🛡"
+                                                       VerticalAlignment="Center"
+                                                       ToolTip="Official Script">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsOfficial}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+
+                                            <!-- Script name -->
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Name}"
+                                                       FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       TextWrapping="NoWrap"
+                                                       VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <!-- Relative path -->
                                         <TextBlock Text="{Binding RelativePath}"
                                                    Margin="0,2,0,0"
                                                    Foreground="{DynamicResource AppMutedTextBrush}"
-                                                   FontSize="11" />
+                                                   FontSize="11"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   TextWrapping="NoWrap" />
                                     </StackPanel>
 
-                                    <Border Grid.Column="1"
-                                            Margin="8,0,0,0"
-                                            Padding="8,2"
-                                            CornerRadius="10"
-                                            VerticalAlignment="Top">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#5A5A5A" />
+                                    <!-- Right side: compact type icon -->
+                                    <TextBlock Grid.Column="1"
+                                               Margin="8,0,0,0"
+                                               FontSize="12"
+                                               VerticalAlignment="Top"
+                                               HorizontalAlignment="Right"
+                                               ToolTip="{Binding ScriptType}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="•"/>
+                                                <Setter Property="Foreground" Value="#9CA3AF"/>
+
                                                 <Style.Triggers>
+
+                                                    <!-- ReadOnly -->
                                                     <DataTrigger Binding="{Binding IsReadOnlyType}" Value="True">
-                                                        <Setter Property="Background" Value="#2E8B57" />
+                                                        <Setter Property="Text" Value="👁"/>
+                                                        <Setter Property="Foreground" Value="#22C55E"/>
                                                     </DataTrigger>
+
+                                                    <!-- Apply -->
                                                     <DataTrigger Binding="{Binding IsApplyType}" Value="True">
-                                                        <Setter Property="Background" Value="#B8860B" />
+                                                        <Setter Property="Text" Value="⚙"/>
+                                                        <Setter Property="Foreground" Value="#F59E0B"/>
                                                     </DataTrigger>
+
+                                                    <!-- Dangerous -->
                                                     <DataTrigger Binding="{Binding IsDangerousType}" Value="True">
-                                                        <Setter Property="Background" Value="#B22222" />
+                                                        <Setter Property="Text" Value="⚠"/>
+                                                        <Setter Property="Foreground" Value="#EF4444"/>
                                                     </DataTrigger>
+
                                                 </Style.Triggers>
                                             </Style>
-                                        </Border.Style>
-
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Margin="0,0,4,0"
-                                                       Foreground="White"
-                                                       FontSize="11"
-                                                       Text="●" />
-                                            <TextBlock Text="{Binding ScriptType}"
-                                                       Foreground="White"
-                                                       FontSize="11"
-                                                       FontWeight="SemiBold" />
-                                        </StackPanel>
-                                    </Border>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

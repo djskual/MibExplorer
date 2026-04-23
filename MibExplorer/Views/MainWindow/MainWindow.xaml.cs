@@ -122,28 +122,32 @@ public partial class MainWindow : Window
 
         IScriptCatalogService catalogService;
         IScriptExecutionService executionService;
+        IOfficialScriptUpdateService officialScriptUpdateService;
 
         if (ViewModel.ConnectionService is DesignMibConnectionService)
         {
             catalogService = new DesignScriptCatalogService();
             executionService = new DesignScriptExecutionService();
+            officialScriptUpdateService = new DesignOfficialScriptUpdateService();
         }
         else
         {
             catalogService = new ScriptCatalogService();
             executionService = new ScriptExecutionService(ViewModel.ConnectionService);
+            officialScriptUpdateService = new OfficialScriptUpdateService();
         }
 
         var scriptRunnerViewModel = new ScriptRunnerViewModel(
             ViewModel.ConnectionService,
             catalogService,
-            executionService);
+            executionService,
+            officialScriptUpdateService);
 
         var window = new ScriptRunnerWindow
         {
             DataContext = scriptRunnerViewModel,
             Width = 1100,
-            Height = 700
+            Height = 710
         };
 
         double left = Left + Math.Max(0, (ActualWidth - window.Width) / 2);

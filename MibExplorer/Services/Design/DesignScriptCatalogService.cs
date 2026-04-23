@@ -10,6 +10,8 @@ public sealed class DesignScriptCatalogService : IScriptCatalogService
 {
     private sealed record ScriptHeaderInfo(string ScriptType, string Description); 
     public string ScriptsFolderPath => ResolveScriptsFolderPath();
+    public string OfficialScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Official");
+    public string CustomScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Custom");
 
     private static string ResolveScriptsFolderPath()
     {
@@ -26,10 +28,14 @@ public sealed class DesignScriptCatalogService : IScriptCatalogService
     public void EnsureScriptsFolderExists()
     {
         var root = ScriptsFolderPath;
+        var official = OfficialScriptsFolderPath;
+        var custom = CustomScriptsFolderPath;
 
         Directory.CreateDirectory(root);
+        Directory.CreateDirectory(official);
+        Directory.CreateDirectory(custom);
 
-        CreateIfMissing(Path.Combine(root, "dump_variant.sh"),
+        CreateIfMissing(Path.Combine(official, "dump_variant.sh"),
 @"#!/bin/sh
 # Type: ReadOnly
 # Dump current variant information
@@ -38,7 +44,7 @@ echo ""[Design] dump_variant""
 echo ""Reading variant...""
 echo ""Done""");
 
-        string packageRoot = Path.Combine(root, "PackageDemo");
+        string packageRoot = Path.Combine(custom, "PackageDemo");
         Directory.CreateDirectory(packageRoot);
         Directory.CreateDirectory(Path.Combine(packageRoot, "scripts"));
         Directory.CreateDirectory(Path.Combine(packageRoot, "data"));
@@ -74,29 +80,34 @@ echo ""[Design] helper script executed""");
     {
         EnsureScriptsFolderExists();
 
+        string officialScript = Path.Combine(OfficialScriptsFolderPath, "dump_variant.sh");
+        string customPackageRun = Path.Combine(CustomScriptsFolderPath, "PackageDemo", "run.sh");
+
         return new List<ScriptItem>
         {
             new ScriptItem
             {
                 Name = "dump_variant",
                 FileName = "dump_variant.sh",
-                LocalPath = Path.Combine(ScriptsFolderPath, "dump_variant.sh"),
-                RelativePath = "dump_variant.sh",
-                Description = ReadHeaderInfo(Path.Combine(ScriptsFolderPath, "dump_variant.sh")).Description,
-                ScriptType = ReadHeaderInfo(Path.Combine(ScriptsFolderPath, "dump_variant.sh")).ScriptType,
+                LocalPath = officialScript,
+                RelativePath = Path.Combine("Official", "dump_variant.sh"),
+                Description = ReadHeaderInfo(officialScript).Description,
+                ScriptType = ReadHeaderInfo(officialScript).ScriptType,
                 IsPackage = false,
-                PackageRootPath = string.Empty
+                PackageRootPath = string.Empty,
+                IsOfficial = true
             },
             new ScriptItem
             {
                 Name = "PackageDemo",
                 FileName = "run.sh",
-                LocalPath = Path.Combine(ScriptsFolderPath, "PackageDemo", "run.sh"),
-                RelativePath = @"PackageDemo\run.sh",
-                Description = ReadHeaderInfo(Path.Combine(ScriptsFolderPath, "PackageDemo", "run.sh")).Description,
-                ScriptType = ReadHeaderInfo(Path.Combine(ScriptsFolderPath, "PackageDemo", "run.sh")).ScriptType,
+                LocalPath = customPackageRun,
+                RelativePath = Path.Combine("Custom", "PackageDemo", "run.sh"),
+                Description = ReadHeaderInfo(customPackageRun).Description,
+                ScriptType = ReadHeaderInfo(customPackageRun).ScriptType,
                 IsPackage = true,
-                PackageRootPath = Path.Combine(ScriptsFolderPath, "PackageDemo")
+                PackageRootPath = Path.Combine(CustomScriptsFolderPath, "PackageDemo"),
+                IsOfficial = false
             }
         };
     }

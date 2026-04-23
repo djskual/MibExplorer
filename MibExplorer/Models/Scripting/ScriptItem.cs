@@ -18,6 +18,8 @@ public sealed class ScriptItem
 
     public string PackageRootPath { get; init; } = string.Empty;
 
+    public bool IsOfficial { get; init; }
+
     public bool IsReadOnlyType => string.Equals(ScriptType, "ReadOnly", StringComparison.OrdinalIgnoreCase);
 
     public bool IsApplyType => string.Equals(ScriptType, "Apply", StringComparison.OrdinalIgnoreCase);

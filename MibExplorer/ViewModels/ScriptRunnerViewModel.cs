@@ -15,6 +15,7 @@ public sealed class ScriptRunnerViewModel : ObservableObject
     private readonly IMibConnectionService _connectionService;
     private readonly IScriptCatalogService _catalogService;
     private readonly IScriptExecutionService _executionService;
+    private readonly IOfficialScriptUpdateService _officialScriptUpdateService;
 
     public ObservableCollection<ScriptItem> Scripts { get; } = new();
 
@@ -91,15 +92,18 @@ public sealed class ScriptRunnerViewModel : ObservableObject
     public ICommand CopyLogCommand { get; }
     public ICommand OpenScriptsFolderCommand { get; }
     public ICommand OpenInEditorCommand { get; }
+    public ICommand UpdateOfficialScriptsCommand { get; }
 
     public ScriptRunnerViewModel(
         IMibConnectionService connectionService,
         IScriptCatalogService catalogService,
-        IScriptExecutionService executionService)
+        IScriptExecutionService executionService,
+        IOfficialScriptUpdateService officialScriptUpdateService)
     {
         _connectionService = connectionService;
         _catalogService = catalogService;
         _executionService = executionService;
+        _officialScriptUpdateService = officialScriptUpdateService;
 
         _connectionService.ConnectionStateChanged += OnConnectionStateChanged;
 
@@ -119,6 +123,9 @@ public sealed class ScriptRunnerViewModel : ObservableObject
         OpenInEditorCommand = new RelayCommand(
             () => { },
             () => SelectedScript is not null);
+        UpdateOfficialScriptsCommand = new RelayCommand(
+            async () => await UpdateOfficialScriptsAsync(),
+            () => !IsBusy);
 
         RefreshScripts();
         RefreshCommandStates();
@@ -138,6 +145,33 @@ public sealed class ScriptRunnerViewModel : ObservableObject
         }
 
         StatusText = $"{Scripts.Count} script(s) loaded";
+    }
+
+    private async Task UpdateOfficialScriptsAsync()
+    {
+        try
+        {
+            IsBusy = true;
+            StatusText = "Updating official scripts...";
+
+            _catalogService.EnsureScriptsFolderExists();
+
+            string result = await _officialScriptUpdateService.UpdateOfficialScriptsAsync(
+                _catalogService.OfficialScriptsFolderPath);
+
+            RefreshScripts();
+            StatusText = result;
+        }
+        catch (Exception ex)
+        {
+            StatusText = "Official scripts update failed";
+            AppendOutput(ex.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+            RefreshCommandStates();
+        }
     }
 
     private void OnConnectionStateChanged(object? sender, bool isConnected)
@@ -296,5 +330,7 @@ public sealed class ScriptRunnerViewModel : ObservableObject
         {
             openInEditorCommand.RaiseCanExecuteChanged();
         }
+
+        (UpdateOfficialScriptsCommand as RelayCommand)?.RaiseCanExecuteChanged();
     }
 }

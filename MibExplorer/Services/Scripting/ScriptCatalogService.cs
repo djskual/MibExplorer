@@ -8,6 +8,8 @@ public sealed class ScriptCatalogService : IScriptCatalogService
 {
     private sealed record ScriptHeaderInfo(string ScriptType, string Description);
     public string ScriptsFolderPath => ResolveScriptsFolderPath();
+    public string OfficialScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Official");
+    public string CustomScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Custom");
 
     public ScriptCatalogService()
     {
@@ -28,6 +30,8 @@ public sealed class ScriptCatalogService : IScriptCatalogService
     public void EnsureScriptsFolderExists()
     {
         Directory.CreateDirectory(ScriptsFolderPath);
+        Directory.CreateDirectory(OfficialScriptsFolderPath);
+        Directory.CreateDirectory(CustomScriptsFolderPath);
     }
 
     public IReadOnlyList<ScriptItem> GetScripts()
@@ -36,31 +40,38 @@ public sealed class ScriptCatalogService : IScriptCatalogService
 
         var items = new List<ScriptItem>();
 
-        foreach (var file in Directory.EnumerateFiles(ScriptsFolderPath, "*.sh", SearchOption.TopDirectoryOnly)
+        LoadScriptsFromFolder(OfficialScriptsFolderPath, items, true);
+        LoadScriptsFromFolder(CustomScriptsFolderPath, items, false);
+
+        return items
+            .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private void LoadScriptsFromFolder(string folderPath, List<ScriptItem> items, bool isOfficial)
+    {
+        foreach (var file in Directory.EnumerateFiles(folderPath, "*.sh", SearchOption.TopDirectoryOnly)
                      .OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
         {
-            items.Add(CreateSimpleScriptItem(file));
+            items.Add(CreateSimpleScriptItem(file, folderPath, isOfficial));
         }
 
-        foreach (var directory in Directory.EnumerateDirectories(ScriptsFolderPath, "*", SearchOption.TopDirectoryOnly)
+        foreach (var directory in Directory.EnumerateDirectories(folderPath, "*", SearchOption.TopDirectoryOnly)
                      .OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
         {
             string runPath = Path.Combine(directory, "run.sh");
             if (!File.Exists(runPath))
                 continue;
 
-            items.Add(CreatePackageScriptItem(directory, runPath));
+            items.Add(CreatePackageScriptItem(directory, runPath, folderPath, isOfficial));
         }
-
-        return items;
     }
 
-    private ScriptItem CreateSimpleScriptItem(string file)
+    private ScriptItem CreateSimpleScriptItem(string file, string baseFolder, bool isOfficial)
     {
         string fileName = Path.GetFileName(file);
         string name = Path.GetFileNameWithoutExtension(file);
         string relativePath = Path.GetRelativePath(ScriptsFolderPath, file);
-        string extension = Path.GetExtension(file);
         ScriptHeaderInfo header = ReadHeaderInfo(file);
 
         return new ScriptItem
@@ -72,11 +83,12 @@ public sealed class ScriptCatalogService : IScriptCatalogService
             Description = header.Description,
             ScriptType = header.ScriptType,
             IsPackage = false,
-            PackageRootPath = string.Empty
+            PackageRootPath = string.Empty,
+            IsOfficial = isOfficial
         };
     }
 
-    private ScriptItem CreatePackageScriptItem(string directory, string runPath)
+    private ScriptItem CreatePackageScriptItem(string directory, string runPath, string baseFolder, bool isOfficial)
     {
         string name = Path.GetFileName(directory);
         string relativePath = Path.GetRelativePath(ScriptsFolderPath, runPath);
@@ -91,7 +103,8 @@ public sealed class ScriptCatalogService : IScriptCatalogService
             Description = header.Description,
             ScriptType = header.ScriptType,
             IsPackage = true,
-            PackageRootPath = directory
+            PackageRootPath = directory,
+            IsOfficial = isOfficial
         };
     }
 

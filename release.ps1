@@ -12,9 +12,6 @@ $ZipName      = "MibExplorer_$Tag" + "_win-x64.zip"
 $ZipPath      = Join-Path $ArtifactsDir $ZipName
 $ReleaseNotes = ".\RELEASE_NOTES.md"
 
-$ScriptsSource = ".\Scripts\Official"
-$ScriptsDest   = Join-Path $PublishDir "Scripts"
-
 function Fail($msg) {
     Write-Host ""
     Write-Host "ERROR: $msg" -ForegroundColor Red
@@ -136,17 +133,6 @@ Set-Content -Path (Join-Path $PublishDir "git-tag.txt") -Value $Tag -NoNewLine
 
 Write-Step "Removing unnecessary publish files"
 Get-ChildItem $PublishDir -Filter "*.pdb" -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
-
-Write-Step "Copying Script Center packages"
-if (Test-Path $ScriptsDest) {
-    Remove-Item $ScriptsDest -Recurse -Force
-}
-
-$ScriptsOfficialDest = Join-Path $ScriptsDest "Official"
-
-New-Item -ItemType Directory -Force -Path $ScriptsOfficialDest | Out-Null
-
-Copy-Item "$ScriptsSource\*" $ScriptsOfficialDest -Recurse -Force
 
 Write-Step "Creating zip"
 Compress-Archive -Path "$PublishDir\*" -DestinationPath $ZipPath

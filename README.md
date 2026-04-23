@@ -123,10 +123,11 @@ MibExplorer now includes a built-in **Script Center**, allowing you to execute c
 
 ### Features
 
-* Execute local scripts on the MIB
+* Execute scripts directly on the MIB over SSH
 * Supports:
   * single scripts
   * full script packages (folder with `run.sh`)
+* Built-in official script distribution and update system
 * Automatic workflow:
   * upload to remote `/tmp`
   * set execution permissions
@@ -172,8 +173,45 @@ MibExplorer now includes a built-in **Script Center**, allowing you to execute c
 * Scripts must be compatible with QNX shell environment
 * Limited toolset on MIB (no full GNU environment)
 * Line endings must be LF (`\n`)
+* Official scripts require internet connection to update
+* Custom scripts remain fully local and unaffected
 
 ⚠️ Scripts are executed with root privileges on the MIB.
+Always review scripts before executing them.
+
+---
+
+### 🌐 Official Script Distribution
+
+MibExplorer includes a built-in system to download and manage **official scripts** directly from GitHub.
+
+#### Features
+
+* One-click update via **"Update Official"**
+* Scripts are dynamically fetched (no need for new app releases)
+* Separation between:
+  * `Official/` scripts (managed by MibExplorer)
+  * `Custom/` scripts (user-defined)
+
+#### Structure
+
+```
+Scripts/
+	Official/
+		manifest.json
+		ScriptName/
+	Custom/
+		YourScripts.sh
+```
+
+The `Official/` folder is automatically managed by MibExplorer.
+Do not manually edit its content.
+
+#### Benefits
+
+* Always up-to-date scripts
+* Cleaner application releases
+* Easier script sharing and contribution
 
 ---
 
@@ -441,7 +479,7 @@ These demonstrate how to:
 - extract diagnostic data
 - build more advanced workflows
 
-Production-ready Script Center packages are available directly in the `Scripts/` folder.
+Production-ready Script Center packages are available via the **Official Script system** and can be downloaded directly from Script Center.
 
 Scripts are designed for use with Script Center.
 
@@ -510,12 +548,6 @@ Planned improvements:
 
 ---
 
-#  Disclaimer
-
-
-
----
-
 # 🙏 Acknowledgements
 
 Inspired by the MIB modding ecosystem:
@@ -535,6 +567,9 @@ This software is provided for free.
 If you paid for it, you have been scammed.
 
 This tool is intended for advanced users.
+
+Scripts executed via Script Center run with root privileges.
+Always review scripts before executing them.
 
 Modifying a MIB system always carries risk.
 You are responsible for any changes made to your device.
