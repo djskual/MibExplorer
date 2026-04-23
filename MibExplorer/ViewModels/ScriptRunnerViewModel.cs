@@ -86,6 +86,20 @@ public sealed class ScriptRunnerViewModel : ObservableObject
         }
     }
 
+    private bool _hasOfficialScriptUpdates;
+    public bool HasOfficialScriptUpdates
+    {
+        get => _hasOfficialScriptUpdates;
+        set => SetProperty(ref _hasOfficialScriptUpdates, value);
+    }
+
+    private string _officialUpdateTooltip = "Check for official script updates";
+    public string OfficialUpdateTooltip
+    {
+        get => _officialUpdateTooltip;
+        set => SetProperty(ref _officialUpdateTooltip, value);
+    }
+
     public ICommand RefreshScriptsCommand { get; }
     public ICommand RunScriptCommand { get; }
     public ICommand ClearLogCommand { get; }
@@ -129,6 +143,7 @@ public sealed class ScriptRunnerViewModel : ObservableObject
 
         RefreshScripts();
         RefreshCommandStates();
+        _ = CheckForOfficialUpdatesAsync();
     }
 
     private void RefreshScripts()
@@ -161,6 +176,9 @@ public sealed class ScriptRunnerViewModel : ObservableObject
 
             RefreshScripts();
             StatusText = result;
+
+            HasOfficialScriptUpdates = false;
+            OfficialUpdateTooltip = "Official scripts are up to date";
         }
         catch (Exception ex)
         {
@@ -171,6 +189,29 @@ public sealed class ScriptRunnerViewModel : ObservableObject
         {
             IsBusy = false;
             RefreshCommandStates();
+        }
+    }
+
+    private async Task CheckForOfficialUpdatesAsync()
+    {
+        try
+        {
+            _catalogService.EnsureScriptsFolderExists();
+
+            bool hasUpdates = await _officialScriptUpdateService.CheckForOfficialUpdatesAsync(
+                _catalogService.OfficialScriptsFolderPath);
+
+            HasOfficialScriptUpdates = hasUpdates;
+            OfficialUpdateTooltip = hasUpdates
+                ? "Official script updates are available"
+                : "Official scripts are up to date";
+        }
+        catch
+        {
+            // Silent fail:
+            // no internet, GitHub unavailable, DNS issue, etc.
+            HasOfficialScriptUpdates = false;
+            OfficialUpdateTooltip = "Unable to check for official script updates";
         }
     }
 
@@ -195,6 +236,7 @@ public sealed class ScriptRunnerViewModel : ObservableObject
 
         ScriptsFolderPath = _catalogService.ScriptsFolderPath;
         RefreshScripts();
+        _ = CheckForOfficialUpdatesAsync();
     }
 
     private void OpenScriptsFolder()

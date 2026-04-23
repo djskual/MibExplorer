@@ -138,9 +138,35 @@
                                     Command="{Binding RefreshScriptsCommand}" />
 
                             <Button Grid.Row="2" Grid.Column="2"
-                                    Content="Update Official"
                                     MinWidth="100"
-                                    Command="{Binding UpdateOfficialScriptsCommand}" />
+                                    Command="{Binding UpdateOfficialScriptsCommand}"
+                                    ToolTip="{Binding OfficialUpdateTooltip}">
+                                <Grid>
+                                    <TextBlock Text="Update Official"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+
+                                    <Ellipse Width="9"
+                                             Height="9"
+                                             Fill="#F59E0B"
+                                             Stroke="#FFF8E1"
+                                             StrokeThickness="1"
+                                             HorizontalAlignment="Right"
+                                             VerticalAlignment="Top"
+                                             Margin="0,-2,-2,0">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasOfficialScriptUpdates}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                </Grid>
+                            </Button>
                         </Grid>
                     </StackPanel>
 
