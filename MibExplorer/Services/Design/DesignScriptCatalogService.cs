@@ -159,29 +159,29 @@ echo ""[Design] helper script executed""");
 
             string scriptType = "Unknown";
             string version = string.Empty;
-            int descriptionStartIndex = 0;
 
-            if (commentLines.Count > 0 && commentLines[0].StartsWith("Type:", StringComparison.OrdinalIgnoreCase))
+            foreach (var line in commentLines)
             {
-                string parsedType = commentLines[0].Substring("Type:".Length).Trim();
-                if (!string.IsNullOrWhiteSpace(parsedType))
-                    scriptType = parsedType;
-
-                descriptionStartIndex = 1;
+                if (line.StartsWith("Type:", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parsedType = line.Substring("Type:".Length).Trim();
+                    if (!string.IsNullOrWhiteSpace(parsedType))
+                        scriptType = parsedType;
+                }
+                else if (line.StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parsedVersion = line.Substring("Version:".Length).Trim();
+                    if (!string.IsNullOrWhiteSpace(parsedVersion))
+                        version = parsedVersion;
+                }
             }
 
-            if (commentLines.Count > 1 && commentLines[1].StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
-            {
-                string parsedVersion = commentLines[1].Substring("Version:".Length).Trim();
-                if (!string.IsNullOrWhiteSpace(parsedVersion))
-                    version = parsedVersion;
+            var descriptionLines = commentLines
+                .Where(l => !l.StartsWith("Type:", StringComparison.OrdinalIgnoreCase)
+                         && !l.StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
+                .Take(3);
 
-                descriptionStartIndex = 2;
-            }
-
-            string description = string.Join(
-                Environment.NewLine,
-                commentLines.Skip(descriptionStartIndex).Take(3));
+            string description = string.Join(Environment.NewLine, descriptionLines);
 
             return new ScriptHeaderInfo(scriptType, version, description);
         }

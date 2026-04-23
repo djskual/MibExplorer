@@ -196,7 +196,8 @@
                                                        FontWeight="SemiBold"
                                                        TextTrimming="CharacterEllipsis"
                                                        TextWrapping="NoWrap"
-                                                       VerticalAlignment="Center" />
+                                                       VerticalAlignment="Center"
+                                                       ToolTip="{Binding Version, StringFormat=Version: {0}}" />
                                         </Grid>
 
                                         <!-- Relative path -->

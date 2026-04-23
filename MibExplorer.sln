@@ -77,6 +77,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Official", "Official", "{D9
 		Scripts\Official\manifest.json = Scripts\Official\manifest.json
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{89F285CF-9A6E-4EE4-A5B4-FAE5C5CA6B96}"
+	ProjectSection(SolutionItems) = preProject
+		Generate-ScriptManifest.ps1 = Generate-ScriptManifest.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,6 +109,7 @@ Global
 		{699B4A5E-25A3-4516-98D0-1B3C1398F870} = {7FB6AF9F-5E02-4E05-8459-689F7F9E35DF}
 		{430BD6B5-2C63-4D77-BDF9-C07465CE777D} = {A13B95D8-D5FC-4F62-AE21-64BDCE52800A}
 		{D9C915B8-D93F-4709-BAB7-BB9F9A7E77CE} = {A377134E-273F-406B-B553-D2B59ECC16EF}
+		{89F285CF-9A6E-4EE4-A5B4-FAE5C5CA6B96} = {9C8CB701-102D-CF49-A3E0-89AC09D42C2C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D349ABC2-3462-48D9-B5FD-688ABAFA7C20}
