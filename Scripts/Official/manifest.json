@@ -9,8 +9,8 @@
     "SingleScripts":  [
                           {
                               "Name":  "ExtractSkin0ImageMcfToSd.sh",
-                              "Version":  "1.0.0",
-                              "Sha256":  "298028C7F804B41FE45FAB84836C330C2B9A4A5ECD7BD0869C510044DC16F1C3"
+                              "Version":  "1.0.1",
+                              "Sha256":  "E2749C51AC82F3236AD838E707858E784E3EB08051917B55C54844CBD1127EBB"
                           }
                       ]
 }
