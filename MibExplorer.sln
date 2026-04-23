@@ -74,7 +74,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Official", "Official", "{D9C915B8-D93F-4709-BAB7-BB9F9A7E77CE}"
 	ProjectSection(SolutionItems) = preProject
 		Scripts\Official\ExtractSkin0ImageMcfToSd.sh = Scripts\Official\ExtractSkin0ImageMcfToSd.sh
-		manifest.json = manifest.json
+		Scripts\Official\manifest.json = Scripts\Official\manifest.json
 	EndProjectSection
 EndProject
 Global
