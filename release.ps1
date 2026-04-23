@@ -66,11 +66,6 @@ if ([string]::IsNullOrWhiteSpace($notesContent)) {
     Fail "RELEASE_NOTES.md is empty."
 }
 
-Write-Step "Checking scripts folder"
-if (-not (Test-Path $ScriptsSource)) {
-    Fail "Scripts folder not found: $ScriptsSource"
-}
-
 Write-Step "Checking that tag does not already exist"
 $localTag = git tag --list $Tag
 if ($localTag) {
