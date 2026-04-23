@@ -12,7 +12,7 @@ $ZipName      = "MibExplorer_$Tag" + "_win-x64.zip"
 $ZipPath      = Join-Path $ArtifactsDir $ZipName
 $ReleaseNotes = ".\RELEASE_NOTES.md"
 
-$ScriptsSource = ".\Scripts"
+$ScriptsSource = ".\Scripts\Official"
 $ScriptsDest   = Join-Path $PublishDir "Scripts"
 
 function Fail($msg) {
@@ -142,13 +142,11 @@ if (Test-Path $ScriptsDest) {
     Remove-Item $ScriptsDest -Recurse -Force
 }
 
-New-Item -ItemType Directory -Force -Path $ScriptsDest | Out-Null
+$ScriptsOfficialDest = Join-Path $ScriptsDest "Official"
 
-Get-ChildItem $ScriptsSource | Where-Object {
-    $_.Name -ne "Examples"
-} | ForEach-Object {
-    Copy-Item $_.FullName $ScriptsDest -Recurse -Force
-}
+New-Item -ItemType Directory -Force -Path $ScriptsOfficialDest | Out-Null
+
+Copy-Item "$ScriptsSource\*" $ScriptsOfficialDest -Recurse -Force
 
 Write-Step "Creating zip"
 Compress-Archive -Path "$PublishDir\*" -DestinationPath $ZipPath

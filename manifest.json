@@ -1,0 +1,8 @@
+{
+  "PackagesScripts": [
+    "SvmFix"
+  ],
+  "SingleScripts": [
+    "ExtractSkin0ImageMcfToSd.sh"
+  ]
+}

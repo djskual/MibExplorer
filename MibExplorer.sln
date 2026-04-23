@@ -26,12 +26,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{A377
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SvmFix", "SvmFix", "{A13B95D8-D5FC-4F62-AE21-64BDCE52800A}"
 	ProjectSection(SolutionItems) = preProject
-		Scripts\SvmFix\run.sh = Scripts\SvmFix\run.sh
+		Scripts\Official\SvmFix\run.sh = Scripts\Official\SvmFix\run.sh
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sbin", "sbin", "{1E38B158-80A5-4F4A-9AD9-0692625E9495}"
 	ProjectSection(SolutionItems) = preProject
-		Scripts\SvmFix\sbin\svmtool = Scripts\SvmFix\sbin\svmtool
+		Scripts\Official\SvmFix\sbin\svmtool = Scripts\Official\SvmFix\sbin\svmtool
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{699239C3-92F9-492A-A314-CADFD976AFA1}"
@@ -66,6 +66,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{699B4A5E-25A
 		Scripts\Examples\TemplatePackage\lib\mibexplorer_sdk.sh = Scripts\Examples\TemplatePackage\lib\mibexplorer_sdk.sh
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{430BD6B5-2C63-4D77-BDF9-C07465CE777D}"
+	ProjectSection(SolutionItems) = preProject
+		Scripts\Official\SvmFix\lib\mibexplorer_sdk.sh = Scripts\Official\SvmFix\lib\mibexplorer_sdk.sh
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Official", "Official", "{D9C915B8-D93F-4709-BAB7-BB9F9A7E77CE}"
+	ProjectSection(SolutionItems) = preProject
+		Scripts\Official\ExtractSkin0ImageMcfToSd.sh = Scripts\Official\ExtractSkin0ImageMcfToSd.sh
+		manifest.json = manifest.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,7 +94,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {9C8CB701-102D-CF49-A3E0-89AC09D42C2C}
 		{A377134E-273F-406B-B553-D2B59ECC16EF} = {9C8CB701-102D-CF49-A3E0-89AC09D42C2C}
-		{A13B95D8-D5FC-4F62-AE21-64BDCE52800A} = {A377134E-273F-406B-B553-D2B59ECC16EF}
+		{A13B95D8-D5FC-4F62-AE21-64BDCE52800A} = {D9C915B8-D93F-4709-BAB7-BB9F9A7E77CE}
 		{1E38B158-80A5-4F4A-9AD9-0692625E9495} = {A13B95D8-D5FC-4F62-AE21-64BDCE52800A}
 		{699239C3-92F9-492A-A314-CADFD976AFA1} = {A377134E-273F-406B-B553-D2B59ECC16EF}
 		{6774C115-6CB5-4B38-9760-97F389CF704D} = {699239C3-92F9-492A-A314-CADFD976AFA1}
@@ -91,6 +102,8 @@ Global
 		{733CAC06-B3B7-4729-A9C6-D61F0A2500D4} = {6774C115-6CB5-4B38-9760-97F389CF704D}
 		{7FB6AF9F-5E02-4E05-8459-689F7F9E35DF} = {699239C3-92F9-492A-A314-CADFD976AFA1}
 		{699B4A5E-25A3-4516-98D0-1B3C1398F870} = {7FB6AF9F-5E02-4E05-8459-689F7F9E35DF}
+		{430BD6B5-2C63-4D77-BDF9-C07465CE777D} = {A13B95D8-D5FC-4F62-AE21-64BDCE52800A}
+		{D9C915B8-D93F-4709-BAB7-BB9F9A7E77CE} = {A377134E-273F-406B-B553-D2B59ECC16EF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D349ABC2-3462-48D9-B5FD-688ABAFA7C20}
