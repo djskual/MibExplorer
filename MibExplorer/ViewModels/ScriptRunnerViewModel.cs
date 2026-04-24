@@ -176,7 +176,8 @@ public sealed class ScriptRunnerViewModel : ObservableObject
                 _catalogService.OfficialScriptsFolderPath);
 
             RefreshScripts();
-            StatusText = result;
+            AppendOutput(result);
+            StatusText = "Official scripts synchronized";
 
             HasOfficialScriptUpdates = false;
             OfficialUpdateTooltip = "Official scripts are up to date";

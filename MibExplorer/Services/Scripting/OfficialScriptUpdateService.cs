@@ -61,7 +61,7 @@ public sealed class OfficialScriptUpdateService : IOfficialScriptUpdateService
 
         if (!comparison.HasChanges)
         {
-            return "Official scripts are already up to date.";
+            return BuildUpdateSummary(comparison);
         }
 
         string tempRoot = Path.Combine(Path.GetTempPath(), "MibExplorer_OfficialScripts_Update");
@@ -262,12 +262,38 @@ public sealed class OfficialScriptUpdateService : IOfficialScriptUpdateService
             if (!localPackages.TryGetValue(remote.Name, out var local))
             {
                 result.PackagesToDownload.Add(remote);
+                result.Changes.Add(new OfficialScriptChange
+                {
+                    Action = "ADDED",
+                    Kind = "Package",
+                    Name = remote.Name,
+                    NewVersion = remote.Version
+                });
                 continue;
             }
 
             if (!string.Equals(local.Sha256, remote.Sha256, StringComparison.OrdinalIgnoreCase))
             {
                 result.PackagesToDownload.Add(remote);
+                result.Changes.Add(new OfficialScriptChange
+                {
+                    Action = "UPDATED",
+                    Kind = "Package",
+                    Name = remote.Name,
+                    OldVersion = local.Version,
+                    NewVersion = remote.Version
+                });
+            }
+            else
+            {
+                result.Changes.Add(new OfficialScriptChange
+                {
+                    Action = "UNCHANGED",
+                    Kind = "Package",
+                    Name = remote.Name,
+                    OldVersion = local.Version,
+                    NewVersion = remote.Version
+                });
             }
         }
 
@@ -277,12 +303,38 @@ public sealed class OfficialScriptUpdateService : IOfficialScriptUpdateService
             if (!localSingles.TryGetValue(remote.Name, out var local))
             {
                 result.SingleScriptsToDownload.Add(remote);
+                result.Changes.Add(new OfficialScriptChange
+                {
+                    Action = "ADDED",
+                    Kind = "Single",
+                    Name = remote.Name,
+                    NewVersion = remote.Version
+                });
                 continue;
             }
 
             if (!string.Equals(local.Sha256, remote.Sha256, StringComparison.OrdinalIgnoreCase))
             {
                 result.SingleScriptsToDownload.Add(remote);
+                result.Changes.Add(new OfficialScriptChange
+                {
+                    Action = "UPDATED",
+                    Kind = "Single",
+                    Name = remote.Name,
+                    OldVersion = local.Version,
+                    NewVersion = remote.Version
+                });
+            }
+            else
+            {
+                result.Changes.Add(new OfficialScriptChange
+                {
+                    Action = "UNCHANGED",
+                    Kind = "Single",
+                    Name = remote.Name,
+                    OldVersion = local.Version,
+                    NewVersion = remote.Version
+                });
             }
         }
 
@@ -292,6 +344,13 @@ public sealed class OfficialScriptUpdateService : IOfficialScriptUpdateService
             if (!remotePackages.ContainsKey(local.Name))
             {
                 result.PackageNamesToDelete.Add(local.Name);
+                result.Changes.Add(new OfficialScriptChange
+                {
+                    Action = "REMOVED",
+                    Kind = "Package",
+                    Name = local.Name,
+                    OldVersion = local.Version
+                });
             }
         }
 
@@ -301,6 +360,13 @@ public sealed class OfficialScriptUpdateService : IOfficialScriptUpdateService
             if (!remoteSingles.ContainsKey(local.Name))
             {
                 result.SingleScriptNamesToDelete.Add(local.Name);
+                result.Changes.Add(new OfficialScriptChange
+                {
+                    Action = "REMOVED",
+                    Kind = "Single",
+                    Name = local.Name,
+                    OldVersion = local.Version
+                });
             }
         }
 
@@ -376,18 +442,42 @@ public sealed class OfficialScriptUpdateService : IOfficialScriptUpdateService
 
     private static string BuildUpdateSummary(ManifestComparisonResult comparison)
     {
-        int addedOrUpdated =
-            comparison.PackagesToDownload.Count +
-            comparison.SingleScriptsToDownload.Count;
+        var lines = new List<string>();
 
-        int removed =
-            comparison.PackageNamesToDelete.Count +
-            comparison.SingleScriptNamesToDelete.Count;
+        int added = comparison.Changes.Count(change => change.Action == "ADDED");
+        int updated = comparison.Changes.Count(change => change.Action == "UPDATED");
+        int removed = comparison.Changes.Count(change => change.Action == "REMOVED");
+        int unchanged = comparison.Changes.Count(change => change.Action == "UNCHANGED");
 
-        if (removed == 0)
-            return $"Official scripts updated ({addedOrUpdated} item(s)).";
+        lines.Add("Official scripts synchronized.");
+        lines.Add($"Added: {added}, Updated: {updated}, Removed: {removed}, Unchanged: {unchanged}");
+        lines.Add(string.Empty);
 
-        return $"Official scripts synchronized ({addedOrUpdated} updated, {removed} removed).";
+        foreach (var change in comparison.Changes
+                     .OrderBy(change => change.Kind, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(change => change.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            lines.Add(FormatChange(change));
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private static string FormatChange(OfficialScriptChange change)
+    {
+        return change.Action switch
+        {
+            "ADDED" => $"[ADDED] {change.Name} {FormatVersion(change.NewVersion)}",
+            "UPDATED" => $"[UPDATED] {change.Name} {FormatVersion(change.OldVersion)} -> {FormatVersion(change.NewVersion)}",
+            "REMOVED" => $"[REMOVED] {change.Name} {FormatVersion(change.OldVersion)}",
+            "UNCHANGED" => $"[UNCHANGED] {change.Name} {FormatVersion(change.NewVersion ?? change.OldVersion)}",
+            _ => $"[{change.Action}] {change.Name}"
+        };
+    }
+
+    private static string FormatVersion(string? version)
+    {
+        return string.IsNullOrWhiteSpace(version) ? "v-" : $"v{version}";
     }
 
     private async Task DownloadGitHubDirectoryRecursiveAsync(string apiUrl, string localFolder, CancellationToken cancellationToken)
@@ -431,6 +521,8 @@ public sealed class OfficialScriptUpdateService : IOfficialScriptUpdateService
 
     private sealed class ManifestComparisonResult
     {
+        public List<OfficialScriptChange> Changes { get; } = new();
+
         public List<OfficialScriptEntry> PackagesToDownload { get; } = new();
 
         public List<OfficialScriptEntry> SingleScriptsToDownload { get; } = new();
@@ -440,6 +532,19 @@ public sealed class OfficialScriptUpdateService : IOfficialScriptUpdateService
         public List<string> SingleScriptNamesToDelete { get; } = new();
 
         public bool HasChanges { get; set; }
+    }
+
+    private sealed class OfficialScriptChange
+    {
+        public string Action { get; init; } = string.Empty;
+
+        public string Kind { get; init; } = string.Empty;
+
+        public string Name { get; init; } = string.Empty;
+
+        public string? OldVersion { get; init; }
+
+        public string? NewVersion { get; init; }
     }
 
     private sealed class GitHubContentItem
