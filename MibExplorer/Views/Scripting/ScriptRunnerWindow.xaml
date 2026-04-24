@@ -229,7 +229,7 @@
                                                        TextTrimming="CharacterEllipsis"
                                                        TextWrapping="NoWrap"
                                                        VerticalAlignment="Center"
-                                                       ToolTip="{Binding Version, StringFormat=Version: {0}}" />
+                                                       ToolTip="{Binding ScriptTooltip}" />
                                         </Grid>
 
                                         <!-- Relative path -->
@@ -350,37 +350,51 @@
                                Text="Type"
                                FontWeight="SemiBold" />
 
-                    <Border Grid.Row="6"
-                            Padding="8,4"
-                            CornerRadius="10"
-                            HorizontalAlignment="Left">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="#5A5A5A" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedScript.IsReadOnlyType}" Value="True">
-                                        <Setter Property="Background" Value="#2E8B57" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding SelectedScript.IsApplyType}" Value="True">
-                                        <Setter Property="Background" Value="#B8860B" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding SelectedScript.IsDangerousType}" Value="True">
-                                        <Setter Property="Background" Value="#B22222" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
+                    <StackPanel Grid.Row="6"
+            Orientation="Horizontal"
+            VerticalAlignment="Center">
 
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Margin="0,0,4,0"
-                                       Foreground="White"
-                                       FontSize="11"
-                                       Text="●" />
-                            <TextBlock Text="{Binding SelectedScript.ScriptType, Mode=OneWay}"
-                                       Foreground="White"
-                                       FontWeight="SemiBold" />
-                        </StackPanel>
-                    </Border>
+                        <Border Padding="8,4"
+            CornerRadius="10"
+            HorizontalAlignment="Left">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#5A5A5A" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedScript.IsReadOnlyType}" Value="True">
+                                            <Setter Property="Background" Value="#2E8B57" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SelectedScript.IsApplyType}" Value="True">
+                                            <Setter Property="Background" Value="#B8860B" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SelectedScript.IsDangerousType}" Value="True">
+                                            <Setter Property="Background" Value="#B22222" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,4,0"
+                       Foreground="White"
+                       FontSize="11"
+                       Text="●" />
+                                <TextBlock Text="{Binding SelectedScript.ScriptType, Mode=OneWay}"
+                       Foreground="White"
+                       FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Margin="16,0,0,0"
+               VerticalAlignment="Center"
+               Foreground="{DynamicResource AppMutedTextBrush}"
+               Text="{Binding SelectedScript.VersionDisplay, Mode=OneWay}" />
+
+                        <TextBlock Margin="16,0,0,0"
+               VerticalAlignment="Center"
+               Foreground="{DynamicResource AppMutedTextBrush}"
+               Text="{Binding SelectedScript.AuthorDisplay, Mode=OneWay}" />
+                    </StackPanel>
 
                     <TextBlock Grid.Row="8"
                                Text="Local path"

@@ -2,7 +2,7 @@
 
 # Type: Apply
 # Version: 1.0.0
-# SvmFix by DjSkual
+# Author: DjSkual
 # Generates and applies CfgAck and SvmInfo on the MIB
 # Uses modifyE2P to finalize the SVM fix
 

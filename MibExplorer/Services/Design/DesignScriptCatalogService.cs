@@ -2,13 +2,12 @@
 using MibExplorer.Services.Scripting;
 using MibExplorer.Settings;
 using System.IO;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace MibExplorer.Services.Design;
 
 public sealed class DesignScriptCatalogService : IScriptCatalogService
 {
-    private sealed record ScriptHeaderInfo(string ScriptType, string Version, string Description); 
+    private sealed record ScriptHeaderInfo(string ScriptType, string Version, string Author, string Description); 
     public string ScriptsFolderPath => ResolveScriptsFolderPath();
     public string OfficialScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Official");
     public string CustomScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Custom");
@@ -39,6 +38,7 @@ public sealed class DesignScriptCatalogService : IScriptCatalogService
 @"#!/bin/sh
 # Type: ReadOnly
 # Version: 1.0.0
+# Author: MibExplorer
 # Dump current variant information
 # Design mode sample script
 echo ""[Design] dump_variant""
@@ -54,6 +54,7 @@ echo ""Done""");
 @"#!/bin/sh
 # Type: Apply
 # Version: 1.0.0
+# Author: MibExplorer
 # Design package demo
 # Demonstrates package execution in design mode
 echo ""[Design] package demo start""
@@ -96,6 +97,7 @@ echo ""[Design] helper script executed""");
                 Description = ReadHeaderInfo(officialScript).Description,
                 ScriptType = ReadHeaderInfo(officialScript).ScriptType,
                 Version = ReadHeaderInfo(officialScript).Version,
+                Author = ReadHeaderInfo(officialScript).Author,
                 IsPackage = false,
                 PackageRootPath = string.Empty,
                 IsOfficial = true
@@ -109,6 +111,7 @@ echo ""[Design] helper script executed""");
                 Description = ReadHeaderInfo(customPackageRun).Description,
                 ScriptType = ReadHeaderInfo(customPackageRun).ScriptType,
                 Version = ReadHeaderInfo(customPackageRun).Version,
+                Author = ReadHeaderInfo(officialScript).Author,
                 IsPackage = true,
                 PackageRootPath = Path.Combine(CustomScriptsFolderPath, "PackageDemo"),
                 IsOfficial = false
@@ -144,7 +147,7 @@ echo ""[Design] helper script executed""");
                     {
                         commentLines.Add(text);
 
-                        if (commentLines.Count >= 5)
+                        if (commentLines.Count >= 6)
                             break;
 
                         continue;
@@ -155,10 +158,11 @@ echo ""[Design] helper script executed""");
             }
 
             if (commentLines.Count == 0)
-                return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty);
+                return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty, string.Empty);
 
             string scriptType = "Unknown";
             string version = string.Empty;
+            string author = string.Empty;
 
             foreach (var line in commentLines)
             {
@@ -174,20 +178,27 @@ echo ""[Design] helper script executed""");
                     if (!string.IsNullOrWhiteSpace(parsedVersion))
                         version = parsedVersion;
                 }
+                else if (line.StartsWith("Author:", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parsedAuthor = line.Substring("Author:".Length).Trim();
+                    if (!string.IsNullOrWhiteSpace(parsedAuthor))
+                        author = parsedAuthor;
+                }
             }
 
             var descriptionLines = commentLines
                 .Where(l => !l.StartsWith("Type:", StringComparison.OrdinalIgnoreCase)
-                         && !l.StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
+                         && !l.StartsWith("Version:", StringComparison.OrdinalIgnoreCase)
+                         && !l.StartsWith("Author:", StringComparison.OrdinalIgnoreCase))
                 .Take(3);
 
             string description = string.Join(Environment.NewLine, descriptionLines);
 
-            return new ScriptHeaderInfo(scriptType, version, description);
+            return new ScriptHeaderInfo(scriptType, version, author, description);
         }
         catch
         {
-            return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty);
+            return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty, string.Empty);
         }
     }
 }

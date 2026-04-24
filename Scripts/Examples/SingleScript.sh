@@ -1,7 +1,8 @@
 #!/bin/sh
 
-# Type: 
+# Type: ReadOnly
 # Version: 1.0.0
+# Author: MibExplorer Team
 # Example Single Script Center
 # Just say hello
 # you can use until 3 lines of description

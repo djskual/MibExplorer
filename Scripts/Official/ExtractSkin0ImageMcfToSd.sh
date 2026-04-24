@@ -2,6 +2,7 @@
 
 # Type: ReadOnly
 # Version: 1.0.0
+# Author: DjSkual
 # Extracts images.mcf from skin0 to the SD card
 # Useful for quick backup and inspection of the default skin assets
 

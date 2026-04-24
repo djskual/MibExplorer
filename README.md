@@ -248,6 +248,7 @@ Each script should start with:
 #!/bin/sh
 # Type: ReadOnly | Apply | Dangerous
 # Version: x.y.z
+# Author: YourName
 # Description line 1
 # Description line 2
 # Description line 3
@@ -257,6 +258,7 @@ Each script should start with:
 
 - The first commented line must define the script type
 - The second commented line must define the script version
+- The third commented line must define the author
 - Up to 3 description lines are supported
 - Official scripts are versioned and validated using SHA-256
 

@@ -6,7 +6,7 @@ namespace MibExplorer.Services.Scripting;
 
 public sealed class ScriptCatalogService : IScriptCatalogService
 {
-    private sealed record ScriptHeaderInfo(string ScriptType, string Version, string Description);
+    private sealed record ScriptHeaderInfo(string ScriptType, string Version, string Author, string Description);
     public string ScriptsFolderPath => ResolveScriptsFolderPath();
     public string OfficialScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Official");
     public string CustomScriptsFolderPath => Path.Combine(ScriptsFolderPath, "Custom");
@@ -83,6 +83,7 @@ public sealed class ScriptCatalogService : IScriptCatalogService
             Description = header.Description,
             ScriptType = header.ScriptType,
             Version = header.Version,
+            Author = header.Author,
             IsPackage = false,
             PackageRootPath = string.Empty,
             IsOfficial = isOfficial
@@ -104,6 +105,7 @@ public sealed class ScriptCatalogService : IScriptCatalogService
             Description = header.Description,
             ScriptType = header.ScriptType,
             Version = header.Version,
+            Author = header.Author,
             IsPackage = true,
             PackageRootPath = directory,
             IsOfficial = isOfficial
@@ -138,7 +140,7 @@ public sealed class ScriptCatalogService : IScriptCatalogService
                     {
                         commentLines.Add(text);
 
-                        if (commentLines.Count >= 5)
+                        if (commentLines.Count >= 6)
                             break;
 
                         continue;
@@ -149,10 +151,11 @@ public sealed class ScriptCatalogService : IScriptCatalogService
             }
 
             if (commentLines.Count == 0)
-                return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty);
+                return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty, string.Empty);
 
             string scriptType = "Unknown";
             string version = string.Empty;
+            string author = string.Empty;
 
             foreach (var line in commentLines)
             {
@@ -168,20 +171,27 @@ public sealed class ScriptCatalogService : IScriptCatalogService
                     if (!string.IsNullOrWhiteSpace(parsedVersion))
                         version = parsedVersion;
                 }
+                else if (line.StartsWith("Author:", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parsedAuthor = line.Substring("Author:".Length).Trim();
+                    if (!string.IsNullOrWhiteSpace(parsedAuthor))
+                        author = parsedAuthor;
+                }
             }
 
             var descriptionLines = commentLines
                 .Where(l => !l.StartsWith("Type:", StringComparison.OrdinalIgnoreCase)
-                         && !l.StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
+                         && !l.StartsWith("Version:", StringComparison.OrdinalIgnoreCase)
+                         && !l.StartsWith("Author:", StringComparison.OrdinalIgnoreCase))
                 .Take(3);
 
             string description = string.Join(Environment.NewLine, descriptionLines);
 
-            return new ScriptHeaderInfo(scriptType, version, description);
+            return new ScriptHeaderInfo(scriptType, version, author, description);
         }
         catch
         {
-            return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty);
+            return new ScriptHeaderInfo("Unknown", string.Empty, string.Empty, string.Empty);
         }
     }
 }

@@ -16,11 +16,26 @@ public sealed class ScriptItem
 
     public string Version { get; init; } = string.Empty;
 
+    public string Author { get; init; } = string.Empty;
+
     public bool IsPackage { get; init; }
 
     public string PackageRootPath { get; init; } = string.Empty;
 
     public bool IsOfficial { get; init; }
+
+    public string VersionDisplay =>
+        string.IsNullOrWhiteSpace(Version) ? "Version: -" : $"Version: {Version}";
+
+    public string AuthorDisplay =>
+        string.IsNullOrWhiteSpace(Author) ? "Author: -" : $"Author: {Author}";
+
+    public string ScriptTooltip =>
+        string.Join(Environment.NewLine,
+            Name,
+            ScriptType,
+            VersionDisplay,
+            AuthorDisplay);
 
     public bool IsReadOnlyType => string.Equals(ScriptType, "ReadOnly", StringComparison.OrdinalIgnoreCase);
 

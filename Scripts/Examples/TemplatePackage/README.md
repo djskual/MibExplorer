@@ -29,6 +29,7 @@ Each script should start with:
 #!/bin/sh
 # Type: ReadOnly
 # Version: 1.0.0
+# Author: MibExplorer Team
 # Description line 1
 # Description line 2
 # Description line 3
@@ -42,6 +43,8 @@ Each script should start with:
   - Type: Dangerous
 - The second line must define the version:
   - Version: x.y.z
+- The third line must define the author:
+  - Author: MibExplorer
 - You can add 1, 2, or 3 description lines after
 - Script Center reads type, version and description from this header
 
