@@ -3,14 +3,14 @@
 # Type: ReadOnly
 # Version: 1.0.0
 # Author: DjSkual
-# Extracts images.mcf from skin0 to the SD card
+# Extracts imageidmap.rs from skin0 to the SD card
 # Useful for quick backup and inspection of the default skin assets
 
 BASE_DIR=`pwd`
 
-SRC="/net/mmx/mnt/app/eso/hmi/lsd/Resources/skin0/images.mcf"
+SRC="/net/mmx/mnt/app/eso/hmi/lsd/Resources/skin0/imageidmap.res"
 
-echo "=== ExtractSkin0ImageMcfToSd start ==="
+echo "=== ExtractSkin0ImageIdMapToSd start ==="
 
 SD_ROOT=""
 if [ -d /net/mmx/fs/sda0 ]; then
@@ -37,7 +37,7 @@ if [ ! -f "$SRC" ]; then
     exit 1
 fi
 
-cp "$SRC" "$OUT_DIR/images.mcf" || {
+cp "$SRC" "$OUT_DIR/imageidmap.res" || {
     echo "[ERROR] Copy failed"
     mount -ur "$SD_ROOT" 2>/dev/null || true
     exit 1
@@ -47,6 +47,6 @@ sync 2>/dev/null || true
 mount -ur "$SD_ROOT" 2>/dev/null || true
 
 echo "[OK] Exported to: $OUT_DIR/images.mcf"
-echo "=== ExtractSkin0ImageMcfToSd end ==="
+echo "=== ExtractSkin0ImageIdMapToSd end ==="
 
 exit 0

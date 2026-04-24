@@ -129,6 +129,100 @@ public sealed class OfficialScriptUpdateService : IOfficialScriptUpdateService
         }
     }
 
+    public async Task<string> RestoreOfficialScriptAsync(
+        string officialScriptsFolderPath,
+        ScriptItem script,
+        CancellationToken cancellationToken = default)
+    {
+        if (!script.IsOfficial)
+            return "Selected script is not an Official script.";
+
+        Directory.CreateDirectory(officialScriptsFolderPath);
+
+        var remoteManifest = await LoadRemoteManifestAsync(cancellationToken);
+
+        OfficialScriptEntry? entry;
+
+        if (script.IsPackage)
+        {
+            entry = remoteManifest.PackagesScripts
+                .FirstOrDefault(item => string.Equals(item.Name, script.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (entry is null)
+                return $"Official package not found in remote manifest: {script.Name}";
+
+            string tempRoot = Path.Combine(Path.GetTempPath(), "MibExplorer_OfficialScript_Restore");
+            if (Directory.Exists(tempRoot))
+                Directory.Delete(tempRoot, recursive: true);
+
+            Directory.CreateDirectory(tempRoot);
+
+            try
+            {
+                string packageTempPath = Path.Combine(tempRoot, entry.Name);
+                Directory.CreateDirectory(packageTempPath);
+
+                await DownloadGitHubDirectoryRecursiveAsync(
+                    $"{ApiBaseUrl}/{entry.Name}",
+                    packageTempPath,
+                    cancellationToken);
+
+                string localPackagePath = Path.Combine(officialScriptsFolderPath, entry.Name);
+
+                if (Directory.Exists(localPackagePath))
+                    Directory.Delete(localPackagePath, recursive: true);
+
+                Directory.Move(packageTempPath, localPackagePath);
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                    Directory.Delete(tempRoot, recursive: true);
+            }
+
+            await SaveManifestAsync(officialScriptsFolderPath, remoteManifest, cancellationToken);
+
+            return $"Official package restored: {script.Name}";
+        }
+
+        entry = remoteManifest.SingleScripts
+            .FirstOrDefault(item => string.Equals(item.Name, script.FileName, StringComparison.OrdinalIgnoreCase));
+
+        if (entry is null)
+            return $"Official script not found in remote manifest: {script.FileName}";
+
+        string scriptUrl = $"{RawBaseUrl}/{entry.Name}";
+        string localScriptPath = Path.Combine(officialScriptsFolderPath, entry.Name);
+
+        using var response = await _httpClient.GetAsync(scriptUrl, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        await using (var input = await response.Content.ReadAsStreamAsync(cancellationToken))
+        await using (var output = File.Create(localScriptPath))
+        {
+            await input.CopyToAsync(output, cancellationToken);
+        }
+
+        await SaveManifestAsync(officialScriptsFolderPath, remoteManifest, cancellationToken);
+
+        return $"Official script restored: {script.FileName}";
+    }
+
+    private static async Task SaveManifestAsync(
+        string officialScriptsFolderPath,
+        OfficialScriptsManifest manifest,
+        CancellationToken cancellationToken)
+    {
+        string manifestPath = Path.Combine(officialScriptsFolderPath, ManifestFileName);
+
+        string json = JsonSerializer.Serialize(manifest, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        await File.WriteAllTextAsync(manifestPath, json, cancellationToken);
+    }
+
     private async Task<OfficialScriptsManifest> LoadRemoteManifestAsync(CancellationToken cancellationToken)
     {
         string manifestUrl = $"{RawBaseUrl}/{ManifestFileName}";
@@ -361,5 +455,26 @@ public sealed class OfficialScriptUpdateService : IOfficialScriptUpdateService
 
         [JsonPropertyName("download_url")]
         public string DownloadUrl { get; set; } = string.Empty;
+    }
+
+    public string? GetExpectedSha256(string officialScriptsFolderPath, ScriptItem script)
+    {
+        if (!script.IsOfficial)
+            return null;
+
+        var manifest = LoadLocalManifest(officialScriptsFolderPath);
+        if (manifest is null)
+            return null;
+
+        if (script.IsPackage)
+        {
+            return manifest.PackagesScripts
+                .FirstOrDefault(entry => string.Equals(entry.Name, script.Name, StringComparison.OrdinalIgnoreCase))
+                ?.Sha256;
+        }
+
+        return manifest.SingleScripts
+            .FirstOrDefault(entry => string.Equals(entry.Name, script.FileName, StringComparison.OrdinalIgnoreCase))
+            ?.Sha256;
     }
 }

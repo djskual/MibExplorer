@@ -22,4 +22,17 @@ public sealed class DesignOfficialScriptUpdateService : IOfficialScriptUpdateSer
         Directory.CreateDirectory(officialScriptsFolderPath);
         return Task.FromResult("Design mode: official scripts update simulated.");
     }
+
+    public string? GetExpectedSha256(string officialScriptsFolderPath, ScriptItem script)
+    {
+        return null;
+    }
+
+    public Task<string> RestoreOfficialScriptAsync(
+        string officialScriptsFolderPath,
+        ScriptItem script,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult($"Design mode: restore simulated for {script.Name}.");
+    }
 }

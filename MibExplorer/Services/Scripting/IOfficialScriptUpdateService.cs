@@ -8,5 +8,9 @@ public interface IOfficialScriptUpdateService
 
     Task<string> UpdateOfficialScriptsAsync(string officialScriptsFolderPath, CancellationToken cancellationToken = default);
 
+    Task<string> RestoreOfficialScriptAsync(string officialScriptsFolderPath, ScriptItem script, CancellationToken cancellationToken = default);
+
     OfficialScriptsManifest? LoadLocalManifest(string officialScriptsFolderPath);
+
+    string? GetExpectedSha256(string officialScriptsFolderPath, ScriptItem script);
 }

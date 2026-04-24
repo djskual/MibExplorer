@@ -3,6 +3,7 @@ using MibExplorer.Models.Scripting;
 using MibExplorer.Services;
 using MibExplorer.Services.Scripting;
 using MibExplorer.Settings;
+using MibExplorer.Views.Dialogs;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
@@ -271,14 +272,26 @@ public sealed class ScriptRunnerViewModel : ObservableObject
             return;
         }
 
+        if (!await ValidateOfficialScriptIntegrityAsync())
+        {
+            return;
+        }
+
+        var scriptToRun = SelectedScript;
+        if (scriptToRun is null)
+        {
+            StatusText = "No script selected";
+            return;
+        }
+
         IsBusy = true;
-        StatusText = $"Running {SelectedScript.Name}...";
+        StatusText = $"Running {scriptToRun.Name}...";
         OutputText = string.Empty;
 
         try
         {
             var result = await _executionService.ExecuteAsync(
-                SelectedScript,
+                scriptToRun,
                 onOutput: AppendOutput);
 
             if (result.Success)
@@ -310,6 +323,96 @@ public sealed class ScriptRunnerViewModel : ObservableObject
             {
                 Application.Current.Dispatcher.Invoke(() => IsBusy = false);
             }
+        }
+    }
+
+    private async Task<bool> ValidateOfficialScriptIntegrityAsync()
+    {
+        if (SelectedScript is null)
+            return false;
+
+        if (!SelectedScript.IsOfficial)
+            return true;
+
+        string? expectedSha = _officialScriptUpdateService.GetExpectedSha256(
+            _catalogService.OfficialScriptsFolderPath,
+            SelectedScript);
+
+        if (string.IsNullOrWhiteSpace(expectedSha))
+        {
+            AppendOutput("[WARN] Official script integrity check skipped: no SHA found in local manifest.");
+            AppendOutput("Run 'Update Official' to refresh official scripts metadata.");
+            StatusText = "Official script integrity unavailable";
+            return false;
+        }
+
+        string actualSha = SelectedScript.IsPackage
+            ? ScriptIntegrityService.ComputePackageSha256(SelectedScript.PackageRootPath)
+            : ScriptIntegrityService.ComputeSingleScriptSha256(SelectedScript.LocalPath);
+
+        if (string.Equals(actualSha, expectedSha, StringComparison.OrdinalIgnoreCase))
+        {
+            SelectedScript.IsModified = false;
+            return true;
+        }
+
+        SelectedScript.IsModified = true;
+
+        AppendOutput("[ERROR] Official script integrity check failed.");
+        AppendOutput($"Script: {SelectedScript.Name}");
+        AppendOutput("This Official script was modified locally or is out of sync.");
+
+        var result = AppMessageBox.Show(
+            "This Official script has been modified locally or is out of sync.\n\n" +
+            "Do you want to restore the trusted Official version now?",
+            "Official script integrity check failed",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            StatusText = "Official script modified";
+            OnPropertyChanged(nameof(Scripts));
+            return false;
+        }
+
+        try
+        {
+            var scriptNameToRestore = SelectedScript.Name; 
+
+            IsBusy = true;
+            StatusText = $"Restoring {scriptNameToRestore}...";
+
+            string restoreResult = await _officialScriptUpdateService.RestoreOfficialScriptAsync(
+                _catalogService.OfficialScriptsFolderPath,
+                SelectedScript);
+
+            AppendOutput(restoreResult);
+
+            RefreshScripts();
+
+            var restoredScript = Scripts
+                .FirstOrDefault(script => string.Equals(script.Name, scriptNameToRestore, StringComparison.OrdinalIgnoreCase));
+
+            if (restoredScript is not null)
+            {
+                SelectedScript = restoredScript;
+            }
+
+            StatusText = "Official script restored";
+            return false;
+        }
+        catch (Exception ex)
+        {
+            AppendOutput("[ERROR] Failed to restore Official script.");
+            AppendOutput(ex.Message);
+            StatusText = "Official script restore failed";
+            return false;
+        }
+        finally
+        {
+            IsBusy = false;
+            RefreshCommandStates();
         }
     }
 

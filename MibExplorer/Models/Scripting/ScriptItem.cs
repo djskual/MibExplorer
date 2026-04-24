@@ -1,6 +1,8 @@
-﻿namespace MibExplorer.Models.Scripting;
+﻿using MibExplorer.Core;
 
-public sealed class ScriptItem
+namespace MibExplorer.Models.Scripting;
+
+public sealed class ScriptItem : ObservableObject
 {
     public string Name { get; init; } = string.Empty;
 
@@ -23,6 +25,13 @@ public sealed class ScriptItem
     public string PackageRootPath { get; init; } = string.Empty;
 
     public bool IsOfficial { get; init; }
+
+    private bool _isModified;
+    public bool IsModified
+    {
+        get => _isModified;
+        set => SetProperty(ref _isModified, value);
+    }
 
     public string VersionDisplay =>
         string.IsNullOrWhiteSpace(Version) ? "Version: -" : $"Version: {Version}";

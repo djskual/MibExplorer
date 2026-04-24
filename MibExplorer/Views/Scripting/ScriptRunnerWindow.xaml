@@ -205,7 +205,6 @@
                                             <!-- Official badge -->
                                             <TextBlock Grid.Column="0"
                                                        Margin="0,0,6,0"
-                                                       Foreground="#22C55E"
                                                        FontSize="12"
                                                        Text="🛡"
                                                        VerticalAlignment="Center"
@@ -213,9 +212,15 @@
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Setter Property="Foreground" Value="#22C55E" />
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsOfficial}" Value="True">
                                                                 <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding IsModified}" Value="True">
+                                                                <Setter Property="Foreground" Value="#EF4444" />
+                                                                <Setter Property="ToolTip" Value="Official script modified locally" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
