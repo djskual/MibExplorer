@@ -134,6 +134,7 @@ MibExplorer now includes a built-in **Script Center**, allowing you to execute c
   * execute script
   * capture output
   * automatic cleanup
+* Script metadata support (Type / Version / Author)
 
 ---
 
@@ -153,6 +154,27 @@ MibExplorer now includes a built-in **Script Center**, allowing you to execute c
 * No persistent modification unless explicitly done by the script
 * Automatic cleanup after execution
 * Exit code detection and reporting
+
+---
+
+### 🔐 Official Script Integrity
+
+Official scripts are protected by a **SHA-256 integrity system**.
+
+#### Behavior
+
+* Integrity is verified **before execution**
+* If a script has been modified locally:
+  * execution is blocked
+  * a prompt allows restoring the official version
+* Only the affected script/package is re-downloaded
+* No full re-sync is required
+
+#### Notes
+
+* Ensures Official scripts remain trusted and consistent
+* Prevents accidental or malicious local modifications
+* Custom scripts are not affected
 
 ---
 
@@ -192,6 +214,17 @@ MibExplorer includes a built-in system to download and manage **official scripts
 * Separation between:
   * `Official/` scripts (managed by MibExplorer)
   * `Custom/` scripts (user-defined)
+
+#### Update Feedback
+
+The update system provides a detailed synchronization log:
+
+* `[ADDED]` new scripts
+* `[UPDATED]` updated scripts with version change
+* `[REMOVED]` scripts no longer present in repository
+* `[UNCHANGED]` scripts already up to date
+
+This allows full visibility on what changed during an update.
 
 #### Structure
 
