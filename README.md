@@ -16,7 +16,8 @@ It provides:
 - an **interactive remote shell console**
 - a **built-in remote file editor with inline diff**
 - an **advanced side-by-side file diff viewer**
-- and a **powerful Script Center for remote execution**
+- a **powerful Script Center for remote execution**
+- and a **full Coding Center for direct MIB long coding management**
 
 ---
 
@@ -301,6 +302,77 @@ If you create useful scripts, feel free to submit a PR.
 
 ---
 
+## 🚗 Coding Center
+
+![MibExplorer CodingCenter](docs/CodingCenter.png)
+
+MibExplorer now includes a powerful built-in **Coding Center** for direct **5F long coding** management on Volkswagen MIB systems.
+
+Designed to combine the best workflows from ODIS, VCDS and raw engineering tools.
+
+---
+
+### Features
+
+* Direct read of current 5F coding from the MIB
+* Automatic VIN detection
+* Full decoding through internal feature catalog
+* Safe full-blob coding write with verification
+* Persistent write confirmed after reboot
+
+---
+
+### Editing Modes
+
+#### ODIS-style Features View
+
+* Human readable coding parameters
+* Dropdown / checkbox editing
+* Current value vs new value comparison
+
+#### VCDS-style Raw Coding View
+
+* Byte-by-byte coding access
+* Bit / multibit decoding
+* Direct HEX byte editing
+* Direct binary byte editing
+* Full synchronization with Features view
+
+#### Direct Long Coding View
+
+* Paste or edit full coding string manually
+* Instant decoding of imported coding
+* Auto-generated changes preview
+
+---
+
+### Changes & Safety
+
+* Dedicated Changes tab with clear diff display
+* Byte old/new comparison
+* Automatic snapshot created before Apply
+* One-click snapshot restore
+* Readback verification after write
+* Safe full 4101 blob write workflow
+
+---
+
+### History
+
+* Per-vehicle coding history
+* Snapshot labels
+* Restore previous coding versions instantly
+
+---
+
+### Integration
+
+* Fully integrated into MibExplorer UI
+* Uses existing SSH connection
+* No external coding tools required
+
+---
+
 ## 🧑‍💻 Remote File Editor
 
 ![MibExplorer FileEditor](docs/FileEditor.png)
@@ -581,6 +653,7 @@ Scripts are designed for use with Script Center.
 * Inline diff editor (line + token level)
 * Diff navigation inside editor
 * Advanced file diff viewer
+* Full Coding Center (read / edit / apply / restore)
 * IP auto-detection with validation
 
 ---

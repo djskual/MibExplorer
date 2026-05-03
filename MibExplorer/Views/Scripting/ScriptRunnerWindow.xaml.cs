@@ -162,6 +162,12 @@ public partial class ScriptRunnerWindow : Window
         _followExecutionLog = IsExecutionLogNearBottom(scrollViewer);
     }
 
+    private void ScriptsListBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is DependencyObject source)
+            ApplyFineVerticalScroll(source, e);
+    }
+
     private void ExecutionLogTextBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         ApplyFineVerticalScroll(ExecutionLogTextBox, e);

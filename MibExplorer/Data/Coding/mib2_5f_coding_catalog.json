@@ -1,0 +1,3737 @@
+{
+  "schemaVersion": 1,
+  "ecu": "5F",
+  "name": "MIB2 / MIB2.5 5F Long Coding Catalog",
+  "source": "mib2_5f_coding_catalog_first.csv completed by user; keys computed with 0x50180000 + byte*0x400 + mask; 15 inferred entries validated by Coding15SnapshotProbe campaign on 2026-04-30",
+  "features": [
+    {
+      "id": "brand",
+      "label": "brand",
+      "byte": 0,
+      "maskHex": "0x0F",
+      "mask": 15,
+      "shift": 0,
+      "bitLength": 4,
+      "key": "0x5018000F",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "VW",
+      "currentValue": "VW",
+      "values": [
+        {
+          "raw": "0",
+          "label": "no Brand"
+        },
+        {
+          "raw": "1",
+          "label": "Audi"
+        },
+        {
+          "raw": "2",
+          "label": "VW"
+        },
+        {
+          "raw": "3",
+          "label": "Skoda"
+        },
+        {
+          "raw": "4",
+          "label": "Seat"
+        },
+        {
+          "raw": "5",
+          "label": "Bentley"
+        },
+        {
+          "raw": "6",
+          "label": "VW-NFZ"
+        },
+        {
+          "raw": "7",
+          "label": "Porsche"
+        },
+        {
+          "raw": "8",
+          "label": "MAN"
+        },
+        {
+          "raw": "9",
+          "label": "LAMBORGHINI"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "car_class",
+      "label": "Car Class",
+      "byte": 1,
+      "maskHex": "0x0F",
+      "mask": 15,
+      "shift": 0,
+      "bitLength": 4,
+      "key": "0x5018040F",
+      "type": "int",
+      "control": "slider",
+      "currentRaw": "3",
+      "currentValue": "3",
+      "values": [
+        {
+          "raw": "0",
+          "label": "0"
+        },
+        {
+          "raw": "1",
+          "label": "1"
+        },
+        {
+          "raw": "2",
+          "label": "2"
+        },
+        {
+          "raw": "3",
+          "label": "3"
+        },
+        {
+          "raw": "4",
+          "label": "4"
+        },
+        {
+          "raw": "5",
+          "label": "5"
+        },
+        {
+          "raw": "6",
+          "label": "6"
+        },
+        {
+          "raw": "7",
+          "label": "7"
+        },
+        {
+          "raw": "8",
+          "label": "8"
+        },
+        {
+          "raw": "9",
+          "label": "9"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "car_generation",
+      "label": "Car Generation",
+      "byte": 1,
+      "maskHex": "0xF0",
+      "mask": 240,
+      "shift": 4,
+      "bitLength": 4,
+      "key": "0x501804F0",
+      "type": "int",
+      "control": "slider",
+      "currentRaw": "7",
+      "currentValue": "7",
+      "values": [
+        {
+          "raw": "0",
+          "label": "0"
+        },
+        {
+          "raw": "1",
+          "label": "1"
+        },
+        {
+          "raw": "2",
+          "label": "2"
+        },
+        {
+          "raw": "3",
+          "label": "3"
+        },
+        {
+          "raw": "4",
+          "label": "4"
+        },
+        {
+          "raw": "5",
+          "label": "5"
+        },
+        {
+          "raw": "6",
+          "label": "6"
+        },
+        {
+          "raw": "7",
+          "label": "7"
+        },
+        {
+          "raw": "8",
+          "label": "8"
+        },
+        {
+          "raw": "9",
+          "label": "9"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "car_derivate",
+      "label": "Car Derivate",
+      "byte": 2,
+      "maskHex": "0x0F",
+      "mask": 15,
+      "shift": 0,
+      "bitLength": 4,
+      "key": "0x5018080F",
+      "type": "int",
+      "control": "slider",
+      "currentRaw": "0",
+      "currentValue": "0",
+      "values": [
+        {
+          "raw": "0",
+          "label": "0"
+        },
+        {
+          "raw": "1",
+          "label": "1"
+        },
+        {
+          "raw": "2",
+          "label": "2"
+        },
+        {
+          "raw": "3",
+          "label": "3"
+        },
+        {
+          "raw": "4",
+          "label": "4"
+        },
+        {
+          "raw": "5",
+          "label": "5"
+        },
+        {
+          "raw": "6",
+          "label": "6"
+        },
+        {
+          "raw": "7",
+          "label": "7"
+        },
+        {
+          "raw": "8",
+          "label": "8"
+        },
+        {
+          "raw": "9",
+          "label": "9"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "car_derivate_supplement",
+      "label": "Car Derivate Supplement",
+      "byte": 2,
+      "maskHex": "0xF0",
+      "mask": 240,
+      "shift": 4,
+      "bitLength": 4,
+      "key": "0x501808F0",
+      "type": "int",
+      "control": "slider",
+      "currentRaw": "1",
+      "currentValue": "1",
+      "values": [
+        {
+          "raw": "0",
+          "label": "0"
+        },
+        {
+          "raw": "1",
+          "label": "1"
+        },
+        {
+          "raw": "2",
+          "label": "2"
+        },
+        {
+          "raw": "3",
+          "label": "3"
+        },
+        {
+          "raw": "4",
+          "label": "4"
+        },
+        {
+          "raw": "5",
+          "label": "5"
+        },
+        {
+          "raw": "6",
+          "label": "6"
+        },
+        {
+          "raw": "7",
+          "label": "7"
+        },
+        {
+          "raw": "8",
+          "label": "8"
+        },
+        {
+          "raw": "9",
+          "label": "9"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "country_navigation",
+      "label": "Country Navigation",
+      "byte": 3,
+      "maskHex": "0xFF",
+      "mask": 255,
+      "shift": 0,
+      "bitLength": 8,
+      "key": "0x50180CFF",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "EU",
+      "currentValue": "EU",
+      "values": [
+        {
+          "raw": "0",
+          "label": "None"
+        },
+        {
+          "raw": "1",
+          "label": "EU"
+        },
+        {
+          "raw": "2",
+          "label": "NAR"
+        },
+        {
+          "raw": "3",
+          "label": "MSA"
+        },
+        {
+          "raw": "4",
+          "label": "Korea"
+        },
+        {
+          "raw": "5",
+          "label": "China"
+        },
+        {
+          "raw": "6",
+          "label": "Japan"
+        },
+        {
+          "raw": "7",
+          "label": "AsiaPacific"
+        },
+        {
+          "raw": "8",
+          "label": "Australia"
+        },
+        {
+          "raw": "9",
+          "label": "South Africa"
+        },
+        {
+          "raw": "10",
+          "label": "NEAST"
+        },
+        {
+          "raw": "11",
+          "label": "NMAfrica"
+        },
+        {
+          "raw": "12",
+          "label": "MEAST"
+        },
+        {
+          "raw": "13",
+          "label": "CentralAsia"
+        },
+        {
+          "raw": "14",
+          "label": "India"
+        },
+        {
+          "raw": "15",
+          "label": "Israel"
+        },
+        {
+          "raw": "16",
+          "label": "Taiwan"
+        },
+        {
+          "raw": "17",
+          "label": "MSA 2 (Chile)"
+        },
+        {
+          "raw": "18",
+          "label": "China 2"
+        },
+        {
+          "raw": "19",
+          "label": "China 3"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_1_ht",
+      "label": "Channel 1 HT",
+      "byte": 4,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50181001",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "installed",
+      "currentValue": "installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_1_tt",
+      "label": "Channel 1 TT",
+      "byte": 4,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50181002",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "installed",
+      "currentValue": "installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_2_ht",
+      "label": "Channel 2 HT",
+      "byte": 4,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50181004",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "installed",
+      "currentValue": "installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_2_tt",
+      "label": "Channel 2 TT",
+      "byte": 4,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50181008",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "installed",
+      "currentValue": "installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_3_ht",
+      "label": "Channel 3 HT",
+      "byte": 4,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50181010",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "installed",
+      "currentValue": "installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_3_tt",
+      "label": "Channel 3 TT",
+      "byte": 4,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50181020",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "installed",
+      "currentValue": "installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_4_ht",
+      "label": "Channel 4 HT",
+      "byte": 4,
+      "maskHex": "0x40",
+      "mask": 64,
+      "shift": 6,
+      "bitLength": 1,
+      "key": "0x50181040",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "installed",
+      "currentValue": "installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_4_tt",
+      "label": "Channel 4 TT",
+      "byte": 4,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x50181080",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "installed",
+      "currentValue": "installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_5_ht",
+      "label": "Channel 5 HT",
+      "byte": 5,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50181401",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_5_tt",
+      "label": "Channel 5 TT",
+      "byte": 5,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50181402",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_6_ht",
+      "label": "Channel 6 HT",
+      "byte": 5,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50181404",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_6_tt",
+      "label": "Channel 6 TT",
+      "byte": 5,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50181408",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_7_ht",
+      "label": "Channel 7 HT",
+      "byte": 5,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50181410",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_7_tt",
+      "label": "Channel 7 TT",
+      "byte": 5,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50181420",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_8_ht",
+      "label": "Channel 8 HT",
+      "byte": 5,
+      "maskHex": "0x40",
+      "mask": 64,
+      "shift": 6,
+      "bitLength": 1,
+      "key": "0x50181440",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_8_tt",
+      "label": "Channel 8 TT",
+      "byte": 5,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x50181480",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_9_ht",
+      "label": "Channel 9 HT",
+      "byte": 6,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50181801",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_9_tt",
+      "label": "Channel 9 TT",
+      "byte": 6,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50181802",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_10_ht",
+      "label": "Channel 10 HT",
+      "byte": 6,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50181804",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_10_tt",
+      "label": "Channel 10 TT",
+      "byte": 6,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50181808",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_11_ht",
+      "label": "Channel 11 HT",
+      "byte": 6,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50181810",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_11_tt",
+      "label": "Channel 11 TT",
+      "byte": 6,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50181820",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_12_ht",
+      "label": "Channel 12 HT",
+      "byte": 6,
+      "maskHex": "0x40",
+      "mask": 64,
+      "shift": 6,
+      "bitLength": 1,
+      "key": "0x50181840",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_12_tt",
+      "label": "Channel 12 TT",
+      "byte": 6,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x50181880",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_13_ht",
+      "label": "Channel 13 HT",
+      "byte": 7,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50181C01",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_13_tt",
+      "label": "Channel 13 TT",
+      "byte": 7,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50181C02",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_14_ht",
+      "label": "Channel 14 HT",
+      "byte": 7,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50181C04",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_14_tt",
+      "label": "Channel 14 TT",
+      "byte": 7,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50181C08",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_15_ht",
+      "label": "Channel 15 HT",
+      "byte": 7,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50181C10",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_15_tt",
+      "label": "Channel 15 TT",
+      "byte": 7,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50181C20",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_16_ht",
+      "label": "Channel 16 HT",
+      "byte": 7,
+      "maskHex": "0x40",
+      "mask": 64,
+      "shift": 6,
+      "bitLength": 1,
+      "key": "0x50181C40",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "channel_16_tt",
+      "label": "Channel 16 TT",
+      "byte": 7,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x50181C80",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "microphone_1",
+      "label": "Microphone 1",
+      "byte": 8,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50182001",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "connected",
+      "currentValue": "connected",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not connected"
+        },
+        {
+          "raw": "1",
+          "label": "connected"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "microphone_2",
+      "label": "Microphone 2",
+      "byte": 8,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50182002",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not connected",
+      "currentValue": "not connected",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not connected"
+        },
+        {
+          "raw": "1",
+          "label": "connected"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "headphones_output_1",
+      "label": "Headphones Output 1",
+      "byte": 8,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50182004",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not active",
+      "currentValue": "not active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "headphones_output_2",
+      "label": "Headphones Output 2",
+      "byte": 8,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50182008",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not active",
+      "currentValue": "not active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "aux_in",
+      "label": "AUX IN",
+      "byte": 8,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50182010",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "ami",
+      "label": "AMI",
+      "byte": 8,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50182020",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "vda_nf_in",
+      "label": "VDA-NF IN",
+      "byte": 8,
+      "maskHex": "0x40",
+      "mask": 64,
+      "shift": 6,
+      "bitLength": 1,
+      "key": "0x50182040",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "on",
+      "currentValue": "on",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "wake_up_over_ecl",
+      "label": "Wake Up Over ECL",
+      "byte": 8,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x50182080",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not active",
+      "currentValue": "not active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "band_settings_fm_tuner",
+      "label": "Band Settings FM Tuner",
+      "byte": 9,
+      "maskHex": "0x0F",
+      "mask": 15,
+      "shift": 0,
+      "bitLength": 4,
+      "key": "0x5018240F",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "EU RdW",
+      "currentValue": "EU RdW",
+      "values": [
+        {
+          "raw": "0",
+          "label": "no setting"
+        },
+        {
+          "raw": "1",
+          "label": "EU (RdW)"
+        },
+        {
+          "raw": "2",
+          "label": "NAR"
+        },
+        {
+          "raw": "3",
+          "label": "JP"
+        },
+        {
+          "raw": "4",
+          "label": "KOR"
+        },
+        {
+          "raw": "5",
+          "label": "China"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "band_settings_am_tuner",
+      "label": "Band Settings AM Tuner",
+      "byte": 9,
+      "maskHex": "0xF0",
+      "mask": 240,
+      "shift": 4,
+      "bitLength": 4,
+      "key": "0x501824F0",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "EU RdW",
+      "currentValue": "EU RdW",
+      "values": [
+        {
+          "raw": "0",
+          "label": "no setting"
+        },
+        {
+          "raw": "1",
+          "label": "EU (RdW)"
+        },
+        {
+          "raw": "2",
+          "label": "NAR"
+        },
+        {
+          "raw": "3",
+          "label": "JP"
+        },
+        {
+          "raw": "4",
+          "label": "EU"
+        },
+        {
+          "raw": "5",
+          "label": "AUS"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "band_settings_dab_tuner_band_1",
+      "label": "Band Settings DAB Tuner Band 1",
+      "byte": 10,
+      "maskHex": "0x0F",
+      "mask": 15,
+      "shift": 0,
+      "bitLength": 4,
+      "key": "0x5018280F",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "EU Band III -N"
+        },
+        {
+          "raw": "2",
+          "label": "EU Band III"
+        },
+        {
+          "raw": "3",
+          "label": "CANADA L-Band"
+        },
+        {
+          "raw": "4",
+          "label": "KOREA Band III"
+        },
+        {
+          "raw": "5",
+          "label": "CHINA Band III"
+        },
+        {
+          "raw": "6",
+          "label": "Download Table 1"
+        },
+        {
+          "raw": "7",
+          "label": "NEW ZEALAND Band III"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "band_settings_dab_tuner_band_2",
+      "label": "Band Settings DAB Tuner Band 2",
+      "byte": 10,
+      "maskHex": "0xF0",
+      "mask": 240,
+      "shift": 4,
+      "bitLength": 4,
+      "key": "0x501828F0",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "L-Band"
+        },
+        {
+          "raw": "2",
+          "label": "Download Table 2"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "sound_system",
+      "label": "Sound System",
+      "byte": 11,
+      "maskHex": "0xFF",
+      "mask": 255,
+      "shift": 0,
+      "bitLength": 8,
+      "key": "0x50182CFF",
+      "type": "int",
+      "control": "unknown",
+      "currentRaw": "Sound System internal",
+      "currentValue": "Sound System internal",
+      "values": [
+        {
+          "raw": "0",
+          "label": "Sound System no Allocation"
+        },
+        {
+          "raw": "1",
+          "label": "Sound System internal"
+        },
+        {
+          "raw": "2",
+          "label": "Sound System External MOST"
+        },
+        {
+          "raw": "3",
+          "label": "Sound System External BAP"
+        },
+        {
+          "raw": "4",
+          "label": "Sound System Internal individual"
+        },
+        {
+          "raw": "5",
+          "label": "Sound System External BOOSTER"
+        },
+        {
+          "raw": "6",
+          "label": "Sound System External BAP with presets"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Confirmed by snapshots: byte 11 changed 0x01→0x06 and pc_i 0x50182CFF changed 1→6."
+      ],
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "fm_antenna",
+      "label": "FM Antenna",
+      "byte": 12,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50183001",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "available",
+      "currentValue": "available",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not available"
+        },
+        {
+          "raw": "1",
+          "label": "available"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "hd_fm_antenna_mode",
+      "label": "HD FM Antenna Mode",
+      "byte": 12,
+      "maskHex": "0x0E",
+      "mask": 14,
+      "shift": 1,
+      "bitLength": 3,
+      "key": "0x5018300E",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "AM FM ANT",
+      "currentValue": "AM FM ANT",
+      "values": [
+        {
+          "raw": "0",
+          "label": "AM FM ANT"
+        },
+        {
+          "raw": "1",
+          "label": "Switching"
+        },
+        {
+          "raw": "2",
+          "label": "FM ANT"
+        },
+        {
+          "raw": "3",
+          "label": "MRC"
+        },
+        {
+          "raw": "4",
+          "label": "Testmode"
+        }
+      ],
+      "confidence": "provided",
+      "notes": [
+        "0x0E is intentional: it covers bits 1..3 (three-bit enum), not a typo"
+      ]
+    },
+    {
+      "id": "microphone_3",
+      "label": "Microphone 3",
+      "byte": 12,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x501830F0",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "not connected",
+      "currentValue": "not connected",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not connected"
+        },
+        {
+          "raw": "1",
+          "label": "connected"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Blob confirmed: byte 12 bit 4 changed 0x00→0x10. pc_i individual key 0x50183010 does not exist; shared upper-nibble key 0x501830F0 changed 0→1.",
+        "For blob rebuild keep the individual bit mask/shift. For pc-based write, write the merged upper-nibble value to shared key 0x501830F0."
+      ],
+      "pcGroupKey": "0x501830F0",
+      "pcGroupMaskHex": "0xF0",
+      "pcGroupMask": 240,
+      "pcGroupShift": 4,
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "microphone_4",
+      "label": "Microphone 4",
+      "byte": 12,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x501830F0",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "not connected",
+      "currentValue": "not connected",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not connected"
+        },
+        {
+          "raw": "1",
+          "label": "connected"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Blob confirmed: byte 12 bit 5 changed 0x00→0x20. pc_i individual key 0x50183020 does not exist; shared upper-nibble key 0x501830F0 changed 0→2.",
+        "For blob rebuild keep the individual bit mask/shift. For pc-based write, write the merged upper-nibble value to shared key 0x501830F0."
+      ],
+      "pcGroupKey": "0x501830F0",
+      "pcGroupMaskHex": "0xF0",
+      "pcGroupMask": 240,
+      "pcGroupShift": 4,
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "dab_antenna_1",
+      "label": "DAB antenna 1",
+      "byte": 12,
+      "maskHex": "0x40",
+      "mask": 64,
+      "shift": 6,
+      "bitLength": 1,
+      "key": "0x501830F0",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "not active",
+      "currentValue": "not active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Blob confirmed: byte 12 bit 6 changed 0x00→0x40. pc_i individual key 0x50183040 does not exist; shared upper-nibble key 0x501830F0 changed 0→4.",
+        "For blob rebuild keep the individual bit mask/shift. For pc-based write, write the merged upper-nibble value to shared key 0x501830F0."
+      ],
+      "pcGroupKey": "0x501830F0",
+      "pcGroupMaskHex": "0xF0",
+      "pcGroupMask": 240,
+      "pcGroupShift": 4,
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "am_fm_dab_antenna",
+      "label": "AM FM DAB antenna",
+      "byte": 12,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x501830F0",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "not active",
+      "currentValue": "not active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Blob confirmed: byte 12 bit 7 changed 0x00→0x80. pc_i individual key 0x50183080 does not exist; shared upper-nibble key 0x501830F0 changed 0→8.",
+        "For blob rebuild keep the individual bit mask/shift. For pc-based write, write the merged upper-nibble value to shared key 0x501830F0."
+      ],
+      "pcGroupKey": "0x501830F0",
+      "pcGroupMaskHex": "0xF0",
+      "pcGroupMask": 240,
+      "pcGroupShift": 4,
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "rds",
+      "label": "RDS",
+      "byte": 13,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50183401",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not deactivated",
+      "currentValue": "not deactivated",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not deactivated"
+        },
+        {
+          "raw": "1",
+          "label": "deactivated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "af",
+      "label": "AF",
+      "byte": 13,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50183402",
+      "type": "bool",
+      "control": "BIOSCtrl",
+      "currentRaw": "persistent",
+      "currentValue": "persistent",
+      "values": [
+        {
+          "raw": "0",
+          "label": "persistent"
+        },
+        {
+          "raw": "1",
+          "label": "temporary"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "hd_radio_coding",
+      "label": "hd radio coding",
+      "byte": 13,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50183404",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not activated",
+      "currentValue": "not activated",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "radio_text_plus",
+      "label": "Radio Text Plus",
+      "byte": 13,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50183408",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "activated",
+      "currentValue": "activated",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Confirmed by snapshots: byte 13 bit 3 changed 0x09→0x01 and pc_i 0x50183408 changed 1→0."
+      ],
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "pi_ignore",
+      "label": "PI ignore",
+      "byte": 13,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50183410",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "bws",
+      "label": "BWS",
+      "byte": 13,
+      "maskHex": "0x60",
+      "mask": 96,
+      "shift": 5,
+      "bitLength": 2,
+      "key": "0x50183460",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "no BWS",
+      "currentValue": "no BWS",
+      "values": [
+        {
+          "raw": "0",
+          "label": "no BWS"
+        },
+        {
+          "raw": "1",
+          "label": "restricted"
+        },
+        {
+          "raw": "2",
+          "label": "unrestricted"
+        },
+        {
+          "raw": "3",
+          "label": "rest/unrest"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "dab_alarm_announcement",
+      "label": "DAB Alarm Announcement",
+      "byte": 13,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x50183480",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not activated",
+      "currentValue": "not activated",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "fm_pty31_alarm",
+      "label": "FM PTY31 Alarm",
+      "byte": 14,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50183801",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "am_disable",
+      "label": "AM disable",
+      "byte": 14,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50183802",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "activated",
+      "currentValue": "activated",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "hd_radio_coding_am",
+      "label": "hd radio coding am",
+      "byte": 14,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50183804",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "deactivated",
+      "currentValue": "deactivated",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "multiple_entry_switch",
+      "label": "multiple entry switch",
+      "byte": 14,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50183808",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "on",
+      "currentValue": "on",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "rds_deactivation",
+      "label": "RDS deactivation",
+      "byte": 14,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50183810",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "yes",
+      "currentValue": "yes",
+      "values": [
+        {
+          "raw": "0",
+          "label": "no"
+        },
+        {
+          "raw": "1",
+          "label": "yes"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "af_deactivation",
+      "label": "AF deactivation",
+      "byte": 14,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50183820",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "no",
+      "currentValue": "no",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "baseplate",
+      "label": "Baseplate",
+      "byte": 15,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50183C01",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not installed",
+      "currentValue": "not installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "antenna_baseplate",
+      "label": "Antenna Baseplate",
+      "byte": 15,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50183C02",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "installed",
+      "currentValue": "installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "cradle_force",
+      "label": "Cradle Force",
+      "byte": 15,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50183C04",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "no",
+      "currentValue": "no",
+      "values": [
+        {
+          "raw": "0",
+          "label": "no"
+        },
+        {
+          "raw": "1",
+          "label": "yes"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "handy_in_cradle_force",
+      "label": "Handy in Cradle Force",
+      "byte": 15,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50183C08",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "no",
+      "currentValue": "no",
+      "values": [
+        {
+          "raw": "0",
+          "label": "no"
+        },
+        {
+          "raw": "1",
+          "label": "yes"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "phone_nad",
+      "label": "Phone NAD",
+      "byte": 15,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50183C10",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "wireless_charging_availability",
+      "label": "Wireless Charging Availability",
+      "byte": 15,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50183C20",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "installed",
+      "currentValue": "installed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not installed"
+        },
+        {
+          "raw": "1",
+          "label": "installed"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "media_player_1",
+      "label": "Media Player 1",
+      "byte": 15,
+      "maskHex": "0xC0",
+      "mask": 192,
+      "shift": 6,
+      "bitLength": 2,
+      "key": "0x50183CC0",
+      "type": "enum",
+      "control": "unknown",
+      "currentRaw": "not connected",
+      "currentValue": "not connected",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not connected"
+        },
+        {
+          "raw": "1",
+          "label": "connected without USB hub"
+        },
+        {
+          "raw": "2",
+          "label": "connected with USB hub"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Confirmed by snapshots: byte 15 bits 6..7 changed 0x22→0x62 (raw 1) and 0x22→0xA2 (raw 2); pc_i 0x50183CC0 changed 0→1/2."
+      ],
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "bluetooth_availability",
+      "label": "Bluetooth Availability",
+      "byte": 16,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50184001",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "available",
+      "currentValue": "available",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not available"
+        },
+        {
+          "raw": "1",
+          "label": "available"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "bluetooth_multimedia_functionality",
+      "label": "Bluetooth Multimedia Functionality",
+      "byte": 16,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50184002",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "available",
+      "currentValue": "available",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not available"
+        },
+        {
+          "raw": "1",
+          "label": "available"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Confirmed by snapshots: byte 16 bit 1 changed 0x1F→0x1D and pc_i 0x50184002 changed 1→0."
+      ],
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "bluetooth_phone",
+      "label": "Bluetooth Phone",
+      "byte": 16,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50184004",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "available",
+      "currentValue": "available",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not available"
+        },
+        {
+          "raw": "1",
+          "label": "available"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "bluetooth_audio",
+      "label": "Bluetooth Audio",
+      "byte": 16,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50184008",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "available",
+      "currentValue": "available",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not available"
+        },
+        {
+          "raw": "1",
+          "label": "available"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "bluetooth_visibility",
+      "label": "Bluetooth Visibility",
+      "byte": 16,
+      "maskHex": "0x30",
+      "mask": 48,
+      "shift": 4,
+      "bitLength": 2,
+      "key": "0x50184030",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "auto",
+      "currentValue": "auto",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "auto"
+        },
+        {
+          "raw": "2",
+          "label": "on"
+        },
+        {
+          "raw": "3",
+          "label": "limited"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "bluetooth_headphones",
+      "label": "Bluetooth Headphones",
+      "byte": 16,
+      "maskHex": "0x40",
+      "mask": 64,
+      "shift": 6,
+      "bitLength": 1,
+      "key": "0x50184040",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "legal_rvc",
+      "label": "legal rvc",
+      "byte": 16,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x50184080",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "no",
+      "currentValue": "no",
+      "values": [
+        {
+          "raw": "0",
+          "label": "no"
+        },
+        {
+          "raw": "1",
+          "label": "yes"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "skinning",
+      "label": "Skinning",
+      "byte": 17,
+      "maskHex": "0xFF",
+      "mask": 255,
+      "shift": 0,
+      "bitLength": 8,
+      "key": "0x501844FF",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "Skin 1",
+      "currentValue": "Skin 1",
+      "values": [
+        {
+          "raw": "0",
+          "label": "no Skin"
+        },
+        {
+          "raw": "1",
+          "label": "Skin 1"
+        },
+        {
+          "raw": "2",
+          "label": "Skin 2"
+        },
+        {
+          "raw": "3",
+          "label": "Skin 3"
+        },
+        {
+          "raw": "4",
+          "label": "Skin 4"
+        },
+        {
+          "raw": "5",
+          "label": "Skin 5"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "screenings",
+      "label": "Screenings",
+      "byte": 18,
+      "maskHex": "0xFF",
+      "mask": 255,
+      "shift": 0,
+      "bitLength": 8,
+      "key": "0x501848FF",
+      "type": "enum",
+      "control": "slider",
+      "currentRaw": "9",
+      "currentValue": "9",
+      "values": [
+        {
+          "raw": "0",
+          "label": "Standard"
+        },
+        {
+          "raw": "1",
+          "label": "TwinDrive"
+        },
+        {
+          "raw": "2",
+          "label": "GTD"
+        },
+        {
+          "raw": "3",
+          "label": "GTI"
+        },
+        {
+          "raw": "4",
+          "label": "BlueMotion"
+        },
+        {
+          "raw": "5",
+          "label": "e-Golf"
+        },
+        {
+          "raw": "6",
+          "label": "R-Line"
+        },
+        {
+          "raw": "7",
+          "label": "R"
+        },
+        {
+          "raw": "8",
+          "label": "AllTrack"
+        },
+        {
+          "raw": "9",
+          "label": "GTE"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "log_book",
+      "label": "Log Book",
+      "byte": 19,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50184C01",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "not displayed",
+      "currentValue": "not displayed",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not displayed"
+        },
+        {
+          "raw": "1",
+          "label": "displayed"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Confirmed by snapshots: byte 19 bit 0 changed 0xE4→0xE5 and pc_i 0x50184C01 changed 0→1."
+      ],
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "suspension_arm_side",
+      "label": "Suspension Arm Side",
+      "byte": 19,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50184C02",
+      "type": "bool",
+      "control": "BIOSCtrl",
+      "currentRaw": "left hand drive",
+      "currentValue": "left hand drive",
+      "values": [
+        {
+          "raw": "0",
+          "label": "Left Hand Drive"
+        },
+        {
+          "raw": "1",
+          "label": "Right Hand Drive"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "kombi_track_station_info",
+      "label": "Kombi Track Station Info",
+      "byte": 19,
+      "maskHex": "0x0C",
+      "mask": 12,
+      "shift": 2,
+      "bitLength": 2,
+      "key": "0x50184C0C",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "long info",
+      "currentValue": "long info",
+      "values": [
+        {
+          "raw": "0",
+          "label": "n/a"
+        },
+        {
+          "raw": "1",
+          "label": "long"
+        },
+        {
+          "raw": "2",
+          "label": "short"
+        },
+        {
+          "raw": "3",
+          "label": "reserved"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "rear_view_low",
+      "label": "Rear View Low",
+      "byte": 19,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50184C10",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "not active",
+      "currentValue": "not active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Confirmed by snapshots: byte 19 bit 4 changed 0xE4→0xF4 and pc_i 0x50184C10 changed 0→1."
+      ],
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "most",
+      "label": "Most",
+      "byte": 19,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50184C20",
+      "type": "bool",
+      "control": "BIOSCtrl",
+      "currentRaw": "on",
+      "currentValue": "on",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "usb",
+      "label": "USB",
+      "byte": 19,
+      "maskHex": "0xC0",
+      "mask": 192,
+      "shift": 6,
+      "bitLength": 2,
+      "key": "0x50184CC0",
+      "type": "enum",
+      "control": "BIOSCtrl",
+      "currentRaw": "usb ipod",
+      "currentValue": "usb ipod",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "charge"
+        },
+        {
+          "raw": "2",
+          "label": "full"
+        },
+        {
+          "raw": "3",
+          "label": "usb ipod"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "display_1",
+      "label": "display 1",
+      "byte": 20,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50185001",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "connected",
+      "currentValue": "connected",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not connected"
+        },
+        {
+          "raw": "1",
+          "label": "connected"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "display_2",
+      "label": "display 2",
+      "byte": 20,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50185002",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not connected",
+      "currentValue": "not connected",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not connected"
+        },
+        {
+          "raw": "1",
+          "label": "connected"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "display_3",
+      "label": "display 3",
+      "byte": 20,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50185004",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not connected",
+      "currentValue": "not connected",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not connected"
+        },
+        {
+          "raw": "1",
+          "label": "connected"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "display_4",
+      "label": "display 4",
+      "byte": 20,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50185008",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not connected",
+      "currentValue": "not connected",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not connected"
+        },
+        {
+          "raw": "1",
+          "label": "connected"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "dashboard_audio_slide",
+      "label": "dashboard audio slide",
+      "byte": 20,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50185010",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "on",
+      "currentValue": "on",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "dashboard_phone_slide",
+      "label": "dashboard phone slide",
+      "byte": 20,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50185020",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "on",
+      "currentValue": "on",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "dashboard_navigation_slide",
+      "label": "dashboard navigation slide",
+      "byte": 20,
+      "maskHex": "0x40",
+      "mask": 64,
+      "shift": 6,
+      "bitLength": 1,
+      "key": "0x50185040",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "on",
+      "currentValue": "on",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Confirmed by snapshots: byte 20 bit 6 changed 0x71→0x31 and pc_i 0x50185040 changed 1→0."
+      ],
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "dashboard_communication",
+      "label": "dashboard communication",
+      "byte": 20,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x50185080",
+      "type": "bool",
+      "control": "BIOSCtrl",
+      "currentRaw": "BAP",
+      "currentValue": "BAP",
+      "values": [
+        {
+          "raw": "0",
+          "label": "BAP"
+        },
+        {
+          "raw": "1",
+          "label": "DDP2"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "viwi",
+      "label": "viwi",
+      "byte": 21,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50185401",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "scrolling",
+      "label": "Scrolling",
+      "byte": 21,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50185410",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "messaging_via_map",
+      "label": "Messaging via MAP",
+      "byte": 21,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50185420",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "on",
+      "currentValue": "on",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "pagewise_scrolling",
+      "label": "Pagewise scrolling",
+      "byte": 21,
+      "maskHex": "0x40",
+      "mask": 64,
+      "shift": 6,
+      "bitLength": 1,
+      "key": "0x50185440",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "gps_antenna_availability",
+      "label": "gps antenna Availability",
+      "byte": 21,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x50185480",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "active",
+      "currentValue": "active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "dashboard_graphic_variant",
+      "label": "Dashboard Graphic Variant",
+      "byte": 22,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50185801",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "MOST",
+      "currentValue": "MOST",
+      "values": [
+        {
+          "raw": "0",
+          "label": "MOST"
+        },
+        {
+          "raw": "1",
+          "label": "Via CAN"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "dashboard_text_replacement",
+      "label": "Dashboard Text Replacement",
+      "byte": 22,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50185802",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "bap_sds_sd",
+      "label": "bap sds sd",
+      "byte": 22,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50185804",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "bap_online_function_secondary_display",
+      "label": "bap online function secondary display",
+      "byte": 22,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50185808",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Confirmed by snapshots: byte 22 bit 3 changed 0x00→0x08 and pc_i 0x50185808 changed 0→1."
+      ],
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "touch_screen_remote",
+      "label": "Touch Screen Remote",
+      "byte": 22,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50185810",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "keypad_rear_keys",
+      "label": "Keypad Rear Keys",
+      "byte": 22,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50185820",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not available",
+      "currentValue": "not available",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not available"
+        },
+        {
+          "raw": "1",
+          "label": "available"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "wheel_drive",
+      "label": "wheel drive",
+      "byte": 22,
+      "maskHex": "0xC0",
+      "mask": 192,
+      "shift": 6,
+      "bitLength": 2,
+      "key": "0x501858C0",
+      "type": "enum",
+      "control": "unknown",
+      "currentRaw": "front",
+      "currentValue": "front",
+      "values": [
+        {
+          "raw": "0",
+          "label": "front"
+        },
+        {
+          "raw": "1",
+          "label": "rear"
+        },
+        {
+          "raw": "2",
+          "label": "all"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Blob confirmed: byte 22 bits 6..7 changed 0x00→0x40 for raw 1 and 0x00→0x80 for raw 2.",
+        "pc_i group key 0x501858C0 does not exist. pc_i bit key 0x50185840 changed 0→1 for raw 1; pc_i bit key 0x50185880 changed 0→1 for raw 2.",
+        "For blob rebuild keep mask 0xC0/shift 6. For pc-based write, write both bit keys from the merged raw value."
+      ],
+      "pcBitKeys": {
+        "rawBit0": "0x50185840",
+        "rawBit1": "0x50185880"
+      },
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "speller",
+      "label": "Speller",
+      "byte": 23,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50185C01",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "initial_disclaimer",
+      "label": "Initial Disclaimer",
+      "byte": 23,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50185C02",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "legal_disclaimer",
+      "label": "Legal Disclaimer",
+      "byte": 23,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50185C04",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "off",
+      "currentValue": "off",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "display_turn_out_speed",
+      "label": "Display Turn Out Speed",
+      "byte": 23,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50185C08",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "normal",
+      "currentValue": "normal",
+      "values": [
+        {
+          "raw": "0",
+          "label": "normal"
+        },
+        {
+          "raw": "1",
+          "label": "fast"
+        }
+      ],
+      "confidence": "confirmed_blob_key_unresolved",
+      "notes": [
+        "Blob confirmed: byte 23 bit 3 changed 0x00→0x08.",
+        "No pc_i candidate changed in the sweep; computed key 0x50185C08 returned DOES_NOT_EXIST. Treat as blob-only until a writable persistence key is found."
+      ],
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "emergency_call",
+      "label": "Emergency Call",
+      "byte": 24,
+      "maskHex": "0x01",
+      "mask": 1,
+      "shift": 0,
+      "bitLength": 1,
+      "key": "0x50186001",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "on",
+      "currentValue": "on",
+      "values": [
+        {
+          "raw": "0",
+          "label": "off"
+        },
+        {
+          "raw": "1",
+          "label": "on"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "voice_control_system",
+      "label": "Voice Control System",
+      "byte": 24,
+      "maskHex": "0x02",
+      "mask": 2,
+      "shift": 1,
+      "bitLength": 1,
+      "key": "0x50186002",
+      "type": "bool",
+      "control": "unknown",
+      "currentRaw": "active",
+      "currentValue": "active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "confirmed",
+      "notes": [
+        "Confirmed by snapshots: byte 24 bit 1 changed 0xBF→0xBD and pc_i 0x50186002 changed 1→0."
+      ],
+      "validation": "Coding15SnapshotProbe 2026-04-30"
+    },
+    {
+      "id": "navigation_system",
+      "label": "Navigation System",
+      "byte": 24,
+      "maskHex": "0x04",
+      "mask": 4,
+      "shift": 2,
+      "bitLength": 1,
+      "key": "0x50186004",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "active",
+      "currentValue": "active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "wlan_module",
+      "label": "WLAN Module",
+      "byte": 24,
+      "maskHex": "0x08",
+      "mask": 8,
+      "shift": 3,
+      "bitLength": 1,
+      "key": "0x50186008",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "active",
+      "currentValue": "active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "import_media_data",
+      "label": "Import Media Data",
+      "byte": 24,
+      "maskHex": "0x10",
+      "mask": 16,
+      "shift": 4,
+      "bitLength": 1,
+      "key": "0x50186010",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "active",
+      "currentValue": "active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "ripping_media_data",
+      "label": "Ripping Media Data",
+      "byte": 24,
+      "maskHex": "0x20",
+      "mask": 32,
+      "shift": 5,
+      "bitLength": 1,
+      "key": "0x50186020",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "active",
+      "currentValue": "active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "vza",
+      "label": "vza",
+      "byte": 24,
+      "maskHex": "0x40",
+      "mask": 64,
+      "shift": 6,
+      "bitLength": 1,
+      "key": "0x50186040",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "not active",
+      "currentValue": "not active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    },
+    {
+      "id": "psd",
+      "label": "psd",
+      "byte": 24,
+      "maskHex": "0x80",
+      "mask": 128,
+      "shift": 7,
+      "bitLength": 1,
+      "key": "0x50186080",
+      "type": "bool",
+      "control": "choice",
+      "currentRaw": "active",
+      "currentValue": "active",
+      "values": [
+        {
+          "raw": "0",
+          "label": "not activated"
+        },
+        {
+          "raw": "1",
+          "label": "activated"
+        }
+      ],
+      "confidence": "provided",
+      "notes": []
+    }
+  ],
+  "validationSummary": {
+    "date": "2026-04-30",
+    "baselineCoding": "02731001ff0000004111000100091a221f0109e471a00000bf",
+    "snapshotsAnalyzed": 35,
+    "confirmedBlobEntries": 15,
+    "directPcConfirmedEntries": 9,
+    "sharedPcGroupEntries": [
+      "microphone_3",
+      "microphone_4",
+      "dab_antenna_1",
+      "am_fm_dab_antenna"
+    ],
+    "pcBitKeyEntries": [
+      "wheel_drive"
+    ],
+    "blobOnlyKeyUnresolved": [
+      "display_turn_out_speed"
+    ]
+  }
+}

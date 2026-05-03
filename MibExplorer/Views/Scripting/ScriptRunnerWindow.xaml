@@ -18,9 +18,10 @@
             <Setter Property="Background" Value="{DynamicResource AppControlBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}" />
+            <Setter Property="ScrollViewer.CanContentScroll" Value="False" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="6" />
-            <Setter Property="Template">
+                <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBox">
                         <Border Background="{TemplateBinding Background}"
@@ -28,7 +29,10 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="10">
                             <ScrollViewer Focusable="False"
-                                          Padding="{TemplateBinding Padding}">
+                                          Padding="{TemplateBinding Padding}"
+                                          CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}"
+                                          HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                                          VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
                                 <ItemsPresenter />
                             </ScrollViewer>
                         </Border>
@@ -179,6 +183,7 @@
                     <ListBox ItemsSource="{Binding Scripts}"
                              SelectedItem="{Binding SelectedScript}"
                              MouseDoubleClick="ScriptsListBox_MouseDoubleClick"
+                             PreviewMouseWheel="ScriptsListBox_PreviewMouseWheel"
                              Style="{StaticResource ScriptListBoxStyle}"
                              ItemContainerStyle="{StaticResource ScriptListBoxItemStyle}"
                              HorizontalContentAlignment="Stretch"

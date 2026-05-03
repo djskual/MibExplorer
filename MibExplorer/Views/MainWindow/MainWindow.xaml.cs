@@ -1,9 +1,11 @@
 ﻿using MibExplorer.Models;
 using MibExplorer.Services;
 using MibExplorer.Services.Design;
+using MibExplorer.Services.Coding;
 using MibExplorer.Services.Scripting;
 using MibExplorer.Settings;
 using MibExplorer.ViewModels;
+using MibExplorer.Views.Coding;
 using MibExplorer.Views.Dialogs;
 using MibExplorer.Views.Scripting;
 using Renci.SshNet.Common;
@@ -25,6 +27,7 @@ public partial class MainWindow : Window
 {
     private ShellConsoleWindow? _shellConsoleWindow;
     private ScriptRunnerWindow? _scriptRunnerWindow;
+    private CodingCenterWindow? _codingCenterWindow;
     private MainViewModel ViewModel => (MainViewModel)DataContext;
     private bool _isSortingFromHeader;
     private string? _pendingSortKey;
@@ -159,6 +162,50 @@ public partial class MainWindow : Window
         window.Closed += (_, _) => _scriptRunnerWindow = null;
 
         _scriptRunnerWindow = window;
+
+        window.Show();
+        window.Activate();
+    }
+
+    private void CodingCenterMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        OpenCodingCenterWindow();
+    }
+
+    private void OpenCodingCenterWindow()
+    {
+        if (_codingCenterWindow is not null)
+        {
+            if (_codingCenterWindow.WindowState == WindowState.Minimized)
+                _codingCenterWindow.WindowState = WindowState.Normal;
+
+            _codingCenterWindow.Show();
+            _codingCenterWindow.Activate();
+            _codingCenterWindow.Focus();
+            return;
+        }
+
+        ICodingCenterService codingService = ViewModel.ConnectionService is DesignMibConnectionService
+            ? new DesignCodingCenterService()
+            : new CodingCenterService(ViewModel.ConnectionService);
+
+        var viewModel = new CodingCenterViewModel(codingService);
+
+        var window = new CodingCenterWindow(viewModel)
+        {
+            Width = 1000,
+            Height = 650
+        };
+
+        double left = Left + Math.Max(0, (ActualWidth - window.Width) / 2);
+        double top = Top + Math.Max(0, (ActualHeight - window.Height) / 2);
+
+        window.Left = left;
+        window.Top = top;
+
+        window.Closed += (_, _) => _codingCenterWindow = null;
+
+        _codingCenterWindow = window;
 
         window.Show();
         window.Activate();

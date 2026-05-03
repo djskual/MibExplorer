@@ -1,0 +1,908 @@
+﻿<Window x:Class="MibExplorer.Views.Coding.CodingCenterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
+        Title="Coding Center"
+        Width="1000"
+        Height="650"
+        MinWidth="1000"
+        MinHeight="650"
+        WindowStartupLocation="Manual"
+        Background="{DynamicResource AppWindowBackgroundBrush}"
+        Foreground="{DynamicResource AppTextBrush}">
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="Coding Center"
+                           FontSize="22"
+                           FontWeight="SemiBold"/>
+                <TextBlock Text="5F long coding read directly from the MIB"
+                           Margin="0,4,0,0"
+                           Foreground="{DynamicResource AppMutedTextBrush}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <Image Width="24"
+                       Height="24"
+                       Margin="0,0,10,0"
+                       gif:ImageBehavior.AnimatedSource="pack://application:,,,/Assets/throbber.gif"
+                       Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Button Content="Reload"
+                        MinWidth="90"
+                        Command="{Binding ReloadCommand}"/>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="260"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Background="{DynamicResource AppPanelBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="5">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="6"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Long coding"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                    <TextBox Grid.Row="2"
+                             Text="{Binding CodingHex, Mode=OneWay}"
+                             IsReadOnly="True"
+                             Height="28"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Disabled"
+                             FontFamily="Consolas"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             Foreground="{DynamicResource AppTextBrush}"/>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2"
+                    Background="{DynamicResource AppPanelBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="6"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Vehicle"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                    <TextBlock Grid.Row="2"
+                               Text="{Binding Vin}"
+                               FontFamily="Consolas"
+                               FontSize="14"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource AppTextBrush}"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="4"
+              Margin="0,4,0,0">
+
+            <TabControl Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        HorizontalAlignment="Stretch">
+
+                <TabItem Header="Features">
+                    <Border Background="{DynamicResource AppPanelBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="14">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="6"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="ODIS-style coding"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AppTextBrush}"/>
+
+                        <Grid Grid.Row="2" Margin="12,0,24,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.6*"/>
+                                <ColumnDefinition Width="2.0*"/>
+                                <ColumnDefinition Width="360"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="Coding"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                            <TextBlock Grid.Column="1"
+                                       Text="Current"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                            <TextBlock Grid.Column="2"
+                                       Text="New value"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
+                        </Grid>
+
+                        <ListView Grid.Row="4"
+                                  ItemsSource="{Binding Features}"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  Foreground="{DynamicResource AppTextBrush}"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  PreviewMouseWheel="SlowListView_PreviewMouseWheel">
+
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="MinHeight" Value="36"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0,1"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <Border x:Name="Bd"
+                                                        Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6"
+                                                        Padding="10,3">
+                                                    <ContentPresenter/>
+                                                </Border>
+
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AppControlHoverBrush}"/>
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
+                                                    </Trigger>
+
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="#182A36"/>
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AppAccentBrush}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1.6*"/>
+                                            <ColumnDefinition Width="2.0*"/>
+                                            <ColumnDefinition Width="360"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="{Binding Label}"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AppTextBrush}"/>
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Value}"
+                                                   VerticalAlignment="Center"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding Value}"
+                                                   Foreground="{DynamicResource AppAccentBrush}"/>
+
+                                        <ComboBox Grid.Column="2"
+                                                  ItemsSource="{Binding Options}"
+                                                  DisplayMemberPath="Label"
+                                                  SelectedItem="{Binding SelectedOption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Width="330"
+                                                  MaxDropDownHeight="320"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Center"
+                                                  SelectionChanged="FeatureValueComboBox_SelectionChanged"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Border>
+                </TabItem>
+
+                <TabItem Header="Raw coding">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.78*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="1.22*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0"
+                            Background="{DynamicResource AppPanelBrush}"
+                            BorderBrush="{DynamicResource AppBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="14">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="10"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Bytes"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AppTextBrush}"/>
+
+                            <ListView Grid.Row="2"
+                                      ItemsSource="{Binding Bytes}"
+                                      SelectedItem="{Binding SelectedByte, Mode=TwoWay}"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      Foreground="{DynamicResource AppTextBrush}"
+                                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                      PreviewMouseWheel="SlowListView_PreviewMouseWheel">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="Height" Value="28"/>
+                                        <Setter Property="Padding" Value="4,0"/>
+                                        <Setter Property="Margin" Value="0,1"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="44"/>
+                                                <ColumnDefinition Width="64"/>
+                                                <ColumnDefinition Width="110"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Text="{Binding Index}" Foreground="{DynamicResource AppTextBrush}"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Hex}" FontFamily="Consolas" Foreground="{DynamicResource AppTextBrush}"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding Binary}" FontFamily="Consolas" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Column="2"
+                            Background="{DynamicResource AppPanelBrush}"
+                            BorderBrush="{DynamicResource AppBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="14">
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="12"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="150"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="Selected byte"
+                                           VerticalAlignment="Center"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AppTextBrush}"/>
+
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding SelectedByte.Index, StringFormat=Byte {0}}"
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AppAccentBrush}"/>
+
+                                <Grid Grid.Column="2"
+                                      VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="34"/>
+                                        <ColumnDefinition Width="48"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Text="Hex"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                                    <TextBox Grid.Column="1"
+                                             Text="{Binding SelectedByteHexInput, UpdateSourceTrigger=PropertyChanged}"
+                                             Height="26"
+                                             MaxLength="2"
+                                             Padding="8,2"
+                                             VerticalContentAlignment="Center"
+                                             FontFamily="Consolas"
+                                             CharacterCasing="Upper"
+                                             BorderBrush="{DynamicResource AppAccentBrush}"/>
+                                </Grid>
+
+                                <Grid Grid.Column="3"
+                                      VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="48"/>
+                                        <ColumnDefinition Width="92"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Text="Binary"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                                    <TextBox Grid.Column="1"
+                                             Text="{Binding SelectedByteBinaryInput, UpdateSourceTrigger=PropertyChanged}"
+                                             Height="26"
+                                             MaxLength="8"
+                                             Padding="8,2"
+                                             VerticalContentAlignment="Center"
+                                             FontFamily="Consolas"
+                                             BorderBrush="{DynamicResource AppAccentBrush}"/>
+                                </Grid>
+                            </Grid>
+
+                            <TextBlock Grid.Row="2"
+                                       Text="Mapped coding"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                            <ListView Grid.Row="4"
+                                      ItemsSource="{Binding SelectedByteFeatures}"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      Foreground="{DynamicResource AppTextBrush}"
+                                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                      PreviewMouseWheel="SlowListView_PreviewMouseWheel">
+
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="MinHeight" Value="31"/>
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="Margin" Value="0,2"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListViewItem">
+                                                    <Border x:Name="Bd"
+                                                            Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="8"
+                                                            Padding="8,5">
+                                                        <ContentPresenter/>
+                                                    </Border>
+
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AppControlHoverBrush}"/>
+                                                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
+                                                        </Trigger>
+
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter TargetName="Bd" Property="Background" Value="#182A36"/>
+                                                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AppAccentBrush}"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="74"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="230"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Text="{Binding BitLabel}"
+                                                       VerticalAlignment="Center"
+                                                       FontFamily="Consolas"
+                                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Label}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding Label}"
+                                                       Foreground="{DynamicResource AppTextBrush}"/>
+
+                                            <Grid Grid.Column="2"
+                                                  VerticalAlignment="Center">
+
+                                                <CheckBox Content="{Binding CurrentValue}"
+                                                          IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          IsEnabled="True">
+                                                    <CheckBox.Style>
+                                                        <Style TargetType="CheckBox"
+                                                               BasedOn="{StaticResource LabeledCheckBoxStyle}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSingleBit}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </CheckBox.Style>
+                                                </CheckBox>
+
+                                                <ComboBox ItemsSource="{Binding Options}"
+                                                          SelectedItem="{Binding CurrentOption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          DisplayMemberPath="Label"
+                                                          IsEnabled="True"
+                                                          Width="220"
+                                                          HorizontalAlignment="Left">
+                                                    <ComboBox.Style>
+                                                        <Style TargetType="ComboBox"
+                                                               BasedOn="{StaticResource {x:Type ComboBox}}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsMultiBit}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ComboBox.Style>
+                                                </ComboBox>
+                                            </Grid>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </Grid>
+                    </Border>
+                </Grid>
+                </TabItem>
+
+                <TabItem Header="{Binding ChangesTabHeader}">
+                    <Border Background="{DynamicResource AppPanelBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="14">
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="16"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="6"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="160"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="Modified long coding"
+                                       VerticalAlignment="Center"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AppTextBrush}"/>
+
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding ModifiedCodingHex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     IsReadOnly="False"
+                                     MaxLength="50"
+                                     CharacterCasing="Upper"
+                                     Height="30"
+                                     Padding="10,4"
+                                     VerticalContentAlignment="Center"
+                                     FontFamily="Consolas"
+                                     BorderThickness="1"
+                                     BorderBrush="{DynamicResource AppAccentBrush}"
+                                     Background="{DynamicResource AppControlBrush}"
+                                     Foreground="{DynamicResource AppTextBrush}"/>
+
+                            <Button Grid.Column="4"
+                                    Content="Apply changes"
+                                    Height="30"
+                                    Command="{Binding ApplyCodingCommand}"/>
+                        </Grid>
+
+                        <Grid Grid.Row="2" Margin="10,0,10,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2.50*"/>
+                                <ColumnDefinition Width="2.95*"/>
+                                <ColumnDefinition Width="22"/>
+                                <ColumnDefinition Width="2.95*"/>
+                                <ColumnDefinition Width="58"/>
+                                <ColumnDefinition Width="46"/>
+                                <ColumnDefinition Width="18"/>
+                                <ColumnDefinition Width="46"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="Coding" FontWeight="SemiBold" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <TextBlock Grid.Column="1" Text="Current" FontWeight="SemiBold" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <TextBlock Grid.Column="3" Text="New value" FontWeight="SemiBold" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            <TextBlock Grid.Column="4" Text="Byte" FontWeight="SemiBold" Foreground="{DynamicResource AppMutedTextBrush}" HorizontalAlignment="Left"/>
+                            <TextBlock Grid.Column="5" Text="Old" FontWeight="SemiBold" Foreground="{DynamicResource AppMutedTextBrush}" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="7" Text="New" FontWeight="SemiBold" Foreground="{DynamicResource AppMutedTextBrush}" HorizontalAlignment="Center"/>
+                        </Grid>
+
+                        <ListView Grid.Row="4"
+                                  ItemsSource="{Binding PendingChanges}"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  Foreground="{DynamicResource AppTextBrush}"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  PreviewMouseWheel="SlowListView_PreviewMouseWheel">
+
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="MinHeight" Value="36"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0,2"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <Border x:Name="Bd"
+                                                        Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="8"
+                                                        Padding="10,5">
+                                                    <ContentPresenter/>
+                                                </Border>
+
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AppControlHoverBrush}"/>
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
+                                                    </Trigger>
+
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="#182A36"/>
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AppAccentBrush}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2.50*"/>
+                                            <ColumnDefinition Width="2.95*"/>
+                                            <ColumnDefinition Width="22"/>
+                                            <ColumnDefinition Width="2.95*"/>
+                                            <ColumnDefinition Width="58"/>
+                                            <ColumnDefinition Width="46"/>
+                                            <ColumnDefinition Width="18"/>
+                                            <ColumnDefinition Width="46"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="{Binding Label}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding Label}"
+                                                   Foreground="{DynamicResource AppTextBrush}"/>
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding CurrentValue}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding CurrentValue}"
+                                                   Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                                        <TextBlock Grid.Column="2"
+                                                   Text="→"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                                        <TextBlock Grid.Column="3"
+                                                   Text="{Binding NewValue}"
+                                                   VerticalAlignment="Center"
+                                                   TextAlignment="Left"
+                                                   HorizontalAlignment="Stretch"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding NewValue}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource AppAccentBrush}"/>
+
+                                        <TextBlock Grid.Column="4"
+                                                   Text="{Binding ByteLabel}"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                                        <Border Grid.Column="5"
+                                                Width="36"
+                                                Height="24"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Background="{DynamicResource AppControlBrush}"
+                                                BorderBrush="{DynamicResource AppBorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6">
+                                            <TextBlock Text="{Binding CurrentByteHex}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       FontFamily="Consolas"
+                                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                        </Border>
+
+                                        <TextBlock Grid.Column="6"
+                                                   Text="→"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                                        <Border Grid.Column="7"
+                                                Width="36"
+                                                Height="24"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Background="#182A36"
+                                                BorderBrush="{DynamicResource AppAccentBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6">
+                                            <TextBlock Text="{Binding NewByteHex}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       FontFamily="Consolas"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AppAccentBrush}"/>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Border>
+                </TabItem>
+
+                <TabItem Header="History">
+                    <Border Background="{DynamicResource AppPanelBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="14">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Coding history"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AppTextBrush}"/>
+
+                                <TextBlock Text="Snapshots are stored locally for the current vehicle."
+                                           Margin="0,4,0,0"
+                                           Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="1"
+                                    Content="Create snapshot"
+                                    MinWidth="130"
+                                    Command="{Binding CreateSnapshotCommand}"/>
+
+                            <Button Grid.Column="3"
+                                    Content="Restore"
+                                    MinWidth="100"
+                                    Command="{Binding RestoreSnapshotCommand}"/>
+
+                            <Button Grid.Column="5"
+                                    Content="Delete"
+                                    MinWidth="90"
+                                    Command="{Binding DeleteSnapshotCommand}"/>
+                        </Grid>
+
+                        <ListView Grid.Row="2"
+                                  ItemsSource="{Binding HistorySnapshots}"
+                                  SelectedItem="{Binding SelectedHistorySnapshot, Mode=TwoWay}"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  Foreground="{DynamicResource AppTextBrush}"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  PreviewMouseWheel="SlowListView_PreviewMouseWheel">
+
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="MinHeight" Value="36"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0,1"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <Border x:Name="Bd"
+                                                        Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6"
+                                                        Padding="10,3">
+                                                    <ContentPresenter/>
+                                                </Border>
+
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AppControlHoverBrush}"/>
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
+                                                    </Trigger>
+
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="#182A36"/>
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AppAccentBrush}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="170"/>
+                                            <ColumnDefinition Width="160"/>
+                                            <ColumnDefinition Width="110"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="{Binding CreatedAtDisplay}"
+                                                   VerticalAlignment="Center"
+                                                   FontFamily="Consolas"
+                                                   Foreground="{DynamicResource AppTextBrush}"/>
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Reason}"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AppAccentBrush}"/>
+
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding ChangesDisplay}"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                                        <TextBlock Grid.Column="3"
+                                                   Text="{Binding ShortCoding}"
+                                                   VerticalAlignment="Center"
+                                                   FontFamily="Consolas"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding CodingHex}"
+                                                   Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <Border Grid.Row="4"
+                                Background="{DynamicResource AppControlBrush}"
+                                BorderBrush="{DynamicResource AppBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="10">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="6"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Text="Selected snapshot"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                                <TextBox Grid.Row="2"
+                                         Text="{Binding SelectedHistorySnapshot.CodingHex, Mode=OneWay}"
+                                         IsReadOnly="True"
+                                         Height="28"
+                                         FontFamily="Consolas"
+                                         BorderThickness="0"
+                                         Background="Transparent"
+                                         Foreground="{DynamicResource AppTextBrush}"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+                </TabItem>
+            </TabControl>
+
+            <Border Background="Transparent"
+                    Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        </Grid>
+
+        <TextBlock Grid.Row="6"
+                   Text="{Binding StatusText}"
+                   Foreground="{DynamicResource AppMutedTextBrush}"/>
+    </Grid>
+</Window>

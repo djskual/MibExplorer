@@ -23,20 +23,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+    <PackageReference Include="SSH.NET" Version="2025.1.0" />
+    <PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Assets\app.ico" />
     <None Remove="Assets\app.png" />
     <None Remove="Assets\throbber.gif" />
-    <None Remove="git-tag.txt" />
-    <None Remove="Payload\sshd.zip" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Payload\sshd.zip">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
     <Resource Include="Assets\app.ico" />
     <Resource Include="Assets\app.png" />
     <Resource Include="Assets\throbber.gif">
@@ -45,15 +41,52 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
-    <PackageReference Include="SSH.NET" Version="2025.1.0" />
-    <PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
+    <None Remove="Payload\sshd.zip" />
+    <EmbeddedResource Include="Payload\sshd.zip">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="Views\Scripting\ScriptRunnerWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+    <None Remove="Data\Coding\mib2_5f_coding_catalog.json" />
+    <EmbeddedResource Include="Data\Coding\mib2_5f_coding_catalog.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Payload\CodingCenter\Read\run.sh" />
+    <None Remove="Payload\CodingCenter\Read\dumb_persistence_reader" />
+    <None Remove="Payload\CodingCenter\Write\run.sh" />
+    <None Remove="Payload\CodingCenter\Write\pc" />
+    <None Remove="Payload\CodingCenter\Write\dumb_persistence_reader" />
+
+    <EmbeddedResource Include="Payload\CodingCenter\Read\run.sh">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="Payload\CodingCenter\Read\dumb_persistence_reader">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="Payload\CodingCenter\Write\run.sh">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="Payload\CodingCenter\Write\pc">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="Payload\CodingCenter\Write\dumb_persistence_reader">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
