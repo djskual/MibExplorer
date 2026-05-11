@@ -62,6 +62,8 @@
                           Click="ScriptCenterMenuItem_Click"/>
                 <MenuItem Header="_Coding Center"
                           Click="CodingCenterMenuItem_Click"/>
+                <MenuItem Header="Adaptations Center"
+                          Click="AdaptationsCenterMenuItem_Click"/>
                 <MenuItem Header="_Remote Shell Console"
                           Click="RemoteShellConsoleMenuItem_Click"/>
                 <Separator/>

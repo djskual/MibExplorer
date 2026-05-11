@@ -57,6 +57,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Data\Adaptations\adaptations_catalog.json" />
+    <EmbeddedResource Include="Data\Adaptations\adaptations_catalog.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Payload\CodingCenter\Read\run.sh" />
     <None Remove="Payload\CodingCenter\Read\dumb_persistence_reader" />
     <None Remove="Payload\CodingCenter\Write\run.sh" />
@@ -84,6 +92,21 @@
     </EmbeddedResource>
 
     <EmbeddedResource Include="Payload\CodingCenter\Write\dumb_persistence_reader">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Payload\AdaptationsCenter\Read\run.sh" />
+    <None Remove="Payload\AdaptationsCenter\Read\pc" />
+
+    <EmbeddedResource Include="Payload\AdaptationsCenter\Read\run.sh">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="Payload\AdaptationsCenter\Read\pc">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </EmbeddedResource>

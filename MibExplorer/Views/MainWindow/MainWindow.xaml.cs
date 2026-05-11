@@ -1,10 +1,12 @@
 ﻿using MibExplorer.Models;
 using MibExplorer.Services;
-using MibExplorer.Services.Design;
+using MibExplorer.Services.Adaptations;
 using MibExplorer.Services.Coding;
+using MibExplorer.Services.Design;
 using MibExplorer.Services.Scripting;
 using MibExplorer.Settings;
 using MibExplorer.ViewModels;
+using MibExplorer.Views.Adaptations;
 using MibExplorer.Views.Coding;
 using MibExplorer.Views.Dialogs;
 using MibExplorer.Views.Scripting;
@@ -28,6 +30,7 @@ public partial class MainWindow : Window
     private ShellConsoleWindow? _shellConsoleWindow;
     private ScriptRunnerWindow? _scriptRunnerWindow;
     private CodingCenterWindow? _codingCenterWindow;
+    private AdaptationsCenterWindow? _adaptationsCenterWindow;
     private MainViewModel ViewModel => (MainViewModel)DataContext;
     private bool _isSortingFromHeader;
     private string? _pendingSortKey;
@@ -206,6 +209,53 @@ public partial class MainWindow : Window
         window.Closed += (_, _) => _codingCenterWindow = null;
 
         _codingCenterWindow = window;
+
+        window.Show();
+        window.Activate();
+    }
+
+    private void AdaptationsCenterMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        OpenAdaptationsCenterWindow();
+    }
+
+    private void OpenAdaptationsCenterWindow()
+    {
+        if (_adaptationsCenterWindow is not null)
+        {
+            if (_adaptationsCenterWindow.WindowState == WindowState.Minimized)
+                _adaptationsCenterWindow.WindowState = WindowState.Normal;
+
+            _adaptationsCenterWindow.Show();
+            _adaptationsCenterWindow.Activate();
+            _adaptationsCenterWindow.Focus();
+            return;
+        }
+
+        IAdaptationsCenterService adaptationsService = ViewModel.ConnectionService is DesignMibConnectionService
+            ? new DesignAdaptationsCenterService()
+            : new AdaptationsCenterService(ViewModel.ConnectionService);
+
+        var viewModel = new AdaptationsCenterViewModel(
+            new AdaptationCatalogService(),
+            adaptationsService);
+
+        var window = new AdaptationsCenterWindow
+        {
+            DataContext = viewModel,
+            Width = 1180,
+            Height = 720
+        };
+
+        double left = Left + Math.Max(0, (ActualWidth - window.Width) / 2);
+        double top = Top + Math.Max(0, (ActualHeight - window.Height) / 2);
+
+        window.Left = left;
+        window.Top = top;
+
+        window.Closed += (_, _) => _adaptationsCenterWindow = null;
+
+        _adaptationsCenterWindow = window;
 
         window.Show();
         window.Activate();
