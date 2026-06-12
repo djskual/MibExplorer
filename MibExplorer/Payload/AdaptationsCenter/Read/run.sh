@@ -40,11 +40,38 @@ do
     elif [ "$TYPE" = "string" ]; then
         PC_TYPE="s"
     elif [ "$TYPE" = "blob" ]; then
-        echo "MIBEXPLORER_ADAPT;$PART;$KEY;$TYPE;UNSUPPORTED_BLOB_READ"
-        continue
+        PC_TYPE="b"
     fi
 
     VALUE=`cd "$BASE" && ./pc ${PC_TYPE}:${PART}:${KEY} 2>&1`
+
+    if [ "$TYPE" = "blob" ]; then
+        VALUE=`echo "$VALUE" | awk '
+        {
+            for (i = 1; i <= NF; i++) {
+                token = $i
+
+                if (index(token, ":") > 0) {
+                    continue
+                }
+
+                if (length(token) == 2 && token ~ /^[0-9A-Fa-f][0-9A-Fa-f]$/) {
+                    if (out == "") {
+                        out = token
+                    } else {
+                        out = out " " token
+                    }
+                }
+            }
+        }
+        END {
+            print out
+        }'`
+
+        if [ -z "$VALUE" ]; then
+            VALUE="BLOB_PARSE_FAILED"
+        fi
+    fi
 
     echo "MIBEXPLORER_ADAPT;$PART;$KEY;$TYPE;$VALUE"
 

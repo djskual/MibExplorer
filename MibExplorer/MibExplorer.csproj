@@ -100,6 +100,9 @@
   <ItemGroup>
     <None Remove="Payload\AdaptationsCenter\Read\run.sh" />
     <None Remove="Payload\AdaptationsCenter\Read\pc" />
+    <None Remove="Payload\AdaptationsCenter\Vin\run.sh" />
+    <None Remove="Payload\AdaptationsCenter\Write\run.sh" />
+    <None Remove="Payload\AdaptationsCenter\Write\pc" />
 
     <EmbeddedResource Include="Payload\AdaptationsCenter\Read\run.sh">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
@@ -107,6 +110,21 @@
     </EmbeddedResource>
 
     <EmbeddedResource Include="Payload\AdaptationsCenter\Read\pc">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="Payload\AdaptationsCenter\Vin\run.sh">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="Payload\AdaptationsCenter\Write\run.sh">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="Payload\AdaptationsCenter\Write\pc">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </EmbeddedResource>

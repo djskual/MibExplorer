@@ -42,9 +42,18 @@
                            FontWeight="SemiBold"
                            Foreground="{DynamicResource AppTextBrush}"/>
 
-                <TextBlock Text="ODIS-visible adaptation catalog V4 preview. Writes are still disabled."
-                           Margin="0,4,0,0"
-                           Foreground="{DynamicResource AppMutedTextBrush}"/>
+                <StackPanel Orientation="Horizontal"
+                            Margin="0,4,0,0">
+                    <TextBlock Text="ODIS-visible adaptation catalog V4 preview. Writes are still disabled."
+                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                    <TextBlock Text="  VIN: "
+                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+
+                    <TextBlock Text="{Binding CurrentVin}"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource AppTextBrush}"/>
+                </StackPanel>
             </StackPanel>
 
             <StackPanel Grid.Column="1"
@@ -75,12 +84,6 @@
                         Padding="14,0"
                         Command="{Binding DiscardCommand}"
                         Content="Discard"/>
-
-                <Button MinWidth="115"
-                        Height="34"
-                        Padding="14,0"
-                        Command="{Binding ReloadCommand}"
-                        Content="Reload group"/>
             </StackPanel>
 
         </Grid>
@@ -177,24 +180,24 @@
 
                 <TextBlock Grid.Column="2"
                            VerticalAlignment="Center"
-                           Text="Expand a group to read its adaptations from the MIB."
+                           Text="Expand groups to read adaptations from the MIB. Apply is manual; closing a dirty group discards its pending edits."
                            Foreground="{DynamicResource AppMutedTextBrush}"/>
             </Grid>
         </Border>
 
-        <Grid Grid.Row="4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <TabControl Grid.Row="4"
+                    Background="Transparent"
+                    BorderThickness="0">
 
-            <Border Background="{DynamicResource AppPanelBrush}"
-                    BorderBrush="{DynamicResource AppBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="12"
-                    Padding="10">
+            <TabItem Header="Edit">
+                <Border Background="{DynamicResource AppPanelBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="10">
 
-                <DockPanel>
-                    <Grid DockPanel.Dock="Top"
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Top"
                           Margin="72,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource AdaptationColumnWidth}"/>
@@ -231,7 +234,7 @@
                               BorderThickness="0"
                               Foreground="{DynamicResource AppTextBrush}"
                               ScrollViewer.VerticalScrollBarVisibility="Auto"
-                              ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 
                         <TreeView.ItemContainerStyle>
                             <Style TargetType="{x:Type TreeViewItem}">
@@ -241,6 +244,10 @@
                                         Value="{DynamicResource AppTextBrush}"/>
                                 <Setter Property="Background"
                                         Value="Transparent"/>
+                                <Setter Property="HorizontalContentAlignment"
+                                        Value="Stretch"/>
+                                <Setter Property="HorizontalAlignment"
+                                        Value="Stretch"/>
 
                                 <Setter Property="Template">
                                     <Setter.Value>
@@ -256,7 +263,8 @@
                                                         Background="{TemplateBinding Background}"
                                                         Padding="0">
                                                     <ContentPresenter x:Name="PART_Header"
-                                                                      ContentSource="Header"/>
+                                                                      ContentSource="Header"
+                                                                      HorizontalAlignment="Stretch"/>
                                                 </Border>
 
                                                 <ItemsPresenter x:Name="ItemsHost"
@@ -287,11 +295,15 @@
                             <HierarchicalDataTemplate DataType="{x:Type models:AdaptationGroupView}"
                                                       ItemsSource="{Binding AdaptationsView}">
                                 <Grid Margin="0,3"
+                                      HorizontalAlignment="Stretch"
                                       MouseLeftButtonDown="GroupHeader_MouseLeftButtonDown">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="18"/>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="26"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="18"/>
+                                        <ColumnDefinition Width="56"/>
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock Grid.Column="0"
@@ -314,6 +326,35 @@
                                            VerticalAlignment="Center"
                                            gif:ImageBehavior.AnimatedSource="pack://application:,,,/Assets/throbber.gif"
                                            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                    <Ellipse Grid.Column="4"
+                                             Width="8"
+                                             Height="8"
+                                             Margin="4,0,0,0"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Fill="#4DA3FF"
+                                             ToolTip="This group has pending changes"
+                                             Visibility="{Binding HasPendingChanges, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                    <Button Grid.Column="5"
+                                            Width="46"
+                                            Height="24"
+                                            Margin="4,0,6,0"
+                                            Padding="0"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            ToolTip="Reload this group"
+                                            Command="{Binding DataContext.ReloadCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"
+                                            CommandParameter="{Binding}"
+                                            Visibility="{Binding IsExpanded, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            Click="GroupReloadButton_Click">
+                                        <TextBlock Text="↻"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Button>
                                 </Grid>
                             </HierarchicalDataTemplate>
 
@@ -328,13 +369,57 @@
 
                                     <StackPanel Grid.Column="0"
                                                 VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Label}"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   ToolTip="{Binding Label}"
-                                                   Foreground="{DynamicResource AppTextBrush}"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="18"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Viewbox Grid.Column="0"
+                                                     Width="13"
+                                                     Height="13"
+                                                     Margin="0,1,5,0"
+                                                     VerticalAlignment="Center"
+                                                     ToolTip="{Binding StorageMappedToolTip}">
+                                                <Viewbox.Style>
+                                                    <Style TargetType="Viewbox">
+                                                        <Setter Property="Visibility" Value="Hidden"/>
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding IsStorageMapped}" Value="True"/>
+                                                                    <Condition Binding="{Binding DataContext.ShowDiagnostics, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Viewbox.Style>
+
+                                                <Canvas Width="16" Height="16">
+                                                    <Ellipse Width="16"
+                                                             Height="16"
+                                                             Fill="#2EA043"/>
+                                                    <Path Data="M4.2,8.4 L6.8,11 L12.2,5.2"
+                                                          Stroke="White"
+                                                          StrokeThickness="2"
+                                                          StrokeStartLineCap="Round"
+                                                          StrokeEndLineCap="Round"
+                                                          StrokeLineJoin="Round"/>
+                                                </Canvas>
+                                            </Viewbox>
+
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Label}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding Label}"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource AppTextBrush}"/>
+                                        </Grid>
 
                                         <TextBlock Text="{Binding DiagnosticSummary}"
-                                                   Margin="0,2,0,0"
+                                                   Margin="18,2,0,0"
                                                    FontSize="11"
                                                    TextTrimming="CharacterEllipsis"
                                                    ToolTip="{Binding DiagnosticSummary}"
@@ -354,7 +439,10 @@
                                                   Width="220"
                                                   ItemsSource="{Binding EditOptions}"
                                                   DisplayMemberPath="Label"
-                                                  SelectedItem="{Binding SelectedEditOption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectedValuePath="Label"
+                                                  SelectedValue="{Binding EditValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectionChanged="ComboBox_SelectionChanged"
+                                                  PreviewKeyDown="Editor_PreviewKeyDown"
                                                   Visibility="{Binding IsComboEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                         <TextBox Height="30"
@@ -363,6 +451,7 @@
                                                  HorizontalContentAlignment="Center"
                                                  Text="{Binding EditValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                  Visibility="{Binding IsNumericEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                 PreviewKeyDown="Editor_PreviewKeyDown"
                                                  PreviewTextInput="NumericBox_PreviewTextInput"
                                                  DataObject.Pasting="NumericBox_Pasting"/>
 
@@ -370,14 +459,16 @@
                                                  MinHeight="30"
                                                  Width="220"
                                                  Text="{Binding EditValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                 Visibility="{Binding IsTextEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                 Visibility="{Binding IsTextEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                 PreviewKeyDown="Editor_PreviewKeyDown"/>
 
                                         <TextBox Height="30"
                                                  MinHeight="30"
                                                  Width="220"
                                                  CharacterCasing="Upper"
                                                  Text="{Binding EditValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                 Visibility="{Binding IsHexBytesEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                 Visibility="{Binding IsHexBytesEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                 PreviewKeyDown="Editor_PreviewKeyDown"/>
 
                                         <TextBlock Text="Read only"
                                                    VerticalAlignment="Center"
@@ -393,9 +484,217 @@
                             </DataTemplate>
                         </TreeView.Resources>
                     </TreeView>
-                </DockPanel>
-            </Border>
-        </Grid>
+                    </DockPanel>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="History">
+                <Border Background="{DynamicResource AppPanelBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="12">
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="230"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="{Binding HistoryEntryCount, StringFormat=History: {0} transaction(s)}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AppTextBrush}"/>
+
+                        <ListView Grid.Row="2"
+                                  ItemsSource="{Binding HistoryEntries}"
+                                  SelectedItem="{Binding SelectedHistoryEntry, Mode=TwoWay}"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  Foreground="{DynamicResource AppTextBrush}"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Width="150"
+                                                    DisplayMemberBinding="{Binding CreatedAtDisplay}">
+                                        <GridViewColumn.Header>
+                                            <TextBlock Text="Date"
+                                                       Foreground="{DynamicResource AppMutedTextBrush}"
+                                                       FontWeight="SemiBold"/>
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="360"
+                                                    DisplayMemberBinding="{Binding OdisGroupDisplay}">
+                                        <GridViewColumn.Header>
+                                            <TextBlock Text="ODIS group"
+                                                       Foreground="{DynamicResource AppMutedTextBrush}"
+                                                       FontWeight="SemiBold"/>
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="130"
+                                                    DisplayMemberBinding="{Binding Status}">
+                                        <GridViewColumn.Header>
+                                            <TextBlock Text="Status"
+                                                       Foreground="{DynamicResource AppMutedTextBrush}"
+                                                       FontWeight="SemiBold"/>
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="180"
+                                                    DisplayMemberBinding="{Binding PhysicalKey}">
+                                        <GridViewColumn.Header>
+                                            <TextBlock Text="Physical key"
+                                                       Foreground="{DynamicResource AppMutedTextBrush}"
+                                                       FontWeight="SemiBold"/>
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="230"
+                                                    DisplayMemberBinding="{Binding Summary}">
+                                        <GridViewColumn.Header>
+                                            <TextBlock Text="Summary"
+                                                       Foreground="{DynamicResource AppMutedTextBrush}"
+                                                       FontWeight="SemiBold"/>
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+
+                        <Border Grid.Row="4"
+                                Background="{DynamicResource AppPanelBrush}"
+                                BorderBrush="{DynamicResource AppBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="12"
+                                Visibility="{Binding HasSelectedHistoryEntry, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                            <Grid DataContext="{Binding SelectedHistoryEntry}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="8"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="120"/>
+                                </Grid.RowDefinitions>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Text="Transaction details"
+                                               FontWeight="SemiBold"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource AppTextBrush}"/>
+
+                                    <Button Grid.Column="1"
+                                            MinWidth="90"
+                                            Height="28"
+                                            Padding="12,0"
+                                            Content="Restore"
+                                            ToolTip="Create a reverse transaction from this history entry"
+                                            Command="{Binding DataContext.RestoreHistoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </Grid>
+
+                                <Grid Grid.Row="2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0"
+                                               Text="Physical key:"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1"
+                                               Text="{Binding PhysicalKey}"
+                                               Foreground="{DynamicResource AppTextBrush}"/>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="2"
+                                               Text="Status:"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="3"
+                                               Text="{Binding Status}"
+                                               Foreground="{DynamicResource AppTextBrush}"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0"
+                                               Text="Original raw:"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1"
+                                               Text="{Binding OriginalRawValue}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource AppTextBrush}"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="2"
+                                               Text="Merged raw:"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="3"
+                                               Text="{Binding MergedRawValue}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource AppTextBrush}"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0"
+                                               Text="Readback:"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1"
+                                               Text="{Binding ReadbackRawValue}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource AppTextBrush}"/>
+                                </Grid>
+
+                                <ListView Grid.Row="4"
+                                          ItemsSource="{Binding Changes}"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          Foreground="{DynamicResource AppTextBrush}"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListView.View>
+                                        <GridView>
+
+                                            <GridViewColumn Width="360"
+                                                            DisplayMemberBinding="{Binding Label}">
+                                                <GridViewColumn.Header>
+                                                    <TextBlock Text="Adaptation"
+                                                               Foreground="{DynamicResource AppMutedTextBrush}"
+                                                               FontWeight="SemiBold"/>
+                                                </GridViewColumn.Header>
+                                            </GridViewColumn>
+
+                                            <GridViewColumn Width="350"
+                                                            DisplayMemberBinding="{Binding CurrentValue}">
+                                                <GridViewColumn.Header>
+                                                    <TextBlock Text="Before"
+                                                               Foreground="{DynamicResource AppMutedTextBrush}"
+                                                               FontWeight="SemiBold"/>
+                                                </GridViewColumn.Header>
+                                            </GridViewColumn>
+
+                                            <GridViewColumn Width="350"
+                                                            DisplayMemberBinding="{Binding NewValue}">
+                                                <GridViewColumn.Header>
+                                                    <TextBlock Text="After"
+                                                               Foreground="{DynamicResource AppMutedTextBrush}"
+                                                               FontWeight="SemiBold"/>
+                                                </GridViewColumn.Header>
+                                            </GridViewColumn>
+
+                                        </GridView>
+                                    </ListView.View>
+                                </ListView>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </TabItem>
+        </TabControl>
 
         <TextBlock Grid.Row="6"
                    Text="{Binding StatusText}"

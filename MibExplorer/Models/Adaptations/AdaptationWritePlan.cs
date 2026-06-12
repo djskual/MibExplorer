@@ -3,8 +3,13 @@
 public sealed class AdaptationWritePlan
 {
     public List<AdaptationWriteKeyPlan> Keys { get; } = new();
+    public List<PhysicalWriteTransaction> Transactions { get; } = new();
+
+    public List<string> BlockedReasons { get; } = new();
 
     public bool HasChanges => Keys.Count > 0;
+
+    public bool HasBlockedChanges => BlockedReasons.Count > 0;
 }
 
 public sealed class AdaptationWriteKeyPlan
@@ -18,11 +23,15 @@ public sealed class AdaptationWriteKeyPlan
 
     public List<AdaptationWriteFieldPlan> Fields { get; } = new();
 
+    public bool IsDirty =>
+        !string.Equals(CurrentRawValue, NewRawValue, StringComparison.OrdinalIgnoreCase);
+
     public string KeyDisplay => $"{Partition}:{Key}:{Type}";
 }
 
 public sealed class AdaptationWriteFieldPlan
 {
+    public string AdaptationId { get; init; } = string.Empty;
     public string Label { get; init; } = string.Empty;
     public string CurrentValue { get; init; } = string.Empty;
     public string NewValue { get; init; } = string.Empty;

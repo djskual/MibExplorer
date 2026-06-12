@@ -7,7 +7,10 @@ public sealed class AdaptationItemView : ObservableObject
 {
     private string _rawValue = string.Empty;
     private string _currentValue = string.Empty;
+    private string _storageWarning = string.Empty;
     private string? _editValue;
+
+    public event EventHandler? PendingChangeChanged;
 
     public string Id { get; init; } = string.Empty;
     public string Group { get; init; } = string.Empty;
@@ -18,9 +21,16 @@ public sealed class AdaptationItemView : ObservableObject
     public string Partition { get; init; } = string.Empty;
     public string Key { get; init; } = string.Empty;
     public string Type { get; init; } = string.Empty;
+    public IReadOnlyList<PhysicalStorageKey> PhysicalKeys { get; init; } = Array.Empty<PhysicalStorageKey>();
+    public bool IsMultiStorage =>
+        PhysicalKeys.Count > 1
+        || string.Equals(StorageMode, "multiStorage", StringComparison.OrdinalIgnoreCase);
     public string StorageMode { get; init; } = string.Empty;
     public int? Mask { get; init; }
     public int? Shift { get; init; }
+    public int? BitWidth { get; init; }
+    public int? ByteIndex { get; init; }
+    public int? BitIndex { get; init; }
     public string ValueType { get; init; } = string.Empty;
     public string Control { get; init; } = string.Empty;
     public string Confidence { get; init; } = string.Empty;
@@ -30,12 +40,23 @@ public sealed class AdaptationItemView : ObservableObject
     public bool IsStorageMapped { get; init; }
     public int? ByteLength { get; init; }
 
+    public string StorageMappedToolTip =>
+        IsStorageMapped
+        ? $"Mapped: {KeyDisplay} ({Type})"
+        : "Storage unmapped";
+
     public string DiagnosticSummary
     {
         get
         {
+            string extra = StorageMode.Equals("packedFlags", StringComparison.OrdinalIgnoreCase)
+                ? $" mask={MaskDisplay} shift={Shift?.ToString() ?? "-"}"
+                : StorageMode.Equals("blobBit", StringComparison.OrdinalIgnoreCase)
+                    ? $" byte={ByteIndex?.ToString() ?? "-"} bit={BitIndex?.ToString() ?? "-"}"
+                    : string.Empty;
+
             string storage = IsStorageMapped
-                ? $"mapped {KeyDisplay} ({Type}) mode={StorageMode}"
+                ? $"mapped {KeyDisplay} ({Type}) mode={StorageMode}{extra}"
                 : "storage unmapped";
 
             string bounds = MinValue is null && MaxValue is null
@@ -46,7 +67,11 @@ public sealed class AdaptationItemView : ObservableObject
                 ? string.Empty
                 : $" | bytes={ByteLength}";
 
-            return $"id={Id} | rawLabel={RawLabel} | rawValue={RawValue} | type={ValueType} | editor={Control} | {storage}{bounds}{bytes}";
+            string warning = string.IsNullOrWhiteSpace(StorageWarning)
+                ? string.Empty
+                : $" | warning={StorageWarning}";
+
+            return $"id={Id} | rawLabel={RawLabel} | rawValue={RawValue} | type={ValueType} | editor={Control} | {storage}{bounds}{bytes}{warning}";
         }
     }
 
@@ -62,11 +87,51 @@ public sealed class AdaptationItemView : ObservableObject
         set
         {
             if (SetProperty(ref _currentValue, value))
+            {
                 OnPropertyChanged(nameof(HasPendingChange));
+                OnPropertyChanged(nameof(IsModified));
+                PendingChangeChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 
-    public string CacheKey => AdaptationReadValue.BuildCacheKey(Partition, Key, Type);
+    public string StorageWarning
+    {
+        get => _storageWarning;
+        set
+        {
+            if (SetProperty(ref _storageWarning, value))
+                OnPropertyChanged(nameof(HasStorageWarning));
+        }
+    }
+
+    public bool HasStorageWarning => !string.IsNullOrWhiteSpace(StorageWarning);
+
+    public string CacheKey
+    {
+        get
+        {
+            PhysicalStorageKey? firstKey = PhysicalKeys.FirstOrDefault();
+
+            if (firstKey is not null)
+            {
+                return AdaptationReadValue.BuildCacheKey(
+                    firstKey.Partition,
+                    firstKey.Key,
+                    firstKey.Type);
+            }
+
+            return AdaptationReadValue.BuildCacheKey(Partition, Key, Type);
+        }
+    }
+
+    public IReadOnlyList<string> CacheKeys =>
+        PhysicalKeys.Count > 0
+            ? PhysicalKeys
+                .Select(k => AdaptationReadValue.BuildCacheKey(k.Partition, k.Key, k.Type))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList()
+            : new[] { CacheKey };
 
     public string KeyDisplay => string.IsNullOrWhiteSpace(Key)
         ? "-"
@@ -85,25 +150,51 @@ public sealed class AdaptationItemView : ObservableObject
                 ? null
                 : value.Trim();
 
-            if (!string.IsNullOrWhiteSpace(normalized)
-                && string.Equals(normalized, CurrentValue, StringComparison.OrdinalIgnoreCase))
-            {
+            if (IsSameAsCurrentValue(normalized))
                 normalized = null;
-            }
 
             if (SetProperty(ref _editValue, normalized))
             {
                 OnPropertyChanged(nameof(HasPendingChange));
-                OnPropertyChanged(nameof(SelectedEditOption));
+                OnPropertyChanged(nameof(IsModified));
+                PendingChangeChanged?.Invoke(this, EventArgs.Empty);
             }
         }
+    }
+
+    private bool IsSameAsCurrentValue(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        if (string.Equals(value, CurrentValue, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (string.Equals(value, RawValue, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        AdaptationEditOption? option = EditOptions.FirstOrDefault(o =>
+            string.Equals(o.Label, value, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(o.Value, value, StringComparison.OrdinalIgnoreCase));
+
+        if (option is null)
+            return false;
+
+        return string.Equals(option.Label, CurrentValue, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(option.Value, CurrentValue, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(option.Label, RawValue, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(option.Value, RawValue, StringComparison.OrdinalIgnoreCase);
     }
 
     public bool HasPendingChange =>
         !string.IsNullOrWhiteSpace(EditValue)
         && !string.Equals(EditValue, CurrentValue, StringComparison.OrdinalIgnoreCase);
 
+    public bool IsModified => HasPendingChange;
+
     public ObservableCollection<AdaptationEditOption> EditOptions { get; } = new();
+
+    public ObservableCollection<AdaptationEditOption> StorageOptions { get; } = new();
 
     public double? MinValue { get; init; }
     public double? MaxValue { get; init; }
@@ -136,22 +227,18 @@ public sealed class AdaptationItemView : ObservableObject
         string.Equals(ValueType, "int", StringComparison.OrdinalIgnoreCase)
         || string.Equals(ValueType, "uint", StringComparison.OrdinalIgnoreCase);
 
-    public AdaptationEditOption? SelectedEditOption
-    {
-        get => EditOptions.FirstOrDefault(o =>
-            string.Equals(o.Label, EditValue, StringComparison.OrdinalIgnoreCase));
-
-        set => EditValue = value?.Label;
-    }
-
     public string EditRawValue
     {
         get
         {
-            AdaptationEditOption? option = EditOptions.FirstOrDefault(o =>
-                string.Equals(o.Label, EditValue, StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrWhiteSpace(EditValue))
+                return string.Empty;
 
-            return option?.Value ?? EditValue ?? string.Empty;
+            AdaptationEditOption? option = EditOptions.FirstOrDefault(o =>
+                string.Equals(o.Label, EditValue, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(o.Value, EditValue, StringComparison.OrdinalIgnoreCase));
+
+            return option?.Value ?? EditValue;
         }
     }
 }

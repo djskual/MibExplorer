@@ -11,6 +11,7 @@ public sealed class AdaptationGroupView : ObservableObject
     private bool _isLoading;
     private bool _isLoaded;
     private string _status = "Not loaded";
+    private bool _hasPendingChanges;
 
     public AdaptationGroupView()
     {
@@ -82,4 +83,10 @@ public sealed class AdaptationGroupView : ObservableObject
     public int VisibleCount => Adaptations.Count;
 
     public string HeaderText => $"{Label} ({VisibleCount})";
+
+    public bool HasPendingChanges
+    {
+        get => _hasPendingChanges;
+        set => SetProperty(ref _hasPendingChanges, value);
+    }
 }

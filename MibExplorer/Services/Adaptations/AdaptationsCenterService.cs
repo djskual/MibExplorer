@@ -35,6 +35,116 @@ public sealed class AdaptationsCenterService : IAdaptationsCenterService
         _connectionService = connectionService;
     }
 
+    public async Task<string> ReadVinAsync(
+        Action<string>? onOutput = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_connectionService.IsConnected)
+            throw new InvalidOperationException("No active MIB connection.");
+
+        string timestamp = DateTimeOffset.UtcNow.ToString(
+            "yyyyMMdd_HHmmss",
+            CultureInfo.InvariantCulture);
+
+        string localTemp = Path.Combine(
+            Path.GetTempPath(),
+            "MibExplorer",
+            "AdaptationsCenter",
+            "Vin",
+            timestamp);
+
+        string remoteName = $"{timestamp}_AdaptationsCenter_Vin";
+        string remoteRoot = $"{RemoteRoot}/{remoteName}";
+
+        Directory.CreateDirectory(localTemp);
+
+        try
+        {
+            ExtractResource("Payload.AdaptationsCenter.Vin.run.sh", Path.Combine(localTemp, "run.sh"));
+
+            await NormalizePackageScriptsAsync(localTemp, onOutput, cancellationToken);
+
+            onOutput?.Invoke($"Remote workspace: {remoteRoot}");
+            onOutput?.Invoke("Uploading Adaptations Center VIN payload");
+
+            await UploadPackageAsync(localTemp, remoteRoot, onOutput, cancellationToken);
+
+            onOutput?.Invoke("Setting execute permissions on VIN payload");
+
+            await SetPackagePermissionsAsync(remoteRoot, localTemp, cancellationToken);
+
+            string command =
+                $"cd {EscapeShellArg(remoteRoot)} && sh ./run.sh; echo {ExitMarker}$?";
+
+            using var shell = await _connectionService.CreateShellSessionAsync(cancellationToken);
+            await shell.StartAsync(cancellationToken);
+
+            var completion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var outputBuilder = new StringBuilder();
+            var lineBuffer = new StringBuilder();
+
+            shell.Closed += (_, _) =>
+            {
+                completion.TrySetException(
+                    new InvalidOperationException("Remote shell closed before VIN read completed."));
+            };
+
+            shell.TextReceived += (_, text) =>
+            {
+                if (string.IsNullOrEmpty(text))
+                    return;
+
+                lineBuffer.Append(text);
+
+                while (TryReadNextLine(lineBuffer, out string line))
+                {
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+
+                    outputBuilder.AppendLine(line);
+                    onOutput?.Invoke(line);
+
+                    if (line.StartsWith(ExitMarker, StringComparison.Ordinal))
+                        completion.TrySetResult(outputBuilder.ToString());
+                }
+            };
+
+            await shell.SendCommandAsync(command, cancellationToken);
+
+            await using var registration = cancellationToken.Register(() =>
+            {
+                completion.TrySetCanceled(cancellationToken);
+            });
+
+            string output = await completion.Task;
+
+            await CleanupRemoteAsync(remoteRoot, cancellationToken);
+
+            return ParseVin(output);
+        }
+        finally
+        {
+            try
+            {
+                if (Directory.Exists(localTemp))
+                    Directory.Delete(localTemp, recursive: true);
+            }
+            catch
+            {
+                // Best effort cleanup only.
+            }
+
+            try
+            {
+                await CleanupRemoteAsync(remoteRoot, cancellationToken);
+            }
+            catch
+            {
+                // Best effort cleanup only.
+            }
+        }
+    }
+
     public async Task<IReadOnlyList<AdaptationReadValue>> ReadAdaptationsAsync(
         IReadOnlyCollection<AdaptationDefinition> definitions,
         Action<string>? onOutput = null,
@@ -149,34 +259,193 @@ public sealed class AdaptationsCenterService : IAdaptationsCenterService
         }
     }
 
+    public Task<AdaptationWriteResult> PreflightWriteAdaptationsAsync(
+        IReadOnlyCollection<PhysicalWriteTransaction> transactions,
+        Action<string>? onOutput = null,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteWritePayloadAsync(
+            transactions,
+            mode: "preflight",
+            onOutput,
+            cancellationToken);
+    }
+
+    public Task<AdaptationWriteResult> WriteAdaptationsAsync(
+        IReadOnlyCollection<PhysicalWriteTransaction> transactions,
+        Action<string>? onOutput = null,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteWritePayloadAsync(
+            transactions,
+            mode: "write",
+            onOutput,
+            cancellationToken);
+    }
+
+    private async Task<AdaptationWriteResult> ExecuteWritePayloadAsync(
+        IReadOnlyCollection<PhysicalWriteTransaction> transactions,
+        string mode,
+        Action<string>? onOutput,
+        CancellationToken cancellationToken)
+    {
+        if (!_connectionService.IsConnected)
+            throw new InvalidOperationException("No active MIB connection.");
+
+        if (!string.Equals(mode, "write", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(mode, "preflight", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentOutOfRangeException(nameof(mode), mode, "Invalid adaptation write mode.");
+        }
+
+        List<PhysicalWriteTransaction> writableTransactions = transactions
+            .Where(t => t.IsDirty && t.IsValid)
+            .ToList();
+
+        if (writableTransactions.Count == 0)
+        {
+            return new AdaptationWriteResult
+            {
+                Success = false,
+                Message = "No valid adaptation write transaction."
+            };
+        }
+
+        string timestamp = DateTimeOffset.UtcNow.ToString(
+            "yyyyMMdd_HHmmss",
+            CultureInfo.InvariantCulture);
+
+        string localTemp = Path.Combine(
+            Path.GetTempPath(),
+            "MibExplorer",
+            "AdaptationsCenter",
+            "Write",
+            timestamp);
+
+        string remoteName = $"{timestamp}_AdaptationsCenter_Write";
+        string remoteRoot = $"{RemoteRoot}/{remoteName}";
+
+        Directory.CreateDirectory(localTemp);
+
+        try
+        {
+            ExtractResource("Payload.AdaptationsCenter.Write.run.sh", Path.Combine(localTemp, "run.sh"));
+            ExtractResource("Payload.AdaptationsCenter.Write.pc", Path.Combine(localTemp, "pc"));
+
+            await File.WriteAllTextAsync(
+                Path.Combine(localTemp, "mode.txt"),
+                mode.ToLowerInvariant(),
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                cancellationToken);
+
+            await WriteTransactionsFileAsync(
+                Path.Combine(localTemp, "writes.txt"),
+                writableTransactions,
+                cancellationToken);
+
+            await NormalizePackageScriptsAsync(localTemp, onOutput, cancellationToken);
+
+            onOutput?.Invoke($"Remote workspace: {remoteRoot}");
+            onOutput?.Invoke($"Uploading Adaptations Center {mode} payload");
+
+            await UploadPackageAsync(localTemp, remoteRoot, onOutput, cancellationToken);
+
+            onOutput?.Invoke($"Setting execute permissions on {mode} payload");
+
+            await SetPackagePermissionsAsync(remoteRoot, localTemp, cancellationToken);
+
+            string command =
+                $"cd {EscapeShellArg(remoteRoot)} && sh ./run.sh; echo {ExitMarker}$?";
+
+            using var shell = await _connectionService.CreateShellSessionAsync(cancellationToken);
+            await shell.StartAsync(cancellationToken);
+
+            var completion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var outputBuilder = new StringBuilder();
+            var lineBuffer = new StringBuilder();
+
+            shell.Closed += (_, _) =>
+            {
+                completion.TrySetException(
+                    new InvalidOperationException("Remote shell closed before adaptations write payload completed."));
+            };
+
+            shell.TextReceived += (_, text) =>
+            {
+                if (string.IsNullOrEmpty(text))
+                    return;
+
+                lineBuffer.Append(text);
+
+                while (TryReadNextLine(lineBuffer, out string line))
+                {
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+
+                    outputBuilder.AppendLine(line);
+                    onOutput?.Invoke(line);
+
+                    if (line.StartsWith(ExitMarker, StringComparison.Ordinal))
+                        completion.TrySetResult(outputBuilder.ToString());
+                }
+            };
+
+            await shell.SendCommandAsync(command, cancellationToken);
+
+            await using var registration = cancellationToken.Register(() =>
+            {
+                completion.TrySetCanceled(cancellationToken);
+            });
+
+            string output = await completion.Task;
+
+            await CleanupRemoteAsync(remoteRoot, cancellationToken);
+
+            return ParseWriteResult(output);
+        }
+        finally
+        {
+            try
+            {
+                if (Directory.Exists(localTemp))
+                    Directory.Delete(localTemp, recursive: true);
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                await CleanupRemoteAsync(remoteRoot, cancellationToken);
+            }
+            catch
+            {
+            }
+        }
+    }
+
     private static async Task WriteKeysFileAsync(
         string destinationPath,
         IReadOnlyCollection<AdaptationDefinition> definitions,
         CancellationToken cancellationToken)
     {
-        IEnumerable<AdaptationDefinition> uniqueDefinitions = definitions
-            .Where(d =>
-                !string.IsNullOrWhiteSpace(d.Persistence.Partition) &&
-                !string.IsNullOrWhiteSpace(d.Persistence.Key) &&
-                !string.IsNullOrWhiteSpace(d.Persistence.Type))
-            .GroupBy(d => AdaptationReadValue.BuildCacheKey(
-                d.Persistence.Partition,
-                d.Persistence.Key,
-                d.Persistence.Type))
+        IEnumerable<PhysicalStorageKey> uniqueKeys = definitions
+            .SelectMany(GetPhysicalKeys)
+            .GroupBy(k => AdaptationReadValue.BuildCacheKey(k.Partition, k.Key, k.Type))
             .Select(g => g.First())
-            .OrderBy(d => d.Persistence.Partition, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(d => d.Persistence.Key, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(d => d.Persistence.Type, StringComparer.OrdinalIgnoreCase);
+            .OrderBy(k => k.Partition, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(k => k.Key, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(k => k.Type, StringComparer.OrdinalIgnoreCase);
 
         var builder = new StringBuilder();
 
-        foreach (AdaptationDefinition definition in uniqueDefinitions)
+        foreach (PhysicalStorageKey key in uniqueKeys)
         {
-            builder.Append(definition.Persistence.Partition.Trim());
+            builder.Append(key.Partition.Trim());
             builder.Append(';');
-            builder.Append(definition.Persistence.Key.Trim());
+            builder.Append(key.Key.Trim());
             builder.Append(';');
-            builder.Append(definition.Persistence.Type.Trim());
+            builder.Append(key.Type.Trim());
             builder.Append('\n');
         }
 
@@ -185,6 +454,27 @@ public sealed class AdaptationsCenterService : IAdaptationsCenterService
             builder.ToString(),
             new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
             cancellationToken);
+    }
+
+    private static IEnumerable<PhysicalStorageKey> GetPhysicalKeys(AdaptationDefinition definition)
+    {
+        if (definition.PhysicalKeys.Count > 0)
+            return definition.PhysicalKeys;
+
+        if (!string.IsNullOrWhiteSpace(definition.Persistence.Partition) &&
+            !string.IsNullOrWhiteSpace(definition.Persistence.Key) &&
+            !string.IsNullOrWhiteSpace(definition.Persistence.Type))
+        {
+            return new[]
+            {
+            new PhysicalStorageKey(
+                definition.Persistence.Partition,
+                definition.Persistence.Key,
+                definition.Persistence.Type)
+        };
+        }
+
+        return Array.Empty<PhysicalStorageKey>();
     }
 
     private async Task UploadPackageAsync(
@@ -319,6 +609,253 @@ public sealed class AdaptationsCenterService : IAdaptationsCenterService
     {
         string extension = Path.GetExtension(localPath);
         return TextLikeExtensions.Contains(extension);
+    }
+
+    private static string ParseVin(string output)
+    {
+        string vin = "UNKNOWN";
+
+        foreach (string rawLine in output.Split('\n'))
+        {
+            string line = rawLine.Trim();
+
+            if (line.StartsWith("MIBEXPLORER_ERROR=", StringComparison.Ordinal))
+                throw new InvalidOperationException(line["MIBEXPLORER_ERROR=".Length..].Trim());
+
+            if (!line.StartsWith("MIBEXPLORER_VIN=", StringComparison.Ordinal))
+                continue;
+
+            vin = line["MIBEXPLORER_VIN=".Length..].Trim();
+
+            if (string.IsNullOrWhiteSpace(vin))
+                vin = "UNKNOWN";
+        }
+
+        return vin;
+    }
+
+    private static async Task WriteTransactionsFileAsync(
+        string destinationPath,
+        IReadOnlyCollection<PhysicalWriteTransaction> transactions,
+        CancellationToken cancellationToken)
+    {
+        var builder = new StringBuilder();
+
+        foreach (PhysicalWriteTransaction transaction in transactions)
+        {
+            builder.Append(transaction.PhysicalKey.Partition.Trim());
+            builder.Append(';');
+            builder.Append(transaction.PhysicalKey.Key.Trim());
+            builder.Append(';');
+            builder.Append(transaction.PhysicalKey.Type.Trim());
+            builder.Append(';');
+            builder.Append(transaction.OriginalRawValue.Trim());
+            builder.Append(';');
+            builder.Append(transaction.MergedRawValue.Trim());
+            builder.Append('\n');
+        }
+
+        await File.WriteAllTextAsync(
+            destinationPath,
+            builder.ToString(),
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            cancellationToken);
+    }
+
+    private static AdaptationWriteResult ParseWriteResult(string output)
+    {
+        var result = new AdaptationWriteResult();
+        var physicalResults = new Dictionary<string, AdaptationPhysicalWriteResult>(StringComparer.OrdinalIgnoreCase);
+
+        bool globalSuccess = false;
+        string message = string.Empty;
+
+        foreach (string rawLine in output.Split('\n'))
+        {
+            string line = rawLine.Trim();
+
+            if (line.StartsWith("MIBEXPLORER_ERROR=", StringComparison.Ordinal))
+            {
+                message = line["MIBEXPLORER_ERROR=".Length..].Trim();
+                globalSuccess = false;
+                continue;
+            }
+
+            if (line.StartsWith("MIBEXPLORER_WRITE_RESULT=", StringComparison.Ordinal))
+            {
+                string value = line["MIBEXPLORER_WRITE_RESULT=".Length..].Trim();
+                globalSuccess = string.Equals(value, "OK", StringComparison.OrdinalIgnoreCase);
+                message = value;
+                continue;
+            }
+
+            if (line.StartsWith("MIBEXPLORER_CURRENT;", StringComparison.Ordinal))
+            {
+                string[] parts = line.Split(';', 5);
+
+                if (parts.Length < 5)
+                    continue;
+
+                var key = new PhysicalStorageKey(parts[1].Trim(), parts[2].Trim(), parts[3].Trim());
+                string cacheKey = AdaptationReadValue.BuildCacheKey(key.Partition, key.Key, key.Type);
+
+                physicalResults[cacheKey] = new AdaptationPhysicalWriteResult
+                {
+                    PhysicalKey = key,
+                    ReadbackRawValue = parts[4].Trim(),
+                    Success = false,
+                    Message = "Current value read."
+                };
+
+                continue;
+            }
+
+            if (line.StartsWith("MIBEXPLORER_EXPECTED;", StringComparison.Ordinal))
+            {
+                string[] parts = line.Split(';', 5);
+
+                if (parts.Length < 5)
+                    continue;
+
+                var key = new PhysicalStorageKey(parts[1].Trim(), parts[2].Trim(), parts[3].Trim());
+                string cacheKey = AdaptationReadValue.BuildCacheKey(key.Partition, key.Key, key.Type);
+
+                AdaptationPhysicalWriteResult? existing = physicalResults.TryGetValue(cacheKey, out AdaptationPhysicalWriteResult? found)
+                    ? found
+                    : null;
+
+                physicalResults[cacheKey] = new AdaptationPhysicalWriteResult
+                {
+                    PhysicalKey = key,
+                    ExpectedOriginalRawValue = parts[4].Trim(),
+                    TargetRawValue = existing?.TargetRawValue ?? string.Empty,
+                    ReadbackRawValue = existing?.ReadbackRawValue ?? string.Empty,
+                    Success = existing?.Success ?? false,
+                    Message = existing?.Message ?? "Expected value read."
+                };
+
+                continue;
+            }
+
+            if (line.StartsWith("MIBEXPLORER_TARGET;", StringComparison.Ordinal))
+            {
+                string[] parts = line.Split(';', 5);
+
+                if (parts.Length < 5)
+                    continue;
+
+                var key = new PhysicalStorageKey(parts[1].Trim(), parts[2].Trim(), parts[3].Trim());
+                string cacheKey = AdaptationReadValue.BuildCacheKey(key.Partition, key.Key, key.Type);
+
+                AdaptationPhysicalWriteResult? existing = physicalResults.TryGetValue(cacheKey, out AdaptationPhysicalWriteResult? found)
+                    ? found
+                    : null;
+
+                physicalResults[cacheKey] = new AdaptationPhysicalWriteResult
+                {
+                    PhysicalKey = key,
+                    ExpectedOriginalRawValue = existing?.ExpectedOriginalRawValue ?? string.Empty,
+                    TargetRawValue = parts[4].Trim(),
+                    ReadbackRawValue = existing?.ReadbackRawValue ?? string.Empty,
+                    Success = existing?.Success ?? false,
+                    Message = existing?.Message ?? "Target value read."
+                };
+
+                continue;
+            }
+
+            if (line.StartsWith("MIBEXPLORER_READBACK;", StringComparison.Ordinal))
+            {
+                string[] parts = line.Split(';', 5);
+
+                if (parts.Length < 5)
+                    continue;
+
+                var key = new PhysicalStorageKey(parts[1].Trim(), parts[2].Trim(), parts[3].Trim());
+                string cacheKey = AdaptationReadValue.BuildCacheKey(key.Partition, key.Key, key.Type);
+
+                AdaptationPhysicalWriteResult? existing = physicalResults.TryGetValue(cacheKey, out AdaptationPhysicalWriteResult? found)
+                    ? found
+                    : null;
+
+                physicalResults[cacheKey] = new AdaptationPhysicalWriteResult
+                {
+                    PhysicalKey = key,
+                    ExpectedOriginalRawValue = existing?.ExpectedOriginalRawValue ?? string.Empty,
+                    TargetRawValue = existing?.TargetRawValue ?? string.Empty,
+                    ReadbackRawValue = parts[4].Trim(),
+                    Success = existing?.Success ?? false,
+                    Message = existing?.Message ?? "Readback received."
+                };
+
+                continue;
+            }
+
+            if (line.StartsWith("MIBEXPLORER_WRITE_OK;", StringComparison.Ordinal))
+            {
+                string[] parts = line.Split(';', 4);
+
+                if (parts.Length < 4)
+                    continue;
+
+                var key = new PhysicalStorageKey(parts[1].Trim(), parts[2].Trim(), parts[3].Trim());
+                string cacheKey = AdaptationReadValue.BuildCacheKey(key.Partition, key.Key, key.Type);
+
+                AdaptationPhysicalWriteResult? existing = physicalResults.TryGetValue(cacheKey, out AdaptationPhysicalWriteResult? found)
+                    ? found
+                    : null;
+
+                physicalResults[cacheKey] = new AdaptationPhysicalWriteResult
+                {
+                    PhysicalKey = key,
+                    ExpectedOriginalRawValue = existing?.ExpectedOriginalRawValue ?? string.Empty,
+                    TargetRawValue = existing?.TargetRawValue ?? string.Empty,
+                    ReadbackRawValue = existing?.ReadbackRawValue ?? string.Empty,
+                    Success = true,
+                    Message = "Write verified."
+                };
+
+                continue;
+            }
+
+            if (line.StartsWith("MIBEXPLORER_WRITE_FAILED;", StringComparison.Ordinal))
+            {
+                string[] parts = line.Split(';', 5);
+
+                if (parts.Length < 5)
+                    continue;
+
+                var key = new PhysicalStorageKey(parts[1].Trim(), parts[2].Trim(), parts[3].Trim());
+                string cacheKey = AdaptationReadValue.BuildCacheKey(key.Partition, key.Key, key.Type);
+
+                AdaptationPhysicalWriteResult? existing = physicalResults.TryGetValue(cacheKey, out AdaptationPhysicalWriteResult? found)
+                    ? found
+                    : null;
+
+                physicalResults[cacheKey] = new AdaptationPhysicalWriteResult
+                {
+                    PhysicalKey = key,
+                    ExpectedOriginalRawValue = existing?.ExpectedOriginalRawValue ?? string.Empty,
+                    TargetRawValue = existing?.TargetRawValue ?? string.Empty,
+                    ReadbackRawValue = existing?.ReadbackRawValue ?? string.Empty,
+                    Success = false,
+                    Message = parts[4].Trim()
+                };
+            }
+        }
+
+        var finalResult = new AdaptationWriteResult
+        {
+            Success = globalSuccess && physicalResults.Values.All(r => r.Success),
+            Message = string.IsNullOrWhiteSpace(message)
+                ? globalSuccess ? "Write completed." : "Write failed."
+                : message
+        };
+
+        foreach (AdaptationPhysicalWriteResult physicalResult in physicalResults.Values)
+            finalResult.PhysicalResults.Add(physicalResult);
+
+        return finalResult;
     }
 
     private static IReadOnlyList<AdaptationReadValue> ParseReadValues(string output)

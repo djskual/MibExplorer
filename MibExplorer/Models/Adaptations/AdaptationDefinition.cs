@@ -22,6 +22,30 @@ public sealed class AdaptationDefinition
     [JsonPropertyName("currentValueFromDump")]
     public string CurrentValueFromDump { get; init; } = string.Empty;
 
+    [JsonPropertyName("storageMode")]
+    public string StorageMode { get; init; } = string.Empty;
+
+    [JsonPropertyName("mask")]
+    public int? Mask { get; init; }
+
+    [JsonPropertyName("shift")]
+    public int? Shift { get; init; }
+
+    [JsonPropertyName("bitWidth")]
+    public int? BitWidth { get; init; }
+
+    [JsonPropertyName("byteIndex")]
+    public int? ByteIndex { get; init; }
+
+    [JsonPropertyName("bitIndex")]
+    public int? BitIndex { get; init; }
+
+    [JsonPropertyName("storageValues")]
+    public List<AdaptationCatalogEnumValue> StorageValues { get; init; } = new();
+
+    [JsonIgnore]
+    public List<PhysicalStorageKey> PhysicalKeys { get; init; } = new();
+
     [JsonPropertyName("persistence")]
     public AdaptationPersistence Persistence { get; init; } = new();
 

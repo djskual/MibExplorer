@@ -178,4 +178,41 @@ public partial class AdaptationsCenterWindow : Window
 
         return true;
     }
+
+    private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ComboBox comboBox)
+            return;
+
+        if (comboBox.DataContext is not AdaptationItemView item)
+            return;
+
+        if (!item.HasPendingChange && string.IsNullOrWhiteSpace(item.EditValue))
+        {
+            comboBox.Dispatcher.BeginInvoke(() =>
+            {
+                comboBox.SelectedIndex = -1;
+                comboBox.SelectedItem = null;
+                comboBox.SelectedValue = null;
+            });
+        }
+    }
+
+    private void Editor_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key is not (Key.Up or Key.Down or Key.Left or Key.Right))
+            return;
+
+        e.Handled = true;
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            AdaptationsTree.Focus();
+        }, DispatcherPriority.Background);
+    }
+
+    private void GroupReloadButton_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+    }
 }

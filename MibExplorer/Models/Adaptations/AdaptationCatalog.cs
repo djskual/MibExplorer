@@ -153,4 +153,121 @@ public sealed class AdaptationCatalogStorage
 
     [JsonPropertyName("mode")]
     public string Mode { get; init; } = string.Empty;
+
+    [JsonPropertyName("entries")]
+    public List<AdaptationCatalogStorageEntry> Entries { get; init; } = new();
+
+    [JsonPropertyName("readPolicy")]
+    public string? ReadPolicy { get; init; }
+
+    [JsonPropertyName("displayPolicy")]
+    public string? DisplayPolicy { get; init; }
+
+    [JsonPropertyName("writePolicy")]
+    public string? WritePolicy { get; init; }
+
+    [JsonPropertyName("mismatchPolicy")]
+    public string? MismatchPolicy { get; init; }
+
+    [JsonPropertyName("mask")]
+    public int? Mask { get; init; }
+
+    [JsonPropertyName("shift")]
+    public int? Shift { get; init; }
+
+    [JsonPropertyName("bitWidth")]
+    public int? BitWidth { get; init; }
+
+    [JsonPropertyName("byteIndex")]
+    public int? ByteIndex { get; init; }
+
+    [JsonPropertyName("bitIndex")]
+    public int? BitIndex { get; init; }
+
+    [JsonPropertyName("values")]
+    public List<AdaptationCatalogEnumValue> Values { get; init; } = new();
+
+    [JsonPropertyName("confidence")]
+    public string? Confidence { get; init; }
+
+    [JsonIgnore]
+    public bool IsMultiStorage =>
+        string.Equals(Mode, "multiStorage", StringComparison.OrdinalIgnoreCase)
+        || Entries.Count > 0;
+
+    [JsonIgnore]
+    public IReadOnlyList<PhysicalStorageKey> PhysicalKeys
+    {
+        get
+        {
+            if (IsMultiStorage)
+            {
+                return Entries
+                    .Where(e =>
+                        !string.IsNullOrWhiteSpace(e.Partition) &&
+                        !string.IsNullOrWhiteSpace(e.Key) &&
+                        !string.IsNullOrWhiteSpace(e.Type))
+                    .Select(e => new PhysicalStorageKey(
+                        e.Partition!,
+                        e.Key!,
+                        e.Type!))
+                    .Distinct()
+                    .ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(Partition) &&
+                !string.IsNullOrWhiteSpace(Key) &&
+                !string.IsNullOrWhiteSpace(Type))
+            {
+                return new[]
+                {
+                new PhysicalStorageKey(
+                    Partition!,
+                    Key!,
+                    Type!)
+            };
+            }
+
+            return Array.Empty<PhysicalStorageKey>();
+        }
+    }
+}
+
+public sealed class AdaptationCatalogStorageEntry
+{
+    [JsonPropertyName("id")]
+    public string Id { get; init; } = string.Empty;
+
+    [JsonPropertyName("partition")]
+    public string? Partition { get; init; }
+
+    [JsonPropertyName("key")]
+    public string? Key { get; init; }
+
+    [JsonPropertyName("type")]
+    public string? Type { get; init; }
+
+    [JsonPropertyName("mode")]
+    public string Mode { get; init; } = string.Empty;
+
+    [JsonPropertyName("mask")]
+    public int? Mask { get; init; }
+
+    [JsonPropertyName("shift")]
+    public int? Shift { get; init; }
+
+    [JsonPropertyName("bitWidth")]
+    public int? BitWidth { get; init; }
+
+    [JsonPropertyName("byteIndex")]
+    public int? ByteIndex { get; init; }
+
+    [JsonPropertyName("bitIndex")]
+    public int? BitIndex { get; init; }
+
+    [JsonPropertyName("values")]
+    public List<AdaptationCatalogEnumValue> Values { get; init; } = new();
+
+    [JsonPropertyName("confidence")]
+    public string? Confidence { get; init; }
 }
