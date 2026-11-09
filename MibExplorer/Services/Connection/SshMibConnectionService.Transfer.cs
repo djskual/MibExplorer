@@ -43,7 +43,7 @@ public sealed partial class SshMibConnectionService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                using var scp = new ScpClient(connectionInfo);
+                using var scp = new ScpClient(connectionInfo, RemotePathTransformation.ShellQuote);
 
                 scp.Downloading += (_, e) =>
                 {
@@ -100,7 +100,7 @@ public sealed partial class SshMibConnectionService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                using var scp = new ScpClient(connectionInfo);
+                using var scp = new ScpClient(connectionInfo, RemotePathTransformation.ShellQuote);
 
                 ConnectScpWithRetry(scp, cancellationToken);
 
@@ -189,7 +189,7 @@ public sealed partial class SshMibConnectionService
 
                 ulong totalBytes = (ulong)new FileInfo(localPath).Length;
 
-                using var scp = new ScpClient(connectionInfo);
+                using var scp = new ScpClient(connectionInfo, RemotePathTransformation.ShellQuote);
 
                 scp.Uploading += (_, e) =>
                 {
@@ -268,7 +268,7 @@ public sealed partial class SshMibConnectionService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                using var scp = new ScpClient(connectionInfo);
+                using var scp = new ScpClient(connectionInfo, RemotePathTransformation.ShellQuote);
 
                 ConnectScpWithRetry(scp, cancellationToken);
 
