@@ -94,7 +94,7 @@ public sealed partial class MainViewModel
             return;
         }
 
-        if (SelectedItem is null || !SelectedItem.IsDirectory)
+        if (SelectedItem is null || !SelectedItem.IsNavigable)
         {
             StatusMessage = "Select a destination folder first.";
             return;
@@ -119,10 +119,11 @@ public sealed partial class MainViewModel
 
         string localPath = openDialog.FileName;
         string fileName = Path.GetFileName(localPath);
-        string remotePath = selectedFolder.FullPath.TrimEnd('/') + "/" + fileName;
-
         try
         {
+            string remoteParent = await ResolveUploadDirectoryAsync(selectedFolder);
+            string remotePath = remoteParent.TrimEnd('/') + "/" + fileName;
+
             bool remoteExists = await _mibConnectionService.RemotePathExistsAsync(remotePath);
 
             string operationName = remoteExists ? "Replacing" : "Uploading";
@@ -295,11 +296,13 @@ public sealed partial class MainViewModel
             return;
         }
 
-        if (SelectedTreeNode is null || !SelectedTreeNode.IsDirectory)
+        if (SelectedTreeNode is null || !SelectedTreeNode.IsNavigable)
         {
             StatusMessage = "Select a target folder.";
             return;
         }
+
+        var selectedParent = SelectedTreeNode;
 
         var dialog = new Microsoft.Win32.OpenFolderDialog();
         if (dialog.ShowDialog() != true)
@@ -309,11 +312,11 @@ public sealed partial class MainViewModel
         string folderName = await TryGetMappedRootFolderNameAsync(localRoot)
             ?? new DirectoryInfo(localRoot).Name;
 
-        string remoteParent = SelectedTreeNode.FullPath.TrimEnd('/');
-        string remoteTarget = remoteParent + "/" + folderName;
-
         try
         {
+            string remoteParent = (await ResolveUploadDirectoryAsync(selectedParent)).TrimEnd('/');
+            string remoteTarget = remoteParent + "/" + folderName;
+
             SetBusyState(true, "Preparing upload...", 0);
 
             bool targetExists = await _mibConnectionService.RemotePathExistsAsync(remoteTarget);
@@ -352,6 +355,28 @@ public sealed partial class MainViewModel
         {
             SetBusyState(false, "Ready", 0);
         }
+    }
+
+    private async Task<string> ResolveUploadDirectoryAsync(RemoteExplorerItem directory)
+    {
+        if (!directory.IsNavigable)
+            throw new InvalidOperationException("The selected destination is not a directory.");
+
+        if (directory.EntryType != RemoteEntryType.Symlink)
+            return directory.FullPath;
+
+        // QNX exposes /tmp -> /dev/shmem and /root -> /mnt/app/root as symlinks.
+        // Resolve the physical directory so the mount policy applies to the target,
+        // not to an arbitrary alias; cd also rejects symlinks to regular files.
+        string escaped = "'" + directory.FullPath.Replace("'", "'\"'\"'") + "'";
+        string resolved = (await _mibConnectionService.ExecuteCommandAsync(
+            $"cd {escaped} && pwd -P")).Trim();
+
+        if (!resolved.StartsWith("/", StringComparison.Ordinal) ||
+            resolved.Contains('\n') || resolved.Contains('\r'))
+            throw new InvalidOperationException("Unable to resolve the selected directory link.");
+
+        return resolved;
     }
 
     private async Task UploadFolderInternalAsync(string localRoot, string remoteTarget)

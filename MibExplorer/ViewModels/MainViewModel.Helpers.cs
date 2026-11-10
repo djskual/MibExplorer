@@ -138,6 +138,7 @@ public sealed partial class MainViewModel
         OnPropertyChanged(nameof(SelectedItemVisibility));
         OnPropertyChanged(nameof(CanRunItemAction));
         OnPropertyChanged(nameof(CanRunFolderAction));
+        OnPropertyChanged(nameof(CanRunUploadAction));
         OnPropertyChanged(nameof(CanRunFileAction));
         OnPropertyChanged(nameof(SelectedPath));
         OnPropertyChanged(nameof(SelectedType));

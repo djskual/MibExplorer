@@ -72,14 +72,14 @@ public sealed partial class MainViewModel : ObservableObject
             () => !IsBusy && IsConnectedToMib && SelectedTreeNode is not null);
         _connectionCommand = new RelayCommand(async () => await ToggleConnectionAsync(), () => !IsBusy);
         _downloadCommand = new RelayCommand(async () => await DownloadSelectedFileAsync(), () => CanRunFileAction);
-        _uploadCommand = new RelayCommand(async () => await UploadFileToSelectedFolderAsync(), () => CanRunFolderAction);
+        _uploadCommand = new RelayCommand(async () => await UploadFileToSelectedFolderAsync(), () => CanRunUploadAction);
         _renameCommand = new RelayCommand(async () => await RenameSelectedItemAsync(), () => CanRunItemAction);
         _deleteCommand = new RelayCommand(async () => await DeleteSelectedFileAsync(), () => CanRunItemAction);
         _extractCommand = new RelayCommand(async () => await ExtractSelectedFolderAsync(), () => CanRunFolderAction);
         _replaceCommand = new RelayCommand(async () => await ReplaceSelectedFileAsync(), () => CanRunFileAction);
         _uploadFolderCommand = new RelayCommand(
             async () => await UploadFolderAsync(),
-            () => IsConnectedToMib && SelectedTreeNode is { IsDirectory: true } && !IsBusy);
+            () => IsConnectedToMib && SelectedTreeNode is { IsNavigable: true } && !IsBusy);
 
         _connectionMonitorTimer = new DispatcherTimer
         {
@@ -327,6 +327,13 @@ public sealed partial class MainViewModel : ObservableObject
         !IsBusy &&
         IsConnectedToMib &&
         (SelectedItem?.IsDirectory ?? false);
+
+    // A directory symlink can be a valid upload destination, too.
+    // Its target is checked before attempting the upload.
+    public bool CanRunUploadAction =>
+        !IsBusy &&
+        IsConnectedToMib &&
+        (SelectedItem?.IsNavigable ?? false);
 
     public bool CanRunFileAction =>
         !IsBusy &&
