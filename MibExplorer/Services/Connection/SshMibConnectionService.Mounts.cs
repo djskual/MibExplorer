@@ -11,8 +11,91 @@ public sealed partial class SshMibConnectionService
 
     public bool CanWriteToPath(string remotePath)
     {
+        // Kept for existing synchronous callers. For symlinks, use CanWriteToPathAsync:
+        // only the QNX filesystem can establish the real writable mount.
         string normalized = NormalizeRemotePath(remotePath).Replace('\\', '/');
         return IsDirectlyWritablePath(normalized) || ResolveWritableMounts(normalized).Count > 0;
+    }
+
+    public async Task<bool> CanWriteToPathAsync(
+        string remotePath,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        try
+        {
+            string parent = await ResolveWriteParentDirectoryAsync(remotePath, cancellationToken);
+            return IsDirectlyWritablePath(parent) || ResolveWritableMounts(parent).Count > 0;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (SshException)
+        {
+            return false; // e.g. broken parent link, inaccessible directory
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
+    // Resolve all symbolic links in the PARENT directory, but never resolve the final
+    // entry. A delete/rename of a symlink must affect the link, not its target.
+    // Authorize writes based on the parent filesystem, not the final name:
+    // deleting /tmp or /fs/sda0 themselves must never be treated as a normal write.
+    // Also works for a new file/directory that does not yet exist.
+    private async Task<string> ResolveWriteParentDirectoryAsync(
+        string remotePath,
+        CancellationToken cancellationToken)
+    {
+        string path = NormalizeRemotePath(remotePath).Replace('\\', '/').TrimEnd('/');
+        if (!path.StartsWith("/", StringComparison.Ordinal) || path.Length <= 1 ||
+            path.Contains('\r') || path.Contains('\n') || path.Contains('\0'))
+            throw new ArgumentException("A valid absolute remote file path is required.", nameof(remotePath));
+
+        int separator = path.LastIndexOf('/');
+        string entryName = path[(separator + 1)..];
+        if (entryName is "" or "." or "..")
+            throw new ArgumentException("Invalid remote entry name.", nameof(remotePath));
+
+        string parentPath = separator == 0 ? "/" : path[..separator];
+        string physicalParent = (await ExecuteCommandAsync(
+            $"cd {EscapeShellArg(parentPath)} && pwd -P", cancellationToken)).Trim();
+
+        if (!physicalParent.StartsWith("/", StringComparison.Ordinal) ||
+            physicalParent.Contains('\r') || physicalParent.Contains('\n'))
+            throw new InvalidOperationException($"Unable to resolve remote parent directory: {parentPath}");
+
+        return physicalParent;
+    }
+
+    public async Task<bool> IsRemoteSymbolicLinkAsync(
+        string remotePath,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        string escapedPath = EscapeShellArg(NormalizeRemotePath(remotePath));
+        try
+        {
+            // The QNX ls format already used by the explorer starts symlinks with 'l'.
+            string details = (await ExecuteCommandAsync($"ls -ld {escapedPath}", cancellationToken)).TrimStart();
+            return details.Length > 0 && details[0] == 'l';
+        }
+        catch (SshException ex) when (
+            ex.Message.Contains("No such file or directory", StringComparison.OrdinalIgnoreCase))
+        {
+            return false; // A new destination does not have a final symlink yet.
+        }
     }
 
     private static bool IsDirectlyWritablePath(string normalized)
@@ -100,21 +183,23 @@ public sealed partial class SshMibConnectionService
         ArgumentNullException.ThrowIfNull(operation);
         cancellationToken.ThrowIfCancellationRequested();
 
-        string normalized = NormalizeRemotePath(remotePath).Replace('\\', '/');
-        if (IsDirectlyWritablePath(normalized))
-        {
-            await operation(cancellationToken);
-            return;
-        }
-
-        var mountPoints = ResolveWritableMounts(normalized);
-        if (mountPoints.Count == 0)
-            throw new InvalidOperationException($"No writable mount mapping is defined for path: {remotePath}");
-
         await _writableOperationSemaphore.WaitAsync(cancellationToken);
         var remountedByUs = new List<string>();
         try
         {
+            // Resolve under the same lock as the mount operation. This works for
+            // nested directory symlinks and avoids hard-coded /root-style aliases.
+            string parent = await ResolveWriteParentDirectoryAsync(remotePath, cancellationToken);
+            if (IsDirectlyWritablePath(parent))
+            {
+                await operation(cancellationToken);
+                return;
+            }
+
+            var mountPoints = ResolveWritableMounts(parent);
+            if (mountPoints.Count == 0)
+                throw new InvalidOperationException($"No writable mount mapping is defined for path: {remotePath} (parent: {parent})");
+
             foreach (string mountPoint in mountPoints.Distinct(StringComparer.Ordinal))
             {
                 if (await IsMountWritableAsync(mountPoint, cancellationToken))

@@ -7,6 +7,9 @@
 - Add RW/RO mount management for SD partitions sda0 and sdb0.
 - Serialize writable operations to prevent conflicting mount changes.
 - Validate directory symlink targets before uploading files.
+- Support directory symlinks across file and folder upload, replace, rename, delete and extraction operations.
+- Resolve the actual destination mount before writable operations.
+- Preserve existing RW/RO mount behavior when operating through symbolic links.
 
 ## Fixed
 - Fixed QNX SSH SFTP subsystem by using internal-sftp instead of the external sftp-server.
@@ -14,6 +17,11 @@
 - Preserve the initial RW/RO mount state during remote file operations.
 - Allow file uploads through directory symlinks such as /tmp and /root.
 - Support direct writes to /tmp and /dev/shmem without remounting.
+- Preserve original file permissions, UID and GID when replacing remote files.
+- Resolve symbolic links dynamically for remote file operations.
+- Fix Replace, Rename and Delete through symbolic directory paths.
+- Prevent accidental replacement of symbolic links to files.
+- Fix explorer refresh after renaming or deleting selected folders and symlinks.
 
 ## Cleanup
 - Removed unused external sftp-server binary from SSH payload.

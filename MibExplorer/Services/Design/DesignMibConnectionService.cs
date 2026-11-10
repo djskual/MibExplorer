@@ -206,6 +206,18 @@ public sealed class DesignMibConnectionService : IMibConnectionService
         return true;
     }
 
+    public Task<bool> CanWriteToPathAsync(string remotePath, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(true);
+    }
+
+    public Task<bool> IsRemoteSymbolicLinkAsync(string remotePath, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(false);
+    }
+
     public Task ConnectAsync(ConnectionSettings settings, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

@@ -397,10 +397,8 @@ public partial class MainWindow : Window
         return BlockedEditorExtensions.Contains(extension);
     }
 
-    private bool TryGetFileEditorMode(string remotePath, out bool isReadOnly)
+    private async Task<(bool CanOpen, bool IsReadOnly)> TryGetFileEditorModeAsync(string remotePath)
     {
-        isReadOnly = false;
-
         if (IsBlockedForTextEditor(remotePath))
         {
             AppMessageBox.Show(this,
@@ -408,16 +406,15 @@ public partial class MainWindow : Window
                 "Remote File Editor",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
-            return false;
+            return (false, true);
         }
 
-        if (!ViewModel.ConnectionService.CanWriteToPath(remotePath))
-            isReadOnly = true;
-
-        return true;
+        bool canWrite = await ViewModel.ConnectionService.CanWriteToPathAsync(remotePath);
+        bool isLink = await ViewModel.ConnectionService.IsRemoteSymbolicLinkAsync(remotePath);
+        return (true, !canWrite || isLink);
     }
 
-    private void EditMenuItem_Click(object sender, RoutedEventArgs e)
+    private async void EditMenuItem_Click(object sender, RoutedEventArgs e)
     {
         if (ViewModel.SelectedListItem is not RemoteExplorerItem item)
             return;
@@ -425,12 +422,28 @@ public partial class MainWindow : Window
         if (item.IsDirectory)
             return;
 
-        OpenFileEditorWindow(item.FullPath);
+        await OpenFileEditorWindowAsync(item.FullPath);
     }
 
-    private void OpenFileEditorWindow(string remotePath)
+    private async Task OpenFileEditorWindowAsync(string remotePath)
     {
-        if (!TryGetFileEditorMode(remotePath, out bool isReadOnly))
+        bool canOpen;
+        bool isReadOnly;
+        try
+        {
+            (canOpen, isReadOnly) = await TryGetFileEditorModeAsync(remotePath);
+        }
+        catch (Exception ex)
+        {
+            AppMessageBox.Show(this,
+                $"Unable to check remote file permissions.\n\n{ex.Message}",
+                "Remote File Editor",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        if (!canOpen)
             return;
 
         if (_openFileEditors.TryGetValue(remotePath, out FileEditorWindow? existingWindow))
@@ -1400,14 +1413,14 @@ Notes:
         e.Handled = true;
     }
 
-    private void CurrentFolderList_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+    private async void CurrentFolderList_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (sender is not ListView listView || listView.SelectedItem is not RemoteExplorerItem item)
             return;
 
         if (!item.IsNavigable)
         {
-            OpenFileEditorWindow(item.FullPath);
+            await OpenFileEditorWindowAsync(item.FullPath);
             return;
         }
 

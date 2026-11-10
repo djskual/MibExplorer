@@ -326,7 +326,7 @@ public sealed partial class MainViewModel : ObservableObject
     public bool CanRunFolderAction =>
         !IsBusy &&
         IsConnectedToMib &&
-        (SelectedItem?.IsDirectory ?? false);
+        (SelectedItem?.IsNavigable ?? false);
 
     // A directory symlink can be a valid upload destination, too.
     // Its target is checked before attempting the upload.

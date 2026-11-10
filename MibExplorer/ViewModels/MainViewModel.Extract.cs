@@ -18,7 +18,7 @@ public sealed partial class MainViewModel
             return;
         }
 
-        if (SelectedItem is null || !SelectedItem.IsDirectory)
+        if (SelectedItem is null || !SelectedItem.IsNavigable)
         {
             StatusMessage = "Select a folder to extract.";
             return;

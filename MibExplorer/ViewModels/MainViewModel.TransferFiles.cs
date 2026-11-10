@@ -124,6 +124,9 @@ public sealed partial class MainViewModel
             string remoteParent = await ResolveUploadDirectoryAsync(selectedFolder);
             string remotePath = remoteParent.TrimEnd('/') + "/" + fileName;
 
+            if (await _mibConnectionService.IsRemoteSymbolicLinkAsync(remotePath))
+                throw new InvalidOperationException("The destination is a symbolic link. Navigate to its target instead of replacing the link.");
+
             bool remoteExists = await _mibConnectionService.RemotePathExistsAsync(remotePath);
 
             string operationName = remoteExists ? "Replacing" : "Uploading";
@@ -209,7 +212,7 @@ public sealed partial class MainViewModel
 
         var selectedFile = SelectedItem;
 
-        if (!_mibConnectionService.CanWriteToPath(selectedFile.FullPath))
+        if (!await _mibConnectionService.CanWriteToPathAsync(selectedFile.FullPath))
         {
             StatusMessage = "Path is not writable.";
 
@@ -318,6 +321,9 @@ public sealed partial class MainViewModel
             string remoteTarget = remoteParent + "/" + folderName;
 
             SetBusyState(true, "Preparing upload...", 0);
+
+            if (await _mibConnectionService.IsRemoteSymbolicLinkAsync(remoteTarget))
+                throw new InvalidOperationException("The destination folder is a symbolic link. Navigate to it instead of replacing the link.");
 
             bool targetExists = await _mibConnectionService.RemotePathExistsAsync(remoteTarget);
 

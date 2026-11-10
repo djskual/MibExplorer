@@ -245,6 +245,9 @@ public sealed partial class SshMibConnectionService
 
         await RunWritableOperationAsync(remotePath, async ct =>
         {
+            if (await IsRemoteSymbolicLinkAsync(remotePath, ct))
+                throw new InvalidOperationException("Cannot upload over a symbolic link directly. Navigate to its target.");
+
             await UploadFileCoreAsync(localPath, remotePath, progress, ct);
         }, cancellationToken);
     }
@@ -356,60 +359,85 @@ public sealed partial class SshMibConnectionService
             throw new FileNotFoundException("Local file not found.", localPath);
 
         string tempRemotePath = BuildTemporaryRemotePath(remotePath);
+        string preservedRemotePath = tempRemotePath + ".__preserved__";
         string backupRemotePath = BuildBackupRemotePath(remotePath);
 
         await RunWritableOperationAsync(remotePath, async ct =>
         {
+            // Replacing a file symlink would destroy the link itself.
+            // Keep the check inside the writable-operation lock.
+            if (await IsRemoteSymbolicLinkAsync(remotePath, ct))
+                throw new InvalidOperationException("Cannot replace a symbolic link directly. Navigate to its target.");
+
             await ExecuteCommandAsync($"rm -f {EscapeShellArg(tempRemotePath)}", ct);
+            await ExecuteCommandAsync($"rm -f {EscapeShellArg(preservedRemotePath)}", ct);
             await ExecuteCommandAsync($"rm -f {EscapeShellArg(backupRemotePath)}", ct);
-
-            await UploadFileCoreAsync(localPath, tempRemotePath, progress, ct);
-
-            bool originalExists = await RemotePathExistsAsync(remotePath, ct);
-
-            if (originalExists)
-            {
-                await ExecuteCommandAsync(
-                    $"mv -f {EscapeShellArg(remotePath)} {EscapeShellArg(backupRemotePath)}",
-                    ct);
-            }
 
             try
             {
-                await ExecuteCommandAsync(
-                    $"mv -f {EscapeShellArg(tempRemotePath)} {EscapeShellArg(remotePath)}",
-                    ct);
+                await UploadFileCoreAsync(localPath, tempRemotePath, progress, ct);
 
-                await ExecuteCommandAsync(
-                    $"rm -f {EscapeShellArg(backupRemotePath)}",
-                    ct);
-            }
-            catch
-            {
-                if (await RemotePathExistsAsync(backupRemotePath, ct) &&
-                    !await RemotePathExistsAsync(remotePath, ct))
+                bool originalExists = await RemotePathExistsAsync(remotePath, ct);
+                string replacementRemotePath = tempRemotePath;
+
+                if (originalExists)
                 {
-                    try
-                    {
-                        await ExecuteCommandAsync(
-                            $"mv -f {EscapeShellArg(backupRemotePath)} {EscapeShellArg(remotePath)}",
-                            ct);
-                    }
-                    catch
-                    {
-                        // Best effort restore only
-                    }
+                    // QNX cp -p preserves mode, owner and group from the original.
+                    // Writing the uploaded bytes into that copy does not replace its inode.
+                    await ExecuteCommandAsync(
+                        $"cp -p {EscapeShellArg(remotePath)} {EscapeShellArg(preservedRemotePath)}",
+                        ct);
+                    await ExecuteCommandAsync(
+                        $"cat {EscapeShellArg(tempRemotePath)} > {EscapeShellArg(preservedRemotePath)}",
+                        ct);
+
+                    replacementRemotePath = preservedRemotePath;
+                    await ExecuteCommandAsync("sync", ct);
+
+                    await ExecuteCommandAsync(
+                        $"mv -f {EscapeShellArg(remotePath)} {EscapeShellArg(backupRemotePath)}",
+                        ct);
                 }
 
-                throw;
-            }
-            finally
-            {
                 try
                 {
                     await ExecuteCommandAsync(
-                        $"rm -f {EscapeShellArg(tempRemotePath)}",
+                        $"mv -f {EscapeShellArg(replacementRemotePath)} {EscapeShellArg(remotePath)}",
                         ct);
+
+                    await ExecuteCommandAsync(
+                        $"rm -f {EscapeShellArg(backupRemotePath)}",
+                        ct);
+                }
+                catch
+                {
+                    if (await RemotePathExistsAsync(backupRemotePath, ct) &&
+                        !await RemotePathExistsAsync(remotePath, ct))
+                    {
+                        try
+                        {
+                            await ExecuteCommandAsync(
+                                $"mv -f {EscapeShellArg(backupRemotePath)} {EscapeShellArg(remotePath)}",
+                                ct);
+                        }
+                        catch
+                        {
+                            // Best effort restore only
+                        }
+                    }
+
+                    throw;
+                }
+            }
+            finally
+            {
+                // Also clean staging files when upload/copy fails before the swap.
+                // Cleanup must remain possible if the caller cancelled the operation.
+                try
+                {
+                    await ExecuteCommandAsync(
+                        $"rm -f {EscapeShellArg(tempRemotePath)} {EscapeShellArg(preservedRemotePath)}",
+                        CancellationToken.None);
                 }
                 catch
                 {

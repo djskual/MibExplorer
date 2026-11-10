@@ -42,6 +42,8 @@ public interface IMibConnectionService : IDisposable
         CancellationToken cancellationToken = default);
 
     bool CanWriteToPath(string remotePath);
+    Task<bool> CanWriteToPathAsync(string remotePath, CancellationToken cancellationToken = default);
+    Task<bool> IsRemoteSymbolicLinkAsync(string remotePath, CancellationToken cancellationToken = default);
 
     Task RenamePathAsync(
         string remotePath,
