@@ -39,6 +39,27 @@ public sealed class DesignRemoteShellSession : IRemoteShellSession
         return Task.CompletedTask;
     }
 
+    public Task WriteInputAsync(string input, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_isOpen) throw new InvalidOperationException("Shell session is closed.");
+        TextReceived?.Invoke(this, input);
+        return Task.CompletedTask;
+    }
+
+    public Task WriteBytesAsync(byte[] data, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_isOpen) throw new InvalidOperationException("Shell session is closed.");
+        return Task.CompletedTask;
+    }
+
+    public Task ResizeAsync(uint columns, uint rows, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.CompletedTask;
+    }
+
     public void Dispose()
     {
         if (!_isOpen)

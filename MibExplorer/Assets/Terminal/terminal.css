@@ -1,0 +1,74 @@
+:root {
+  color-scheme: dark;
+  --terminal-bg: #101820;
+  --terminal-scroll-thumb: #586e80;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--terminal-bg);
+}
+
+#terminal {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--terminal-bg);
+}
+
+/* xterm's viewport extends beyond the last complete row: use the same
+   background throughout to avoid the black stripes above/below the canvas. */
+#terminal .xterm {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0;
+  background: var(--terminal-bg);
+}
+#terminal .xterm .xterm-viewport,
+#terminal .xterm .xterm-screen {
+  background-color: var(--terminal-bg) !important;
+}
+#terminal .xterm .xterm-viewport {
+  scrollbar-color: var(--terminal-scroll-thumb) var(--terminal-bg);
+  scrollbar-width: thin;
+}
+#terminal .xterm .xterm-viewport::-webkit-scrollbar { width: 10px; }
+#terminal .xterm .xterm-viewport::-webkit-scrollbar-track { background: var(--terminal-bg); }
+#terminal .xterm .xterm-viewport::-webkit-scrollbar-thumb {
+  background: var(--terminal-scroll-thumb);
+  border: 2px solid var(--terminal-bg);
+  border-radius: 8px;
+}
+#terminal .xterm .xterm-viewport::-webkit-scrollbar-thumb:hover { background: #718ba0; }
+
+.terminal-menu[hidden] { display: none; }
+.terminal-menu {
+  position: fixed;
+  z-index: 100;
+  min-width: 148px;
+  padding: 4px;
+  background: #202a35;
+  color: #dce6ed;
+  border: 1px solid #405163;
+  border-radius: 8px;
+  box-shadow: 0 8px 22px #0008;
+  font: 13px 'Segoe UI', sans-serif;
+}
+.terminal-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 5px;
+  padding: 7px 10px;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.terminal-menu button:hover:not(:disabled),
+.terminal-menu button:focus-visible { background: #34475a; outline: none; }
+.terminal-menu button:disabled { opacity: .4; cursor: default; }

@@ -1,166 +1,45 @@
 <Window x:Class="MibExplorer.Views.Dialogs.ShellConsoleWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="Remote Shell Console"
-        Width="980"
-        Height="650"
-        MinWidth="760"
-        MinHeight="460"
+        Width="980" Height="650" MinWidth="760" MinHeight="460"
         WindowStartupLocation="Manual"
         Background="{DynamicResource AppWindowBackgroundBrush}"
         Foreground="{DynamicResource AppTextBrush}">
-
     <Grid Margin="14">
         <Border Background="{DynamicResource AppPanelBrush}"
                 BorderBrush="{DynamicResource AppBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="14"
-                Padding="14">
+                BorderThickness="1" CornerRadius="14" Padding="14">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="10"/>
-                    <RowDefinition Height="*"/>
                     <RowDefinition Height="12"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-
                 <Grid Grid.Row="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="Remote shell console"
-                                   FontSize="20"
-                                   FontWeight="SemiBold"/>
-
-                        <TextBlock Margin="0,6,0,0"
-                                   Text="{Binding StatusText}"
+                        <TextBlock Text="Remote shell console" FontSize="20" FontWeight="SemiBold"/>
+                        <TextBlock Margin="0,6,0,0" Text="{Binding StatusText}"
                                    Foreground="{DynamicResource AppMutedTextBrush}"/>
                     </StackPanel>
-
-                    <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Top">
-                        <Button Width="90"
-                                Content="Copy All"
-                                Margin="0,0,8,0"
-                                Command="{Binding CopyAllCommand}"/>
-
-                        <Button Width="90"
-                                Content="Save Log"
-                                Margin="0,0,8,0"
-                                Command="{Binding SaveLogCommand}"/>
-
-                        <Button Width="90"
-                                Content="Clear"
-                                ToolTip="Ctrl+L"
-                                Command="{Binding ClearCommand}"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                        <Button Content="Copy" Width="70" Margin="0,0,6,0" Click="CopySelection_Click" ToolTip="Copy selected text"/>
+                        <Button Content="Paste" Width="70" Margin="0,0,6,0" Click="Paste_Click" ToolTip="Paste clipboard into shell"/>
+                        <Button Content="Copy All" Width="80" Margin="0,0,6,0" Click="CopyAll_Click"/>
+                        <Button Content="Save Log" Width="80" Margin="0,0,6,0" Click="SaveLog_Click"/>
+                        <Button Content="Clear" Width="70" Click="Clear_Click" ToolTip="Clear displayed scrollback"/>
                     </StackPanel>
                 </Grid>
-
-                <Border Grid.Row="2"
-                        Background="{DynamicResource AppPanelAltBrush}"
+                <Border Grid.Row="2" Background="#101820"
                         BorderBrush="{DynamicResource AppBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="12"
-                        Padding="10">
-                    <RichTextBox x:Name="OutputRichTextBox"
-                                 IsReadOnly="True"
-                                 IsDocumentEnabled="False"
-                                 VerticalScrollBarVisibility="Auto"
-                                 HorizontalScrollBarVisibility="Auto"
-                                 FontFamily="Consolas"
-                                 FontSize="13"
-                                 Foreground="{DynamicResource AppTextBrush}"
-                                 Background="Transparent"
-                                 BorderThickness="0"
-                                 Padding="0"
-                                 IsUndoEnabled="False"
-                                 SpellCheck.IsEnabled="False">
-                        <RichTextBox.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem Header="Copy"
-                                          Command="ApplicationCommands.Copy"
-                                          CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                <MenuItem Header="Copy All"
-                                          Command="{Binding DataContext.CopyAllCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                <Separator/>
-                                <MenuItem Header="Select All"
-                                          Command="ApplicationCommands.SelectAll"
-                                          CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                <Separator/>
-                                <MenuItem Header="Save Log"
-                                          Command="{Binding DataContext.SaveLogCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                <Separator/>
-                                <MenuItem Header="Clear"
-                                              Command="{Binding DataContext.ClearCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                            </ContextMenu>
-                        </RichTextBox.ContextMenu>
-                    </RichTextBox>
-                </Border>
-
-                <Border Grid.Row="4"
-                        Background="{DynamicResource AppPanelAltBrush}"
-                        BorderBrush="{DynamicResource AppBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="12"
-                        Padding="12">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="10"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Grid.Column="0"
-                                   Text="Command"
-                                   VerticalAlignment="Center"
-                                   Foreground="{DynamicResource AppMutedTextBrush}"/>
-
-                        <TextBox x:Name="CommandTextBox"
-                                 Grid.Column="2"
-                                 Text="{Binding CurrentCommand, UpdateSourceTrigger=PropertyChanged}"
-                                 IsEnabled="{Binding CanEditCommand}"
-                                 VerticalContentAlignment="Center"
-                                 FontFamily="Consolas"
-                                 FontSize="13"
-                                 PreviewKeyDown="CommandTextBox_OnPreviewKeyDown"
-                                 KeyDown="CommandTextBox_OnKeyDown">
-                            <TextBox.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="Cut"
-                                              Command="ApplicationCommands.Cut"
-                                              CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                    <MenuItem Header="Copy"
-                                              Command="ApplicationCommands.Copy"
-                                              CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                    <MenuItem Header="Paste"
-                                              Command="ApplicationCommands.Paste"
-                                              CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                    <Separator/>
-                                    <MenuItem Header="Select All"
-                                              Command="ApplicationCommands.SelectAll"
-                                              CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                    <Separator/>
-                                    <MenuItem Header="Clear"
-                                              Click="CommandContextClear_Click"/>
-                                </ContextMenu>
-                            </TextBox.ContextMenu>
-                        </TextBox>
-
-                        <Button Grid.Column="4"
-                                Width="90"
-                                Content="Send"
-                                Command="{Binding SendCommand}"/>
-                    </Grid>
+                        BorderThickness="1" CornerRadius="12" Padding="7">
+                    <wv2:WebView2 x:Name="TerminalView"
+                                  />
                 </Border>
             </Grid>
         </Border>

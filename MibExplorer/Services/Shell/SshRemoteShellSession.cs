@@ -80,6 +80,62 @@ public sealed class SshRemoteShellSession : IRemoteShellSession
         return Task.CompletedTask;
     }
 
+    public Task WriteInputAsync(string input, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(input);
+
+        lock (_syncRoot)
+        {
+            if (!IsOpen)
+                throw new InvalidOperationException("Shell session is not available.");
+
+            // Raw data from xterm.js: DO NOT append a newline.
+            _shellStream!.Write(input);
+            _shellStream.Flush();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task WriteBytesAsync(byte[] data, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(data);
+
+        lock (_syncRoot)
+        {
+            if (!IsOpen)
+                throw new InvalidOperationException("Shell session is not available.");
+
+            _shellStream!.Write(data, 0, data.Length);
+            _shellStream.Flush();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task ResizeAsync(uint columns, uint rows, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+
+        if (columns is < 2 or > 1000 || rows is < 2 or > 500)
+            throw new ArgumentOutOfRangeException(nameof(columns), "Invalid terminal dimensions.");
+
+        lock (_syncRoot)
+        {
+            if (!IsOpen)
+                return Task.CompletedTask;
+
+            _shellStream!.ChangeWindowSize(columns, rows, 0, 0);
+        }
+
+        return Task.CompletedTask;
+    }
+
     private async Task ReadLoopAsync(CancellationToken cancellationToken)
     {
         var buffer = new byte[4096];
@@ -107,11 +163,12 @@ public sealed class SshRemoteShellSession : IRemoteShellSession
                 if (bytesRead <= 0)
                     break;
 
-                int charCount = decoder.GetCharCount(buffer, 0, bytesRead);
-                var chars = new char[charCount];
-                decoder.GetChars(buffer, 0, bytesRead, chars, 0);
+                // A UTF-8 Decoder is stateful: GetCharCount then GetChars would
+                // consume its state twice across multi-byte read boundaries.
+                var chars = new char[Encoding.UTF8.GetMaxCharCount(bytesRead)];
+                int charCount = decoder.GetChars(buffer, 0, bytesRead, chars, 0);
 
-                string text = new string(chars);
+                string text = new string(chars, 0, charCount);
                 if (!string.IsNullOrEmpty(text))
                     TextReceived?.Invoke(this, text);
             }

@@ -16,6 +16,7 @@
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <PublishTrimmed>false</PublishTrimmed>
     <DebugType>none</DebugType>
@@ -25,6 +26,7 @@
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
     <PackageReference Include="SSH.NET" Version="2026.0.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
     <PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
   </ItemGroup>
 
@@ -38,6 +40,21 @@
     <Resource Include="Assets\throbber.gif">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Embed all terminal resources in MibExplorer.dll, and therefore in the single-file EXE. -->
+    <!-- WebView2 receives these resources from the assembly; no Assets folder is distributed. -->
+    <None Remove="Assets\Terminal\**\*" />
+    <Content Remove="Assets\Terminal\**\*" />
+    <EmbeddedResource Include="Assets\Terminal\index.html" LogicalName="MibExplorer.Terminal.index.html" />
+    <EmbeddedResource Include="Assets\Terminal\bridge.js" LogicalName="MibExplorer.Terminal.bridge.js" />
+    <EmbeddedResource Include="Assets\Terminal\terminal.css" LogicalName="MibExplorer.Terminal.terminal.css" />
+    <EmbeddedResource Include="Assets\Terminal\vendor\xterm.js" LogicalName="MibExplorer.Terminal.xterm.js" />
+    <EmbeddedResource Include="Assets\Terminal\vendor\xterm.css" LogicalName="MibExplorer.Terminal.xterm.css" />
+    <EmbeddedResource Include="Assets\Terminal\vendor\addon-fit.js" LogicalName="MibExplorer.Terminal.addon-fit.js" />
+    <EmbeddedResource Include="Assets\Terminal\vendor\xterm.LICENSE" LogicalName="MibExplorer.Terminal.xterm.LICENSE" />
+    <EmbeddedResource Include="Assets\Terminal\vendor\addon-fit.LICENSE" LogicalName="MibExplorer.Terminal.addon-fit.LICENSE" />
   </ItemGroup>
 
   <ItemGroup>

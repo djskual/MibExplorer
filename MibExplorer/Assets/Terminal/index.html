@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline';
+                 img-src 'none'; connect-src 'none'; font-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>MibExplorer terminal</title>
+  <link rel="stylesheet" href="vendor/xterm.css">
+  <link rel="stylesheet" href="terminal.css">
+  <script defer src="vendor/xterm.js"></script>
+  <script defer src="vendor/addon-fit.js"></script>
+  <script defer src="bridge.js"></script>
+</head>
+<body>
+  <div id="terminal" aria-label="Remote QNX terminal"></div>
+  <div id="terminal-menu" class="terminal-menu" role="menu" hidden>
+    <button type="button" role="menuitem" data-action="copy">Copy</button>
+    <button type="button" role="menuitem" data-action="paste">Paste</button>
+    <button type="button" role="menuitem" data-action="selectAll">Select All</button>
+  </div>
+</body>
+</html>

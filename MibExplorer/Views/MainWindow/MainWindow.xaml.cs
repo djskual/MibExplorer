@@ -338,20 +338,10 @@ public partial class MainWindow : Window
         if (_shellConsoleWindow?.DataContext is not ShellConsoleViewModel vm)
             return;
 
-        string safePath = remotePath.Replace("\"", "\\\"");
-
-        for (int i = 0; i < 20; i++)
-        {
-            if (vm.IsConnected)
-                break;
-
-            await Task.Delay(100);
-        }
-
-        if (!vm.IsConnected)
-            return;
-
-        await vm.SendCommandDirectAsync($"cd \"{safePath}\"");
+        // Single-quote the remote path and let the shell VM queue the command
+        // until its embedded WebView2 terminal and PTY are both ready.
+        string safePath = "'" + remotePath.Replace("'", "'\"'\"'") + "'";
+        await vm.SendCommandDirectAsync($"cd {safePath}");
     }
 
     private static string GetShellTargetPath(RemoteExplorerItem item)
