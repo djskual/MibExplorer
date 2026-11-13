@@ -19,7 +19,8 @@ public sealed partial class SshMibConnectionService
         return normalized.StartsWith("/", StringComparison.Ordinal) &&
                normalized.Length > 1 &&
                !normalized.Contains('\r') && !normalized.Contains('\n') && !normalized.Contains('\0') &&
-               entryName is not ("" or "." or "..");
+               entryName is not ("" or "." or "..") &&
+               IsRccWriteTargetAllowed(normalized);
     }
 
     public async Task<bool> CanWriteToPathAsync(
@@ -33,8 +34,8 @@ public sealed partial class SshMibConnectionService
         {
             // Only verify that the parent exists and its symlinks resolve.
             // The real write attempt (or existing mount policy) decides writability.
-            await ResolveWriteParentDirectoryAsync(remotePath, cancellationToken);
-            return true;
+            string parent = await ResolveWriteParentDirectoryAsync(remotePath, cancellationToken);
+            return IsRccWriteTargetAllowed(remotePath) && IsRccWriteDirectoryAllowed(parent);
         }
         catch (OperationCanceledException)
         {
@@ -105,6 +106,40 @@ public sealed partial class SshMibConnectionService
         }
     }
 
+    // The Explorer policy protects RCC while keeping MMX writes governed by QNX.
+    // Match both /net/rcc and fully-qualified Qnet node names (/net/rcc.*).
+    private static string? GetRccRelativePath(string remotePath)
+    {
+        string path = NormalizeRemotePath(remotePath).Replace('\\', '/').TrimEnd('/');
+        if (path.Equals("/net/rcc", StringComparison.Ordinal))
+            return "";
+        if (path.StartsWith("/net/rcc/", StringComparison.Ordinal))
+            return path["/net/rcc".Length..];
+        if (path.StartsWith("/net/rcc.", StringComparison.Ordinal))
+        {
+            int separator = path.IndexOf('/', "/net/rcc.".Length);
+            return separator < 0 ? "" : path[separator..];
+        }
+        return null; // Not an RCC path: leave QNX permissions in control.
+    }
+
+    private static bool IsRccWriteDirectoryAllowed(string directoryPath)
+    {
+        string? rccRelative = GetRccRelativePath(directoryPath);
+        return rccRelative is null ||
+               IsPathAtOrBelow(rccRelative, "/mnt/efs-persist") ||
+               IsPathAtOrBelow(rccRelative, "/mnt/efs-system");
+    }
+
+    // Check the parent, never the target entry. The mounted efs-* roots themselves
+    // cannot be deleted/renamed, but their children can be modified.
+    private static bool IsRccWriteTargetAllowed(string remotePath)
+    {
+        string path = NormalizeRemotePath(remotePath).Replace('\\', '/').TrimEnd('/');
+        int separator = path.LastIndexOf('/');
+        string parent = separator <= 0 ? "/" : path[..separator];
+        return IsRccWriteDirectoryAllowed(parent);
+    }
     private static bool IsDirectlyWritablePath(string normalized)
     {
         // QNX /tmp does not need a mount -uw / mount -ur cycle.
@@ -197,6 +232,10 @@ public sealed partial class SshMibConnectionService
             // Resolve under the same lock as the mount operation. This works for
             // nested directory symlinks and avoids hard-coded /root-style aliases.
             string parent = await ResolveWriteParentDirectoryAsync(remotePath, cancellationToken);
+            if (!IsRccWriteTargetAllowed(remotePath) || !IsRccWriteDirectoryAllowed(parent))
+                throw new InvalidOperationException(
+                    "RCC is read-only in MibExplorer outside /net/rcc/mnt/efs-persist and /net/rcc/mnt/efs-system.");
+
             if (IsDirectlyWritablePath(parent))
             {
                 await operation(cancellationToken);

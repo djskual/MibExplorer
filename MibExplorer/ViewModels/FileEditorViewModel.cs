@@ -310,6 +310,15 @@ public sealed class FileEditorViewModel : ObservableObject
             IsSaving = true;
             StatusMessage = _isLocalFile ? "Saving local file..." : "Saving remote file...";
 
+            // Recheck the live remote policy even for editors opened before a policy
+            // or filesystem change. ReplaceFileAsync also enforces it in the SSH service.
+            if (!_isLocalFile &&
+                !await _connectionService!.CanWriteToPathAsync(RemotePath, cancellationToken))
+            {
+                throw new InvalidOperationException(
+                    "This remote path is read-only under the current MibExplorer write policy.");
+            }
+
             string normalizedText = NormalizeLineEndings(EditorText, _lineEnding);
             byte[] bytes = EncodeText(normalizedText, _documentEncoding);
 

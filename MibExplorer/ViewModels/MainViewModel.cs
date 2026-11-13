@@ -72,14 +72,19 @@ public sealed partial class MainViewModel : ObservableObject
             () => !IsBusy && IsConnectedToMib && SelectedTreeNode is not null);
         _connectionCommand = new RelayCommand(async () => await ToggleConnectionAsync(), () => !IsBusy);
         _downloadCommand = new RelayCommand(async () => await DownloadSelectedFileAsync(), () => CanRunFileAction);
-        _uploadCommand = new RelayCommand(async () => await UploadFileToSelectedFolderAsync(), () => CanRunUploadAction);
-        _renameCommand = new RelayCommand(async () => await RenameSelectedItemAsync(), () => CanRunItemAction);
-        _deleteCommand = new RelayCommand(async () => await DeleteSelectedFileAsync(), () => CanRunItemAction);
+        _uploadCommand = new RelayCommand(async () => await UploadFileToSelectedFolderAsync(),
+            () => CanRunUploadAction && CanUploadIntoFolder(SelectedItem));
+        _renameCommand = new RelayCommand(async () => await RenameSelectedItemAsync(),
+            () => CanRunItemAction && CanModifySelectedItem);
+        _deleteCommand = new RelayCommand(async () => await DeleteSelectedFileAsync(),
+            () => CanRunItemAction && CanModifySelectedItem);
         _extractCommand = new RelayCommand(async () => await ExtractSelectedFolderAsync(), () => CanRunFolderAction);
-        _replaceCommand = new RelayCommand(async () => await ReplaceSelectedFileAsync(), () => CanRunFileAction);
+        _replaceCommand = new RelayCommand(async () => await ReplaceSelectedFileAsync(),
+            () => CanRunFileAction && CanModifySelectedItem);
         _uploadFolderCommand = new RelayCommand(
             async () => await UploadFolderAsync(),
-            () => IsConnectedToMib && SelectedTreeNode is { IsNavigable: true } && !IsBusy);
+            () => IsConnectedToMib && SelectedTreeNode is { IsNavigable: true } && !IsBusy &&
+                  CanUploadIntoFolder(SelectedTreeNode));
 
         _connectionMonitorTimer = new DispatcherTimer
         {
@@ -318,6 +323,14 @@ public sealed partial class MainViewModel : ObservableObject
             ? "Folder selected. This is where upload and recursive extract will hook in."
             : "File selected. This is where download, rename and controlled edit will hook in.";
 
+    // UI preflight only: symlink targets are checked again by the SSH service.
+    private bool CanModifySelectedItem =>
+        SelectedItem is not null && _mibConnectionService.CanWriteToPath(SelectedItem.FullPath);
+
+    private bool CanUploadIntoFolder(RemoteExplorerItem? folder) =>
+        folder is { IsNavigable: true } &&
+        _mibConnectionService.CanWriteToPath(
+            folder.FullPath.TrimEnd('/') + "/.__mibexplorer_write_check__");
     public bool CanRunItemAction =>
         !IsBusy &&
         IsConnectedToMib &&
@@ -326,7 +339,7 @@ public sealed partial class MainViewModel : ObservableObject
     public bool CanRunFolderAction =>
         !IsBusy &&
         IsConnectedToMib &&
-        (SelectedItem?.IsNavigable ?? false);
+        (SelectedItem?.IsNavigable == true || SelectedTreeNode?.IsNavigable == true);
 
     // A directory symlink can be a valid upload destination, too.
     // Its target is checked before attempting the upload.

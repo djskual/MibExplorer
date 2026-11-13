@@ -16,6 +16,9 @@
 - Preserve existing RW/RO mount behavior when operating through symbolic links.
 - Allow write operations on valid QNX paths outside known mount mappings; rely on QNX permissions and retain controlled RW/RO remounting for recognized volumes.
 - Display `net` as the explorer tree and breadcrumb root while keeping `/net` as the actual QNX path.
+- Treat RCC as read-only in the file explorer except inside `efs-persist` and `efs-system`; keep MMX write behavior unchanged and preserve read/extract access throughout RCC.
+- Keep recursive folder extraction available for the current RCC folder even when a file is selected; recheck RCC write policy when saving in the remote File Editor.
+- Clear stale file selections when left- or right-clicking an empty area of Content, so actions return to the current tree folder without disturbing row context menus, sorting or scrollbars.
 
 ## Fixed
 - Fix WebView2 terminal clipboard integration and the unused black strip below the console.

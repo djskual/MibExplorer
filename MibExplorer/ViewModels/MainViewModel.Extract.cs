@@ -18,13 +18,17 @@ public sealed partial class MainViewModel
             return;
         }
 
-        if (SelectedItem is null || !SelectedItem.IsNavigable)
+        // A selected file in the list must not disable extraction of the tree folder.
+        // Prefer a selected folder, otherwise extract the currently open tree folder.
+        var selectedFolder = SelectedItem is { IsNavigable: true }
+            ? SelectedItem
+            : SelectedTreeNode;
+
+        if (selectedFolder is null || !selectedFolder.IsNavigable)
         {
             StatusMessage = "Select a folder to extract.";
             return;
         }
-
-        var selectedFolder = SelectedItem;
 
         string initialFolder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
 

@@ -1358,6 +1358,36 @@ Notes:
         e.Handled = true;
     }
 
+    private void CurrentFolderContent_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        ClearCurrentFolderSelectionIfBackground(e);
+    }
+
+    private void CurrentFolderContent_OnPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        ClearCurrentFolderSelectionIfBackground(e);
+    }
+
+    private void ClearCurrentFolderSelectionIfBackground(MouseButtonEventArgs e)
+    {
+        if (_isSortingFromHeader || e.OriginalSource is not DependencyObject source)
+            return;
+
+        // Keep row selection, column sorting and scrollbar interactions unchanged.
+        if (FindVisualParent<ListViewItem>(source) is not null ||
+            FindVisualParent<GridViewColumnHeader>(source) is not null ||
+            FindVisualParent<System.Windows.Controls.Primitives.ScrollBar>(source) is not null)
+            return;
+
+        // SelectedItem falls back to SelectedTreeNode when the Content list is clear,
+        // so upload/extract commands target the folder currently open in the tree.
+        if (CurrentFolderList.SelectedItem is null && ViewModel.SelectedListItem is null)
+            return;
+
+        CurrentFolderList.SelectedItem = null;
+        ViewModel.SelectedListItem = null;
+    }
+
     private void CurrentFolderList_OnPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
         var listViewItem = FindVisualParent<ListViewItem>(e.OriginalSource as DependencyObject);

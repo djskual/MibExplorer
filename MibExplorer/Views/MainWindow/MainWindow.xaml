@@ -447,6 +447,8 @@
                 </Border>
 
                 <Border Grid.Column="2"
+                        PreviewMouseLeftButtonDown="CurrentFolderContent_OnPreviewMouseLeftButtonDown"
+                        PreviewMouseRightButtonDown="CurrentFolderContent_OnPreviewMouseRightButtonDown"
                         Background="{DynamicResource AppPanelBrush}"
                         BorderBrush="{DynamicResource AppBorderBrush}"
                         BorderThickness="1"
