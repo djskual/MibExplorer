@@ -25,11 +25,12 @@ It provides:
 
 ## 📁 Remote File Explorer
 
-* Full remote filesystem browsing (TreeView + ListView)
+* Browse accessible QNX filesystem nodes from the `/net` root, including MMX and RCC (TreeView + ListView)
 * Lazy loading for performance
 * Context menu operations (files & folders)
-* Symlink support (navigation + visibility)
+* Symlink-aware navigation and file operations
 * Hidden files support
+* Click an empty area in the Content pane to clear the current selection and target the open folder
 
 ---
 
@@ -37,8 +38,11 @@ It provides:
 
 * Download / upload files
 * Rename / delete files and folders
-* Recursive folder upload
-* Folder extraction
+* Recursive folder upload and extraction
+* Resolve symbolic-link destinations when handling file operations
+* Preserve the initial read-only / read-write mount state on supported QNX volumes
+* MMX: use the actual QNX filesystem permissions instead of an application-wide write-path whitelist
+* RCC: browse, download and extract throughout; explorer writes are restricted to files and folders **inside** `/net/rcc/mnt/efs-persist` and `/net/rcc/mnt/efs-system`
 * **Safe folder replace**:
 
   * temporary upload
@@ -61,38 +65,37 @@ It provides:
 
 ![MibExplorer Shell](docs/Shell.png)
 
-MibExplorer includes a **built-in interactive remote shell console**.
+MibExplorer includes a **built-in interactive QNX terminal** powered by xterm.js and WebView2.
 
 ---
 
 ### Features
 
-* Real persistent SSH shell session (no command emulation)
-* Interactive command execution
-* Live remote output display
-* Command history navigation (Up / Down)
-* Clear console (`Ctrl + L`)
-* Copy all output
-* Save console log to file
-* Themed context menu
+* Real persistent SSH shell session with direct keyboard input (no command emulation)
+* Live terminal output with ANSI colors and escape-sequence rendering
+* Interactive shell history (Up / Down, when supported by the remote shell)
+* Terminal resizing with the window
+* Copy, Paste, Copy All, Save Log and Clear toolbar actions
+* Themed right-click menu: Copy / Paste / Select All
 * Single console instance management
+
+---
+
+### Keyboard Shortcuts
+
+* `Ctrl + C`: copy selected text; without a selection, send interrupt to QNX
+* `Ctrl + V`: paste from the Windows clipboard (including multiline text)
+* `Ctrl + Shift + C`: copy the current selection
+* `Ctrl + L`: clear the local terminal display
 
 ---
 
 ### Console Rendering
 
-* Terminal-like prompt and command flow
-* Prompt-aware formatting:
-  * user/host (cyan)
-  * path (light blue)
-* Distinct colors for:
-  * commands (white)
-  * normal output (light gray)
-  * errors (red)
-  * warnings (orange)
-  * system messages `[shell]` (blue, italic)
-* Clean spacing and improved readability
-* Output trimming to prevent memory overflow
+* xterm.js terminal with a theme matching the MibExplorer interface
+* ANSI colors and cursor/control sequences rendered from the remote QNX output
+* Scrollback history without imposing client-side colors on ordinary shell output
+* HTML, CSS, JavaScript and xterm.js bundled inside the single-file executable
 
 ---
 
@@ -386,7 +389,8 @@ MibExplorer includes a built-in **remote file editor** for editing files directl
 * Explicit save with overwrite
 * Atomic save (temporary file + replace)
 * RW mount handling for writable paths
-* Read-only fallback for protected areas
+* Read-only fallback for protected areas, including RCC paths outside the two supported `efs-*` partitions
+* Rechecks write permissions when saving to a remote RCC path
 * Reload file support
 * Unsaved changes protection (Save / Discard / Cancel)
 
@@ -474,7 +478,7 @@ MibExplorer provides a **complete SSH lifecycle system** for MIB devices.
 * No external tools required
 * Includes:
 
-  * SSH payload (sshd)
+  * SSH payload (sshd with QNX-compatible `internal-sftp`)
   * public key (GEM)
   * scripts and checksums
 
@@ -579,7 +583,8 @@ MibExplorer provides a **complete SSH lifecycle system** for MIB devices.
 
 MibExplorer is built with a strong focus on **safety and reversibility**:
 
-* Controlled RW/RO remount handling
+* Controlled RW/RO remount handling, restoring the original mount state when required
+* RCC file-explorer writes restricted to `efs-persist` and `efs-system` (the RemoteShell remains an unrestricted SSH terminal)
 * Atomic file operations
 * Backup-based restore logic
 * Defensive cleanup mechanisms
@@ -607,9 +612,10 @@ Scripts are designed for use with Script Center.
 
 # 🔌 Requirements
 
-* Windows 10 / 11
-* .NET 8 Runtime
+* Windows 10 / 11 (x64)
+* Microsoft Edge WebView2 Runtime installed on the PC (required for RemoteShell)
 * Volkswagen MIB2 / MIB2.5 with SSH capability
+* The release is a self-contained, single-file `MibExplorer.exe`; **no separate .NET 8 Runtime installation is required**
 
 ---
 
@@ -642,11 +648,11 @@ Scripts are designed for use with Script Center.
 # 📦 Current Capabilities
 
 * SSH install / update / uninstall (SD + direct)
-* Remote filesystem explorer
-* File & folder operations
+* QNX `/net` filesystem explorer with MMX/RCC browsing
+* File & folder operations with controlled RW/RO behavior and RCC write protection
 * Safe replace system
 * Smart filename mapping
-* Remote shell console
+* Interactive xterm.js RemoteShell with ANSI rendering, clipboard shortcuts and a themed context menu
 * Script Center (script execution on MIB)
 * Official script distribution with versioning and SHA-based updates
 * Remote file editor
@@ -664,6 +670,8 @@ Inspired by the MIB modding ecosystem:
 
 * MIB2Toolbox
 * MoreIncredibleBash
+
+The integrated RemoteShell uses [xterm.js](https://xtermjs.org/) and Microsoft Edge WebView2. The bundled xterm.js and fit-addon license notices are retained in the source repository and executable resources.
 
 ---
 
