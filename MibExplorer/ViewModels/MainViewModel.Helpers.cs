@@ -19,14 +19,14 @@ public sealed partial class MainViewModel
 
             var root = new RemoteExplorerItem
             {
-                Name = "/",
-                FullPath = "/",
+                Name = "net",
+                FullPath = "/net",
                 EntryType = RemoteEntryType.Directory,
                 IsLoaded = false
             };
 
             RootNodes.Add(root);
-            Breadcrumbs.Add("/");
+            Breadcrumbs.Add("net");
 
             if (_mibConnectionService.IsConnected)
             {
@@ -38,7 +38,7 @@ public sealed partial class MainViewModel
                 root.IsSelected = true;
 
                 ProgressValue = 100;
-                StatusMessage = "Connected. Remote filesystem loaded from MIB root.";
+                StatusMessage = "Connected. Remote filesystem loaded from QNX /net.";
             }
             else
             {

@@ -168,7 +168,10 @@ public sealed partial class MainViewModel
             return;
         }
 
-        Breadcrumbs.Add("/");
+        // /net is the visible tree root; do not add a separate "/" breadcrumb.
+        if (path != "/net" && !path.StartsWith("/net/", StringComparison.Ordinal))
+            Breadcrumbs.Add("/");
+
         foreach (var segment in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
             Breadcrumbs.Add(segment);
     }

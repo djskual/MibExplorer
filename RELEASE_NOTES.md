@@ -14,6 +14,8 @@
 - Support directory symlinks across file and folder upload, replace, rename, delete and extraction operations.
 - Resolve the actual destination mount before writable operations.
 - Preserve existing RW/RO mount behavior when operating through symbolic links.
+- Allow write operations on valid QNX paths outside known mount mappings; rely on QNX permissions and retain controlled RW/RO remounting for recognized volumes.
+- Display `net` as the explorer tree and breadcrumb root while keeping `/net` as the actual QNX path.
 
 ## Fixed
 - Fix WebView2 terminal clipboard integration and the unused black strip below the console.

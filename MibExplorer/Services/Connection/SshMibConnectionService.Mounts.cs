@@ -11,10 +11,15 @@ public sealed partial class SshMibConnectionService
 
     public bool CanWriteToPath(string remotePath)
     {
-        // Kept for existing synchronous callers. For symlinks, use CanWriteToPathAsync:
-        // only the QNX filesystem can establish the real writable mount.
-        string normalized = NormalizeRemotePath(remotePath).Replace('\\', '/');
-        return IsDirectlyWritablePath(normalized) || ResolveWritableMounts(normalized).Count > 0;
+        // Synchronous preflight only validates the path. Do not restrict edits to a
+        // fixed list of mount points: QNX enforces the actual filesystem permissions.
+        string normalized = NormalizeRemotePath(remotePath).Replace('\\', '/').TrimEnd('/');
+        int separator = normalized.LastIndexOf('/');
+        string entryName = normalized[(separator + 1)..];
+        return normalized.StartsWith("/", StringComparison.Ordinal) &&
+               normalized.Length > 1 &&
+               !normalized.Contains('\r') && !normalized.Contains('\n') && !normalized.Contains('\0') &&
+               entryName is not ("" or "." or "..");
     }
 
     public async Task<bool> CanWriteToPathAsync(
@@ -26,8 +31,10 @@ public sealed partial class SshMibConnectionService
 
         try
         {
-            string parent = await ResolveWriteParentDirectoryAsync(remotePath, cancellationToken);
-            return IsDirectlyWritablePath(parent) || ResolveWritableMounts(parent).Count > 0;
+            // Only verify that the parent exists and its symlinks resolve.
+            // The real write attempt (or existing mount policy) decides writability.
+            await ResolveWriteParentDirectoryAsync(remotePath, cancellationToken);
+            return true;
         }
         catch (OperationCanceledException)
         {
@@ -198,7 +205,13 @@ public sealed partial class SshMibConnectionService
 
             var mountPoints = ResolveWritableMounts(parent);
             if (mountPoints.Count == 0)
-                throw new InvalidOperationException($"No writable mount mapping is defined for path: {remotePath} (parent: {parent})");
+            {
+                // An unmapped directory may already be writable (for example,
+                // /net/mmx/var/app). Let QNX authorize or reject the operation.
+                // Never attempt a guessed mount -uw on an unknown filesystem.
+                await operation(cancellationToken);
+                return;
+            }
 
             foreach (string mountPoint in mountPoints.Distinct(StringComparer.Ordinal))
             {
