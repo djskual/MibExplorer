@@ -73,6 +73,14 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <!-- Golf VW37X ODX definitions; generated offline and embedded compressed. -->
+  <ItemGroup>
+    <None Remove="Data\Adaptations\Odx\*.json.gz" />
+    <None Remove="Data\Adaptations\Odx\index.json" />
+    <EmbeddedResource Include="Data\Adaptations\Odx\*.json.gz" />
+    <EmbeddedResource Include="Data\Adaptations\Odx\index.json" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Remove="Data\Adaptations\adaptations_catalog.json" />
     <EmbeddedResource Include="Data\Adaptations\adaptations_catalog.json">

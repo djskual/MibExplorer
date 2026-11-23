@@ -26,6 +26,9 @@ public sealed class AdaptationsCenterViewModel : ObservableObject
     private string _searchText = string.Empty;
     private string _statusText = "Ready.";
     private string _currentVin = "UNKNOWN";
+    private string _currentAsam = "Not read";
+    private string _currentOdxVersion = "-";
+    private string _catalogDescription = "Identifying MIB ASAM/ODX...";
     private bool _isLoading;
     private bool _showDiagnostics;
 
@@ -52,7 +55,8 @@ public sealed class AdaptationsCenterViewModel : ObservableObject
             parameter => !IsLoading
                 && parameter is AdaptationGroupView group
                 && group.IsExpanded
-                && group.IsLoaded);
+                && group.IsLoaded
+                && group.ReadDefinitions.Count > 0);
         ApplyCommand = new RelayCommand(
             _ => ApplyPendingGroups(),
             _ => !IsLoading && GetPendingGroups().Count > 0);
@@ -69,7 +73,7 @@ public sealed class AdaptationsCenterViewModel : ObservableObject
         GroupsView = CollectionViewSource.GetDefaultView(Groups);
         GroupsView.Filter = FilterGroup;
 
-        LoadCatalog();
+        // Do not show the historical V4 mappings until the connected ASAM is known.
         _ = InitializeRuntimeContextAsync();
     }
 
@@ -108,6 +112,24 @@ public sealed class AdaptationsCenterViewModel : ObservableObject
     {
         get => _currentVin;
         private set => SetProperty(ref _currentVin, value);
+    }
+
+    public string CurrentAsam
+    {
+        get => _currentAsam;
+        private set => SetProperty(ref _currentAsam, value);
+    }
+
+    public string CurrentOdxVersion
+    {
+        get => _currentOdxVersion;
+        private set => SetProperty(ref _currentOdxVersion, value);
+    }
+
+    public string CatalogDescription
+    {
+        get => _catalogDescription;
+        private set => SetProperty(ref _catalogDescription, value);
     }
 
     public bool IsLoading
@@ -290,7 +312,7 @@ public sealed class AdaptationsCenterViewModel : ObservableObject
         return group.Adaptations.Any(a => a.Ui.VisibleByDefault);
     }
 
-    private void LoadCatalog()
+    private void LoadCatalog(AdaptationCatalog catalog)
     {
         _runtimeCache.Clear();
         OnPropertyChanged(nameof(DirtyPhysicalKeyCount));
@@ -302,7 +324,7 @@ public sealed class AdaptationsCenterViewModel : ObservableObject
         _transactionHistory.Clear();
         OnPropertyChanged(nameof(TransactionHistoryCount));
 
-        _catalog = _catalogService.Load();
+        _catalog = catalog;
 
         Groups.Clear();
 
@@ -331,7 +353,7 @@ public sealed class AdaptationsCenterViewModel : ObservableObject
         }
 
         int visibleCount = Groups.Sum(g => g.Adaptations.Count);
-        StatusText = $"{Groups.Count} ODIS groups loaded. {visibleCount} adaptations available from catalog V4. Expand a group to inspect values.";
+        StatusText = $"Golf VW37X ODX: {Groups.Count} DID loaded, {visibleCount} parameter definitions (RCC values not mapped).";
     }
 
     private async Task InitializeRuntimeContextAsync()
@@ -347,12 +369,39 @@ public sealed class AdaptationsCenterViewModel : ObservableObject
 
             await LoadHistoryAsync();
 
-            StatusText = $"{Groups.Count} ODIS groups loaded. VIN: {CurrentVin}. History: {HistoryEntryCount} transaction(s).";
+            StatusText = "Reading ASAM/ODX identity from RCC...";
+            try
+            {
+                (string identifier, string version) = await _adaptationsService.ReadAsamIdentityAsync(
+                    cancellationToken: CancellationToken.None);
+                CurrentAsam = IsDesignMode ? $"DESIGN {identifier}" : identifier;
+                CurrentOdxVersion = version;
+
+                AdaptationCatalog? matched = _catalogService.LoadForAsam(identifier, version);
+                if (matched is null)
+                {
+                    CatalogDescription = "No matching Golf VW37X MIB2/MIB2.5 ODX catalog (read-only).";
+                    StatusText = $"ASAM {identifier}, ODX {version}: unsupported in Golf VW37X catalog set.";
+                }
+                else
+                {
+                    LoadCatalog(matched);
+                    CatalogDescription = $"Golf VW37X: {matched.Name} — ODX only.";
+                }
+            }
+            catch (Exception ex)
+            {
+                CurrentAsam = "Unavailable";
+                CurrentOdxVersion = "-";
+                CatalogDescription = "ASAM unavailable — no ODX catalog selected.";
+                StatusText = $"ASAM/catalog identification failed: {ex.Message}";
+            }
         }
         catch (Exception ex)
         {
             CurrentVin = "UNKNOWN";
             await LoadHistoryAsync();
+            CatalogDescription = "VIN/ASAM identification failed — no ODX catalog selected.";
             StatusText = $"VIN read failed: {ex.Message}";
         }
         finally
@@ -575,7 +624,17 @@ public sealed class AdaptationsCenterViewModel : ObservableObject
         RefreshActionCommands();
 
         if (!group.IsLoaded)
-            await ReadGroupAsync(group, forceRefresh: false);
+        {
+            if (group.ReadDefinitions.Count == 0)
+            {
+                group.IsLoaded = true;
+                group.Status = "ODX definitions only — no RCC mapping";
+            }
+            else
+            {
+                await ReadGroupAsync(group, forceRefresh: false);
+            }
+        }
 
         group.IsExpanded = true;
         RefreshActionCommands();
@@ -603,7 +662,7 @@ public sealed class AdaptationsCenterViewModel : ObservableObject
         if (IsLoading)
             return;
 
-        if (!group.IsExpanded || !group.IsLoaded)
+        if (!group.IsExpanded || !group.IsLoaded || group.ReadDefinitions.Count == 0)
             return;
 
         if (HasPendingChanges(group))

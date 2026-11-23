@@ -17,7 +17,8 @@ It provides:
 - a **built-in remote file editor with inline diff**
 - an **advanced side-by-side file diff viewer**
 - a **powerful Script Center for remote execution**
-- and a **full Coding Center for direct MIB long coding management**
+- a **full Coding Center for direct MIB long coding management**
+- and **MIB reboot with optional hotspot/SSH reconnection**
 
 ---
 
@@ -26,9 +27,11 @@ It provides:
 ## 📁 Remote File Explorer
 
 * Browse accessible QNX filesystem nodes from the `/net` root, including MMX and RCC (TreeView + ListView)
-* Lazy loading for performance
+* Lazy loading and responsive background directory enumeration, with fewer redundant SSH requests
 * Context menu operations (files & folders)
-* Symlink-aware navigation and file operations
+* Symlink-aware navigation and file operations across Qnet, including MMX/RCC links and resolved paths
+* Correct handling of RCC temporary paths (`/net/rcc/tmp` resolves to `/net/rcc/dev/shmem`)
+* Clear failed directory listings instead of leaving stale entries visible
 * Hidden files support
 * Click an empty area in the Content pane to clear the current selection and target the open folder
 
@@ -42,7 +45,8 @@ It provides:
 * Resolve symbolic-link destinations when handling file operations
 * Preserve the initial read-only / read-write mount state on supported QNX volumes
 * MMX: use the actual QNX filesystem permissions instead of an application-wide write-path whitelist
-* RCC: browse, download and extract throughout; explorer writes are restricted to files and folders **inside** `/net/rcc/mnt/efs-persist` and `/net/rcc/mnt/efs-system`
+* RCC: browse, download and extract throughout; persistent explorer writes remain restricted to files and folders **inside** `/net/rcc/mnt/efs-persist` and `/net/rcc/mnt/efs-system`
+* RCC: file transfers to temporary memory (`/net/rcc/dev/shmem`) are also supported, without enabling writes to other protected RCC system paths
 * **Safe folder replace**:
 
   * temporary upload
@@ -389,7 +393,7 @@ MibExplorer includes a built-in **remote file editor** for editing files directl
 * Explicit save with overwrite
 * Atomic save (temporary file + replace)
 * RW mount handling for writable paths
-* Read-only fallback for protected areas, including RCC paths outside the two supported `efs-*` partitions
+* Read-only fallback for protected areas, including protected RCC system paths (temporary file transfers to `/net/rcc/dev/shmem` are handled separately)
 * Rechecks write permissions when saving to a remote RCC path
 * Reload file support
 * Unsaved changes protection (Save / Discard / Cancel)
@@ -565,6 +569,30 @@ MibExplorer provides a **complete SSH lifecycle system** for MIB devices.
 
 ---
 
+# 🔄 Reboot MIB
+
+MibExplorer provides a **Reboot MIB** action in the **Actions** menu for restarting the connected unit over SSH.
+
+### Reboot workflow
+
+* Requires an active SSH connection and asks for confirmation before proceeding
+* Runs `sync` before issuing the RCC reboot command to flush pending filesystem changes
+* Disconnects the current SSH session after initiating the reboot
+* Optionally reconnects to the MIB Wi-Fi hotspot and then SSH when the device returns
+* Automatic reconnection is enabled by default, with a **3-minute timeout** and a cancellation option
+
+### Windows Wi-Fi location access
+
+If Windows location access is unavailable and prevents the hotspot reconnection workflow, MibExplorer offers a choice to:
+
+* Open Windows **Location settings**
+* Reboot **without automatic reconnection**
+* Cancel the operation
+
+Reconnection is optional; a reboot can still be initiated without it.
+
+---
+
 # 🌐 Automatic MIB IP Detection
 
 * Detects active Wi-Fi interface (MIB hotspot)
@@ -584,7 +612,7 @@ MibExplorer provides a **complete SSH lifecycle system** for MIB devices.
 MibExplorer is built with a strong focus on **safety and reversibility**:
 
 * Controlled RW/RO remount handling, restoring the original mount state when required
-* RCC file-explorer writes restricted to `efs-persist` and `efs-system` (the RemoteShell remains an unrestricted SSH terminal)
+* RCC persistent file-explorer writes restricted to `efs-persist` and `efs-system`; transfers to `/net/rcc/dev/shmem` are allowed for temporary files (the RemoteShell remains an unrestricted SSH terminal)
 * Atomic file operations
 * Backup-based restore logic
 * Defensive cleanup mechanisms
@@ -648,8 +676,8 @@ Scripts are designed for use with Script Center.
 # 📦 Current Capabilities
 
 * SSH install / update / uninstall (SD + direct)
-* QNX `/net` filesystem explorer with MMX/RCC browsing
-* File & folder operations with controlled RW/RO behavior and RCC write protection
+* QNX `/net` filesystem explorer with MMX/RCC browsing, responsive directory loading and corrected Qnet symlink navigation
+* File & folder operations with controlled RW/RO behavior, RCC persistent-write protection and temporary transfers to `/net/rcc/dev/shmem`
 * Safe replace system
 * Smart filename mapping
 * Interactive xterm.js RemoteShell with ANSI rendering, clipboard shortcuts and a themed context menu
@@ -660,6 +688,7 @@ Scripts are designed for use with Script Center.
 * Diff navigation inside editor
 * Advanced file diff viewer
 * Full Coding Center (read / edit / apply / restore)
+* MIB reboot with confirmation, `sync`, and optional Wi-Fi hotspot / SSH reconnection
 * IP auto-detection with validation
 
 ---

@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /MiExplorer/git-tag.txt
 /MibExplorer/git-tag.txt
+
+/tools/ODX/

@@ -18,6 +18,15 @@ public sealed class DesignAdaptationsCenterService : IAdaptationsCenterService
         return Task.FromResult(vin);
     }
 
+    public Task<(string Identifier, string Version)> ReadAsamIdentityAsync(
+        Action<string>? onOutput = null,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        onOutput?.Invoke("Design ASAM identity (synthetic, not a MIB read).");
+        return Task.FromResult((Identifier: "EV_MUHig4CGen2HBAS", Version: "001001"));
+    }
+
     public Task<IReadOnlyList<AdaptationReadValue>> ReadAdaptationsAsync(
         IReadOnlyCollection<AdaptationDefinition> definitions,
         Action<string>? onOutput = null,

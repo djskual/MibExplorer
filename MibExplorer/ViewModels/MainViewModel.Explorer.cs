@@ -7,6 +7,10 @@ namespace MibExplorer.ViewModels;
 
 public sealed partial class MainViewModel
 {
+    // Share an in-flight directory read between selection and expansion.
+    // Entries are removed at completion; this is not a persistent folder cache.
+    private readonly Dictionary<RemoteExplorerItem, Task<IReadOnlyList<RemoteExplorerItem>>> _pendingTreeReads = new();
+
     private async Task RefreshSelectedFolderAsync()
     {
         if (!_mibConnectionService.IsConnected)
@@ -21,15 +25,21 @@ public sealed partial class MainViewModel
             return;
         }
 
+        var node = SelectedTreeNode;
         try
         {
-            SetBusyState(true, $"Refreshing {SelectedTreeNode.FullPath}...", 40);
+            SetBusyState(true, $"Refreshing {node.FullPath}...", 40);
+            CurrentFolderItems.Clear(); // No stale content on refresh errors.
 
-            SelectedTreeNode.IsLoaded = false;
-            await EnsureChildrenLoadedAsync(SelectedTreeNode, forceReload: true);
-            await PopulateCurrentFolderAsync(SelectedTreeNode);
+            node.IsLoaded = false;
+            var loadedChildren = await EnsureChildrenLoadedAsync(node, forceReload: true);
+            if (!ReferenceEquals(SelectedTreeNode, node))
+                return;
+            await PopulateCurrentFolderAsync(node, loadedChildren);
 
-            StatusMessage = $"Refreshed {SelectedTreeNode.FullPath}";
+            StatusMessage = $"Refreshed {node.FullPath}" +
+                (node.FullPath != node.BrowsingPath
+                    ? $" (target {node.BrowsingPath})" : string.Empty);
         }
         catch (Exception ex)
         {
@@ -44,22 +54,49 @@ public sealed partial class MainViewModel
     private async Task OnTreeNodeSelectedAsync(RemoteExplorerItem node)
     {
         SelectedListItem = null;
-        await EnsureChildrenLoadedAsync(node);
-        await PopulateCurrentFolderAsync(node);
-        UpdateBreadcrumbs(node.FullPath);
+        // Never show MMX contents under an RCC path while a new listing is
+        // loading, or if that listing fails. The selection callback is async.
+        CurrentFolderItems.Clear();
+        CurrentFolderItemsView.Refresh();
+        try
+        {
+            var loadedChildren = await EnsureChildrenLoadedAsync(node);
+            if (!ReferenceEquals(SelectedTreeNode, node))
+                return; // A newer selection superseded this asynchronous load.
 
-        OnPropertyChanged(nameof(CurrentFolderLabel));
-        OnPropertyChanged(nameof(SelectedItem));
-        OnPropertyChanged(nameof(SelectedPath));
-        OnPropertyChanged(nameof(SelectedType));
-        OnPropertyChanged(nameof(SelectedSize));
-        OnPropertyChanged(nameof(SelectedModifiedAt));
-        OnPropertyChanged(nameof(SelectedName));
-        OnPropertyChanged(nameof(SelectedHint));
-        RefreshCommands();
+            await PopulateCurrentFolderAsync(node, loadedChildren);
+            if (!ReferenceEquals(SelectedTreeNode, node))
+                return;
+
+            UpdateBreadcrumbs(node.FullPath);
+        }
+        catch (Exception ex)
+        {
+            if (ReferenceEquals(SelectedTreeNode, node))
+            {
+                CurrentFolderItems.Clear();
+                StatusMessage = $"Failed to load {node.FullPath}: {ex.Message}";
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(SelectedTreeNode, node))
+            {
+                OnPropertyChanged(nameof(CurrentFolderLabel));
+                OnPropertyChanged(nameof(SelectedItem));
+                OnPropertyChanged(nameof(SelectedPath));
+                OnPropertyChanged(nameof(SelectedType));
+                OnPropertyChanged(nameof(SelectedSize));
+                OnPropertyChanged(nameof(SelectedModifiedAt));
+                OnPropertyChanged(nameof(SelectedName));
+                OnPropertyChanged(nameof(SelectedHint));
+                RefreshCommands();
+            }
+        }
     }
 
-    private async Task PopulateCurrentFolderAsync(RemoteExplorerItem node)
+    private async Task PopulateCurrentFolderAsync(
+        RemoteExplorerItem node, IReadOnlyList<RemoteExplorerItem>? loadedChildren = null)
     {
         if (!node.IsNavigable)
             return;
@@ -67,24 +104,23 @@ public sealed partial class MainViewModel
         if (!_mibConnectionService.IsConnected)
             return;
 
-        try
-        {
-            var children = await _mibConnectionService.GetChildrenAsync(node.FullPath);
+        // A symbolic link must be browsed via its node-qualified destination.
+        // The SSH connection is on MMX, which would otherwise resolve RCC's
+        // absolute /tmp -> /dev/shmem link in the *MMX* filesystem.
+        // A newly loaded branch already fetched this listing. Reuse it for
+        // the file pane instead of immediately running the same SSH command.
+        // Selecting a previously loaded branch still refreshes the file pane.
+        var children = loadedChildren ?? await _mibConnectionService.GetChildrenAsync(node.BrowsingPath);
+        if (!ReferenceEquals(SelectedTreeNode, node))
+            return;
 
-            SelectedListItem = null;
+        SelectedListItem = null;
+        CurrentFolderItems.Clear();
+        foreach (var child in children)
+            CurrentFolderItems.Add(child);
 
-            CurrentFolderItems.Clear();
-
-            foreach (var child in children)
-                CurrentFolderItems.Add(child);
-
-            ApplySort();
-            CurrentFolderItemsView.Refresh();
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Failed to load folder content: {ex.Message}";
-        }
+        ApplySort();
+        CurrentFolderItemsView.Refresh();
     }
 
     public void SortCurrentFolder(string columnName)
@@ -119,21 +155,26 @@ public sealed partial class MainViewModel
         }
     }
 
-    private async Task EnsureChildrenLoadedAsync(RemoteExplorerItem node, bool forceReload = false)
+    private async Task<IReadOnlyList<RemoteExplorerItem>?> EnsureChildrenLoadedAsync(
+        RemoteExplorerItem node, bool forceReload = false)
     {
-        if (!node.IsNavigable)
-            return;
+        if (!node.IsNavigable || !_mibConnectionService.IsConnected)
+            return null;
 
-        if (!_mibConnectionService.IsConnected)
-            return;
+        // Expanded and Selected events can arrive together. They must await
+        // one remote read, not issue two concurrent listings of the same path.
+        if (_pendingTreeReads.TryGetValue(node, out var pending))
+            return await pending;
 
         if (node.IsLoaded && !forceReload)
-            return;
+            return null;
 
+        node.IsLoading = true;
         try
         {
-            node.IsLoading = true;
-            var children = await _mibConnectionService.GetChildrenAsync(node.FullPath);
+            var request = _mibConnectionService.GetChildrenAsync(node.BrowsingPath);
+            _pendingTreeReads.Add(node, request);
+            var children = await request;
             node.Children.Clear();
 
             foreach (var child in children
@@ -151,9 +192,17 @@ public sealed partial class MainViewModel
             }
 
             node.IsLoaded = true;
+            return children;
+        }
+        catch
+        {
+            node.IsLoaded = false;
+            node.Children.Clear(); // Do not leave stale children after a failed Qnet traversal.
+            throw;
         }
         finally
         {
+            _pendingTreeReads.Remove(node);
             node.IsLoading = false;
         }
     }
@@ -178,6 +227,15 @@ public sealed partial class MainViewModel
 
     public async Task EnsureTreeNodeChildrenLoadedAsync(RemoteExplorerItem node)
     {
-        await EnsureChildrenLoadedAsync(node);
+        // Called by an async-void WPF Expanded event: do not let SSH failures
+        // escape to the Dispatcher and crash the entire explorer.
+        try
+        {
+            await EnsureChildrenLoadedAsync(node);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to expand {node.FullPath}: {ex.Message}";
+        }
     }
 }

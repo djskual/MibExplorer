@@ -374,13 +374,24 @@ public sealed partial class MainViewModel
         // QNX exposes /tmp -> /dev/shmem and /root -> /mnt/app/root as symlinks.
         // Resolve the physical directory so the mount policy applies to the target,
         // not to an arbitrary alias; cd also rejects symlinks to regular files.
-        string escaped = "'" + directory.FullPath.Replace("'", "'\"'\"'") + "'";
+        string escaped = "'" + directory.BrowsingPath.Replace("'", "'\"'\"'") + "'";
         string resolved = (await _mibConnectionService.ExecuteCommandAsync(
             $"cd {escaped} && pwd -P")).Trim();
 
         if (!resolved.StartsWith("/", StringComparison.Ordinal) ||
             resolved.Contains('\n') || resolved.Contains('\r'))
             throw new InvalidOperationException("Unable to resolve the selected directory link.");
+
+        // On QNX, pwd -P after crossing Qnet must not silently return the MMX
+        // namespace. Never upload to an unintended node through an absolute link.
+        string requested = directory.BrowsingPath;
+        bool requestedOnRcc = requested.StartsWith("/net/rcc/", StringComparison.Ordinal) ||
+                              requested.StartsWith("/net/rcc.", StringComparison.Ordinal);
+        bool resolvedOnRcc = resolved.StartsWith("/net/rcc/", StringComparison.Ordinal) ||
+                             resolved.StartsWith("/net/rcc.", StringComparison.Ordinal);
+        if (requestedOnRcc && !resolvedOnRcc)
+            throw new InvalidOperationException(
+                $"RCC link resolves outside the RCC namespace: {requested} -> {resolved}");
 
         return resolved;
     }

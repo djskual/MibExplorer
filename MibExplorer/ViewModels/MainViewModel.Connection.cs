@@ -16,6 +16,18 @@ public sealed partial class MainViewModel
         await ConnectAsync();
     }
 
+    // Reuse the ordinary connection path, including workspace and monitor initialization.
+    public async Task<bool> ReconnectAfterRemoteRebootAsync()
+    {
+        if (IsConnectedToMib && _mibConnectionService.IsConnected)
+            return true;
+        if (IsBusy)
+            return false;
+
+        await ConnectAsync();
+        return IsConnectedToMib && _mibConnectionService.IsConnected;
+    }
+
     private async Task ConnectAsync()
     {
         try
@@ -38,6 +50,8 @@ public sealed partial class MainViewModel
                 PublicKeyExportPath = PublicKeyExportPath
             };
 
+            // Keep the SSH connection event on the WPF dispatcher.
+            // The underlying SSH.NET call is synchronous (max. 10 s per attempt).
             await _mibConnectionService.ConnectAsync(settings);
 
             ProgressValue = 60;
@@ -64,6 +78,19 @@ public sealed partial class MainViewModel
             SetBusyState(false, "Ready", 0);
         }
     }
+
+    // Prevent the connection monitor from running a diagnostic SSH command while
+    // the MIB intentionally closes the session during its reboot.
+    public void PauseConnectionMonitorForRemoteReboot() => _connectionMonitorTimer.Stop();
+
+    public void ResumeConnectionMonitorAfterFailedReboot()
+    {
+        if (IsConnectedToMib && _mibConnectionService.IsConnected)
+            _connectionMonitorTimer.Start();
+    }
+
+    // Reuse the normal disconnect path to update the UI after a requested reboot.
+    public Task DisconnectAfterRemoteRebootAsync() => DisconnectAsync();
 
     private async Task DisconnectAsync()
     {

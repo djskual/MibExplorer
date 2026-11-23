@@ -8,6 +8,10 @@ public interface IAdaptationsCenterService
         Action<string>? onOutput = null,
         CancellationToken cancellationToken = default);
 
+    Task<(string Identifier, string Version)> ReadAsamIdentityAsync(
+        Action<string>? onOutput = null,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<AdaptationReadValue>> ReadAdaptationsAsync(
         IReadOnlyCollection<AdaptationDefinition> definitions,
         Action<string>? onOutput = null,

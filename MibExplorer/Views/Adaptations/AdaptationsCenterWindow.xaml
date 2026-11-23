@@ -44,7 +44,7 @@
 
                 <StackPanel Orientation="Horizontal"
                             Margin="0,4,0,0">
-                    <TextBlock Text="ODIS-visible adaptation catalog V4 preview. Writes are still disabled."
+                    <TextBlock Text="{Binding CatalogDescription}"
                                Foreground="{DynamicResource AppMutedTextBrush}"/>
 
                     <TextBlock Text="  VIN: "
@@ -52,6 +52,15 @@
 
                     <TextBlock Text="{Binding CurrentVin}"
                                FontWeight="SemiBold"
+                               Foreground="{DynamicResource AppTextBrush}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                    <TextBlock Text="ASAM: " Foreground="{DynamicResource AppMutedTextBrush}"/>
+                    <TextBlock Text="{Binding CurrentAsam}" FontWeight="SemiBold"
+                               Foreground="{DynamicResource AppTextBrush}"/>
+                    <TextBlock Text="    ODX version: " Foreground="{DynamicResource AppMutedTextBrush}"/>
+                    <TextBlock Text="{Binding CurrentOdxVersion}" FontWeight="SemiBold"
                                Foreground="{DynamicResource AppTextBrush}"/>
                 </StackPanel>
             </StackPanel>
@@ -413,7 +422,7 @@
                                             <TextBlock Grid.Column="1"
                                                        Text="{Binding Label}"
                                                        TextTrimming="CharacterEllipsis"
-                                                       ToolTip="{Binding Label}"
+                                                       ToolTip="{Binding Notes}"
                                                        VerticalAlignment="Center"
                                                        Foreground="{DynamicResource AppTextBrush}"/>
                                         </Grid>

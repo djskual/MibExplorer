@@ -44,6 +44,12 @@ do
     fi
 
     VALUE=`cd "$BASE" && ./pc ${PC_TYPE}:${PART}:${KEY} 2>&1`
+    PC_EXIT=$?
+
+    if [ "$PC_EXIT" -ne 0 ]; then
+        echo "MIBEXPLORER_ERROR=Persistence read failed for $PART:$KEY ($TYPE), pc exit $PC_EXIT"
+        exit 1
+    fi
 
     if [ "$TYPE" = "blob" ]; then
         VALUE=`echo "$VALUE" | awk '
@@ -69,8 +75,12 @@ do
         }'`
 
         if [ -z "$VALUE" ]; then
-            VALUE="BLOB_PARSE_FAILED"
+            echo "MIBEXPLORER_ERROR=Blob parse failed for $PART:$KEY"
+            exit 1
         fi
+    elif [ "$TYPE" != "string" ] && [ -z "$VALUE" ]; then
+        echo "MIBEXPLORER_ERROR=Empty persistence value for $PART:$KEY ($TYPE)"
+        exit 1
     fi
 
     echo "MIBEXPLORER_ADAPT;$PART;$KEY;$TYPE;$VALUE"

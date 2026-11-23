@@ -44,6 +44,11 @@
                 <Separator/>
                 <MenuItem Header="_Extract folder"
                           Command="{Binding ExtractCommand}"/>
+                <Separator/>
+                <MenuItem x:Name="RebootMibMenuItem"
+                          Header="_Reboot MIB..."
+                          IsEnabled="{Binding IsConnectedToMib}"
+                          Click="RebootMibMenuItem_Click"/>
             </MenuItem>
 
             <MenuItem Header="_Tools">
@@ -63,8 +68,8 @@
                 <MenuItem Header="_Coding Center"
                           Click="CodingCenterMenuItem_Click"/>
                 <MenuItem Header="Adaptations Center"
-                          Click="AdaptationsCenterMenuItem_Click"
-                          IsEnabled="False"/>
+                          IsEnabled="False"
+                          Click="AdaptationsCenterMenuItem_Click"/>
                 <MenuItem Header="_Remote Shell Console"
                           Click="RemoteShellConsoleMenuItem_Click"/>
                 <Separator/>

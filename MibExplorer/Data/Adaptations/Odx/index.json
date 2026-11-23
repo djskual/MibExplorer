@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "source": "Golf VW37X only",
+  "variants": [
+    {
+      "variant": "EV_MUEnt4CGen2LGE_001",
+      "identifier": "EV_MUEnt4CGen2LGE",
+      "versionPrefix": "001",
+      "resourceFile": "EV_MUEnt4CGen2LGE_001.json",
+      "didCount": 47,
+      "itemCount": 996,
+      "source": "Golf VW37X",
+      "sourceSha256": "47a6f6918b3c20e5854581daf06ee15cbc5ee087b7cb25dbd4220e77870837bd"
+    },
+    {
+      "variant": "EV_MUGlb4CGen25TPWR_001",
+      "identifier": "EV_MUGlb4CGen25TPWR",
+      "versionPrefix": "001",
+      "resourceFile": "EV_MUGlb4CGen25TPWR_001.json",
+      "didCount": 25,
+      "itemCount": 549,
+      "source": "Golf VW37X",
+      "sourceSha256": "2a6e3f469b6f8db961855a22bef0969b98061ec806b1b1bad6a2f1c04a4aa15a"
+    },
+    {
+      "variant": "EV_MUHig4CGen2AW7_001",
+      "identifier": "EV_MUHig4CGen2AW7",
+      "versionPrefix": "001",
+      "resourceFile": "EV_MUHig4CGen2AW7_001.json",
+      "didCount": 98,
+      "itemCount": 1464,
+      "source": "Golf VW37X",
+      "sourceSha256": "aaebe9a663e83e00a1d66ef297f05ca7bb24b1cc787301bd9ff85b0f4f922dab"
+    },
+    {
+      "variant": "EV_MUHig4CGen2HBAS_001",
+      "identifier": "EV_MUHig4CGen2HBAS",
+      "versionPrefix": "001",
+      "resourceFile": "EV_MUHig4CGen2HBAS_001.json",
+      "didCount": 99,
+      "itemCount": 1465,
+      "source": "Golf VW37X",
+      "sourceSha256": "254bf75b680eb48c97d93fa29f69abfabe4fdc9e0f594919c560d798af012e21"
+    },
+    {
+      "variant": "EV_MUHig6C3Gen2AW7_001",
+      "identifier": "EV_MUHig6C3Gen2AW7",
+      "versionPrefix": "001",
+      "resourceFile": "EV_MUHig6C3Gen2AW7_001.json",
+      "didCount": 98,
+      "itemCount": 1464,
+      "source": "Golf VW37X",
+      "sourceSha256": "2566bfd2e2d1e68677ce0b2894713b6ecc41054e1aacb78ba1de650754e5b2b8"
+    },
+    {
+      "variant": "EV_MUStd4CDELP_001",
+      "identifier": "EV_MUStd4CDELP",
+      "versionPrefix": "001",
+      "resourceFile": "EV_MUStd4CDELP_001.json",
+      "didCount": 70,
+      "itemCount": 1103,
+      "source": "Golf VW37X",
+      "sourceSha256": "a3c312faa4d38aa60eb241d49900214560ab1643597322f3429f94c36b9d7e3f"
+    },
+    {
+      "variant": "EV_MUStd4CTSAT_001",
+      "identifier": "EV_MUStd4CTSAT",
+      "versionPrefix": "001",
+      "resourceFile": "EV_MUStd4CTSAT_001.json",
+      "didCount": 67,
+      "itemCount": 1089,
+      "source": "Golf VW37X",
+      "sourceSha256": "e7660eca179c0673b37a718d8d53dd025dbd3934e45bd7870e7c856e85d3714b"
+    }
+  ]
+}

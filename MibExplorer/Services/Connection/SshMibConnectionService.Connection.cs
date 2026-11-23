@@ -112,25 +112,26 @@ public sealed partial class SshMibConnectionService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (_sshClient is null || !_sshClient.IsConnected)
+        var client = _sshClient;
+        if (client is null || !client.IsConnected)
             return Task.FromResult(false);
 
-        try
+        // This timer-driven SSH command must not block the WPF dispatcher.
+        return Task.Run(() =>
         {
-            using var cmd = _sshClient.CreateCommand("pwd");
-            cmd.CommandTimeout = timeout;
-
-            _ = cmd.Execute();
-
-            if (cmd.ExitStatus != 0)
-                return Task.FromResult(false);
-
-            return Task.FromResult(true);
-        }
-        catch
-        {
-            return Task.FromResult(false);
-        }
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                using var cmd = client.CreateCommand("pwd");
+                cmd.CommandTimeout = timeout;
+                _ = cmd.Execute();
+                return cmd.ExitStatus == 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }, cancellationToken);
     }
 
     public Task<IRemoteShellSession> CreateShellSessionAsync(CancellationToken cancellationToken = default)

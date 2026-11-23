@@ -234,7 +234,9 @@ public sealed class AdaptationsCenterService : IAdaptationsCenterService
 
             await CleanupRemoteAsync(remoteRoot, cancellationToken);
 
-            return ParseReadValues(output);
+            IReadOnlyList<AdaptationReadValue> values = ParseReadValues(output);
+            EnsureRemoteCommandSucceeded(output, "Adaptations Center read");
+            return values;
         }
         finally
         {
@@ -257,6 +259,73 @@ public sealed class AdaptationsCenterService : IAdaptationsCenterService
                 // Best effort cleanup only.
             }
         }
+    }
+
+    // F19E (ASAM identifier) and F1A2 (ODX version) both use this RCC blob.
+    // Use the existing read-only payload instead of a second DSI/SSH implementation.
+    public async Task<(string Identifier, string Version)> ReadAsamIdentityAsync(
+        Action<string>? onOutput = null,
+        CancellationToken cancellationToken = default)
+    {
+        const string asamKey = "3221422084"; // 0xC0030004
+        var definition = new AdaptationDefinition
+        {
+            Id = "ASAM_IDENTITY",
+            Persistence = new AdaptationPersistence
+            {
+                Partition = "0",
+                Key = asamKey,
+                Type = "blob"
+            }
+        };
+
+        IReadOnlyList<AdaptationReadValue> values = await ReadAdaptationsAsync(
+            new[] { definition }, onOutput, cancellationToken);
+
+        if (values.Count != 1 ||
+            values[0].Partition != "0" ||
+            values[0].Key != asamKey ||
+            !string.Equals(values[0].Type, "blob", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("ASAM persistence response missing or unexpected (0:0xC0030004:blob).");
+        }
+
+        // Read/run.sh returns space-separated hexadecimal bytes for a blob.
+        string[] tokens = values[0].Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        byte[] buffer = new byte[tokens.Length];
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            if (tokens[i].Length != 2 ||
+                !byte.TryParse(tokens[i], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out buffer[i]))
+            {
+                throw new InvalidOperationException("ASAM persistence blob is not valid hexadecimal byte data.");
+            }
+        }
+
+        if (buffer.Length < 10)
+            throw new InvalidOperationException($"ASAM persistence blob is too short ({buffer.Length} bytes).");
+
+        for (int i = 0; i < 6; i++)
+        {
+            if (buffer[i] < (byte)'0' || buffer[i] > (byte)'9')
+                throw new InvalidOperationException("ASAM persistence version is not six ASCII digits.");
+        }
+
+        int terminator = Array.IndexOf(buffer, (byte)0, 6);
+        int identifierLength = terminator - 6;
+        if (identifierLength < 4 || identifierLength > 25)
+            throw new InvalidOperationException("ASAM persistence identifier is missing, unterminated or too long.");
+
+        string identifier = Encoding.ASCII.GetString(buffer, 6, identifierLength);
+        if (!identifier.StartsWith("EV_", StringComparison.Ordinal) ||
+            identifier.Any(c => !(char.IsAsciiLetterOrDigit(c) || c == '_')))
+        {
+            throw new InvalidOperationException("ASAM persistence identifier has an invalid format.");
+        }
+
+        string version = Encoding.ASCII.GetString(buffer, 0, 6);
+        return (identifier, version);
     }
 
     public Task<AdaptationWriteResult> PreflightWriteAdaptationsAsync(
@@ -856,6 +925,27 @@ public sealed class AdaptationsCenterService : IAdaptationsCenterService
             finalResult.PhysicalResults.Add(physicalResult);
 
         return finalResult;
+    }
+
+    private static void EnsureRemoteCommandSucceeded(string output, string operation)
+    {
+        foreach (string rawLine in output.Split('\n'))
+        {
+            string line = rawLine.Trim();
+            if (!line.StartsWith(ExitMarker, StringComparison.Ordinal))
+                continue;
+
+            string value = line[ExitMarker.Length..].Trim();
+            if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int exitCode))
+                throw new InvalidOperationException($"{operation}: invalid remote exit status '{value}'.");
+
+            if (exitCode != 0)
+                throw new InvalidOperationException($"{operation}: remote command failed (exit {exitCode}).");
+
+            return;
+        }
+
+        throw new InvalidOperationException($"{operation}: remote exit status missing.");
     }
 
     private static IReadOnlyList<AdaptationReadValue> ParseReadValues(string output)

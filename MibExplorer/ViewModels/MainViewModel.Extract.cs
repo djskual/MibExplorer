@@ -56,14 +56,14 @@ public sealed partial class MainViewModel
             SetBusyState(true, $"Scanning {selectedFolder.Name}...", 0);
             StatusMessage = $"Scanning {selectedFolder.FullPath} for extraction...";
 
-            ExtractPlan plan = await BuildExtractPlanAsync(selectedFolder.FullPath);
+            ExtractPlan plan = await BuildExtractPlanAsync(selectedFolder.BrowsingPath);
 
             Directory.CreateDirectory(extractRoot);
 
             foreach (ExtractDirectoryPlan relativeDirectory in plan.Directories)
                 Directory.CreateDirectory(Path.Combine(extractRoot, relativeDirectory.LocalRelativePath));
 
-            await WriteExtractMapAsync(extractRoot, selectedFolder.FullPath, plan);
+            await WriteExtractMapAsync(extractRoot, selectedFolder.BrowsingPath, plan);
 
             if (plan.Files.Count == 0)
             {

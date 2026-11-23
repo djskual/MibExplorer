@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -33,6 +34,7 @@ public partial class MainWindow : Window
     private AdaptationsCenterWindow? _adaptationsCenterWindow;
     private MainViewModel ViewModel => (MainViewModel)DataContext;
     private bool _isSortingFromHeader;
+    private bool _isRebootInProgress;
     private string? _pendingSortKey;
     private const string SshKeysFolderName = "Keys";
     private const string SshPrivateKeyFileName = "id_rsa";
@@ -261,6 +263,278 @@ public partial class MainWindow : Window
         window.Activate();
     }
 
+    private async void RebootMibMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isRebootInProgress)
+            return;
+
+        var connection = ViewModel.ConnectionService;
+        if (!ViewModel.IsConnectedToMib || !connection.IsConnected)
+        {
+            AppMessageBox.Show(
+                this,
+                "Connect to the MIB over SSH before requesting a reboot.",
+                "Reboot MIB",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        if (ViewModel.IsBusy)
+        {
+            AppMessageBox.Show(
+                this,
+                "Finish the current operation before rebooting the MIB.",
+                "Reboot MIB",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        var confirmation = new RebootMibConfirmWindow { Owner = this };
+        if (confirmation.ShowDialog() != true)
+            return;
+
+        bool autoReconnect = confirmation.AutoReconnect;
+        string sshHost = ViewModel.Host.Trim();
+        MibWifiReconnectService.WifiSnapshot? wifi = null;
+
+        // Wi-Fi discovery is needed ONLY when auto reconnect is requested.
+        // If Windows cannot provide the current profile, warn before running
+        // sync or reboot; the user can open Settings, cancel, or reboot manually.
+        if (autoReconnect)
+        {
+            wifi = MibWifiReconnectService.CaptureCurrentWifi(sshHost, out string? wifiDiagnostic);
+            if (wifi is null)
+            {
+                var warning = new RebootMibWifiWarningWindow(wifiDiagnostic) { Owner = this };
+                warning.ShowDialog();
+
+                switch (warning.Choice)
+                {
+                    case RebootMibWifiWarningChoice.OpenLocationSettings:
+                        try
+                        {
+                            Process.Start(new ProcessStartInfo
+                            {
+                                FileName = "ms-settings:privacy-location",
+                                UseShellExecute = true
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            AppMessageBox.Show(this,
+                                $"Unable to open Windows Location settings.\n\n{ex.Message}",
+                                "Location settings", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                        return; // No reboot is sent when opening Settings.
+
+                    case RebootMibWifiWarningChoice.RebootWithoutReconnect:
+                        autoReconnect = false;
+                        break;
+
+                    default:
+                        return; // Cancel: no sync, no reboot.
+                }
+            }
+        }
+
+        int sshPort = int.TryParse(ViewModel.Port, out int parsedPort) ? parsedPort : 22;
+
+        _isRebootInProgress = true;
+        // SetCurrentValue preserves the IsConnectedToMib binding.
+        RebootMibMenuItem.SetCurrentValue(UIElement.IsEnabledProperty, false);
+
+        try
+        {
+            // Stop background SSH probes before RCC intentionally closes the link.
+            ViewModel.PauseConnectionMonitorForRemoteReboot();
+            ViewModel.StatusMessage = "Synchronizing MIB filesystems...";
+            // The first command must complete successfully before issuing reboot.
+            await Task.Run(() => connection.ExecuteCommandAsync("sync"));
+
+            if (!connection.IsConnected)
+                throw new InvalidOperationException("SSH disconnected before the reboot command was sent.");
+
+            ViewModel.StatusMessage = "Sending MIB reboot request...";
+            // ExecuteCommandAsync runs synchronously inside SSH.NET. A successful RCC
+            // reboot can close the SSH channel before cmd.Execute() returns. Handle
+            // those transport exceptions ON the worker thread, so a normal reboot
+            // does not surface a faulted task as a user-unhandled exception in VS.
+            // Keep all other errors (including remote command failures) visible.
+            bool connectionDropped = await Task.Run(() =>
+            {
+                try
+                {
+                    connection.ExecuteCommandAsync(
+                        "on -f rcc /usr/apps/mib2_ioc_flash reboot")
+                        .GetAwaiter().GetResult();
+                    return false;
+                }
+                catch (Exception ex) when (ex is SshConnectionException or
+                                           SocketException or IOException or
+                                           ObjectDisposedException)
+                {
+                    // A dropped SSH transport alone is not proof of a reboot;
+                    // the optional reconnection phase will follow as before.
+                    return true;
+                }
+            });
+
+            await ViewModel.DisconnectAfterRemoteRebootAsync();
+
+            if (autoReconnect && wifi is not null)
+            {
+                var reconnectWindow = new RebootMibReconnectWindow { Owner = this };
+                reconnectWindow.Run((token, progress) =>
+                    WaitForMibReconnectAsync(sshHost, sshPort, wifi, token, progress));
+
+                ViewModel.StatusMessage = reconnectWindow.Result switch
+                {
+                    RebootReconnectResult.Connected => wifi is null
+                        ? "MIB SSH reconnected after reboot."
+                        : "MIB Wi-Fi and SSH reconnected after reboot.",
+                    RebootReconnectResult.Cancelled => "MIB reboot requested. Automatic reconnect cancelled.",
+                    RebootReconnectResult.TimedOut => "MIB reboot requested. Reconnect timed out after 3 minutes; connect manually.",
+                    _ => "MIB reboot requested, but automatic reconnect failed. Connect manually."
+                };
+            }
+            else
+            {
+                ViewModel.StatusMessage = connectionDropped
+                    ? "SSH closed during reboot request. Reconnect manually; reboot not independently confirmed."
+                    : "MIB reboot requested. Automatic reconnect disabled; connect manually when ready.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ViewModel.ResumeConnectionMonitorAfterFailedReboot();
+            ViewModel.StatusMessage = $"MIB reboot request failed: {ex.Message}";
+            AppMessageBox.Show(
+                this,
+                $"Unable to request the MIB reboot.\n\n{ex.Message}",
+                "Reboot MIB",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            _isRebootInProgress = false;
+            RebootMibMenuItem.SetCurrentValue(
+                UIElement.IsEnabledProperty,
+                ViewModel.IsConnectedToMib);
+        }
+    }
+
+    private async Task<RebootReconnectResult> WaitForMibReconnectAsync(
+        string host,
+        int port,
+        MibWifiReconnectService.WifiSnapshot? wifi,
+        CancellationToken cancellationToken,
+        Action<string, TimeSpan> progress)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        TimeSpan maxWait = TimeSpan.FromMinutes(3);
+        TimeSpan nextScan = TimeSpan.Zero;
+        TimeSpan nextWifiConnect = TimeSpan.Zero;
+        TimeSpan nextSshAttempt = TimeSpan.FromSeconds(15); // Let the old SSH listener stop before rejoining.
+
+        while (stopwatch.Elapsed < maxWait)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            TimeSpan remaining = maxWait - stopwatch.Elapsed;
+            // No captured Wi-Fi profile does NOT mean that the MIB Wi-Fi is ready.
+            // We can only retry SSH if Windows is restored to the correct network manually.
+            bool wifiReady = wifi is null;
+            if (wifi is null)
+                progress("Wi-Fi profile unknown. Restore the MIB hotspot manually; retrying SSH...", remaining);
+
+            if (wifi is not null)
+            {
+                wifiReady = await Task.Run(() => MibWifiReconnectService.IsConnected(wifi), cancellationToken);
+                if (!wifiReady)
+                {
+                    progress($"Waiting for Wi-Fi hotspot '{wifi.Ssid}'...", remaining);
+
+                    bool scan = stopwatch.Elapsed >= nextScan;
+                    bool connect = stopwatch.Elapsed >= nextWifiConnect;
+                    if (connect)
+                    {
+                        // Check visibility before attempting a connection: while the MIB is
+                        // offline, Windows may remain connected to the user's Livebox.
+                        await Task.Run(() => MibWifiReconnectService.TryConnectIfVisible(wifi, scan), cancellationToken);
+                        nextWifiConnect = stopwatch.Elapsed + TimeSpan.FromSeconds(8);
+                    }
+                    else if (scan)
+                    {
+                        await Task.Run(() => MibWifiReconnectService.RequestScan(wifi), cancellationToken);
+                    }
+                    if (scan)
+                        nextScan = stopwatch.Elapsed + TimeSpan.FromSeconds(20);
+                }
+            }
+
+            if (wifiReady && stopwatch.Elapsed >= nextSshAttempt)
+            {
+                progress(wifi is null
+                    ? "Wi-Fi not detected; checking MIB SSH (manual Wi-Fi may be needed)..."
+                    : "MIB Wi-Fi restored. Checking SSH...", maxWait - stopwatch.Elapsed);
+                bool sshOpen = await IsTcpPortOpenAsync(host, port, cancellationToken);
+                if (sshOpen && stopwatch.Elapsed < maxWait && !cancellationToken.IsCancellationRequested)
+                {
+                    progress("SSH detected. Restoring MibExplorer connection...", maxWait - stopwatch.Elapsed);
+                    bool connected = await ViewModel.ReconnectAfterRemoteRebootAsync();
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        // A cancellation during SSH handshake must not leave a surprise connection.
+                        if (connected)
+                            await ViewModel.DisconnectAfterRemoteRebootAsync();
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                    if (connected)
+                        return RebootReconnectResult.Connected;
+                }
+                nextSshAttempt = stopwatch.Elapsed + TimeSpan.FromSeconds(8);
+            }
+            else if (wifiReady)
+            {
+                progress(wifi is null
+                    ? "Wi-Fi profile unavailable. Restore the MIB hotspot manually."
+                    : "Waiting for the MIB SSH service...", remaining);
+            }
+
+            TimeSpan wait = TimeSpan.FromSeconds(4);
+            remaining = maxWait - stopwatch.Elapsed;
+            if (remaining <= TimeSpan.Zero)
+                break;
+            if (wait > remaining)
+                wait = remaining;
+            await Task.Delay(wait, cancellationToken);
+        }
+
+        return RebootReconnectResult.TimedOut;
+    }
+
+    private static async Task<bool> IsTcpPortOpenAsync(string host, int port, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var tcp = new TcpClient();
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(2));
+            await tcp.ConnectAsync(host, port, timeout.Token);
+            return tcp.Connected;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+        catch (SocketException)
+        {
+            return false;
+        }
+    }
+
     private void RemoteShellConsoleMenuItem_Click(object sender, RoutedEventArgs e)
     {
         OpenRemoteShellWindow();
@@ -347,7 +621,7 @@ public partial class MainWindow : Window
     private static string GetShellTargetPath(RemoteExplorerItem item)
     {
         if (item.IsDirectory || item.IsNavigable)
-            return item.FullPath;
+            return item.BrowsingPath;
 
         string path = item.FullPath;
         int lastSlash = path.LastIndexOf('/');

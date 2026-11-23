@@ -1,0 +1,19 @@
+<Window x:Class="MibExplorer.Views.Dialogs.RebootMibConfirmWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Reboot MIB" Width="440" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource AppWindowBackgroundBrush}"
+        Foreground="{DynamicResource AppTextBrush}">
+    <StackPanel Margin="22">
+        <TextBlock Text="Are you sure you want to reboot?"
+                   FontSize="17" FontWeight="SemiBold" Margin="0,0,0,20"/>
+        <CheckBox x:Name="AutoReconnectCheckBox" Content="Try auto reconnect"
+                  Style="{StaticResource LabeledCheckBoxStyle}"
+                  IsChecked="True"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+            <Button Content="Cancel" Width="90" Margin="0,0,8,0" IsCancel="True"/>
+            <Button Content="Reboot" Width="90" IsDefault="True" Click="Reboot_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

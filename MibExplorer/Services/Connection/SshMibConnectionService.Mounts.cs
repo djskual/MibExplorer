@@ -82,6 +82,12 @@ public sealed partial class SshMibConnectionService
             physicalParent.Contains('\r') || physicalParent.Contains('\n'))
             throw new InvalidOperationException($"Unable to resolve remote parent directory: {parentPath}");
 
+        // Never silently authorize a Qnet RCC write after cd/pwd -P has escaped
+        // to MMX's local namespace through an absolute symbolic link.
+        if (GetRccRelativePath(parentPath) is not null && GetRccRelativePath(physicalParent) is null)
+            throw new InvalidOperationException(
+                $"RCC target unexpectedly resolves outside the RCC namespace: {parentPath} -> {physicalParent}");
+
         return physicalParent;
     }
 
@@ -128,7 +134,8 @@ public sealed partial class SshMibConnectionService
         string? rccRelative = GetRccRelativePath(directoryPath);
         return rccRelative is null ||
                IsPathAtOrBelow(rccRelative, "/mnt/efs-persist") ||
-               IsPathAtOrBelow(rccRelative, "/mnt/efs-system");
+               IsPathAtOrBelow(rccRelative, "/mnt/efs-system") ||
+               IsPathAtOrBelow(rccRelative, "/dev/shmem"); // RCC volatile RAM only.
     }
 
     // Check the parent, never the target entry. The mounted efs-* roots themselves
@@ -143,8 +150,10 @@ public sealed partial class SshMibConnectionService
     private static bool IsDirectlyWritablePath(string normalized)
     {
         // QNX /tmp does not need a mount -uw / mount -ur cycle.
+        string? rccRelative = GetRccRelativePath(normalized);
         return IsPathAtOrBelow(normalized, "/tmp") ||
-               IsPathAtOrBelow(normalized, "/dev/shmem");
+               IsPathAtOrBelow(normalized, "/dev/shmem") ||
+               (rccRelative is not null && IsPathAtOrBelow(rccRelative, "/dev/shmem"));
     }
 
     private static bool IsPathAtOrBelow(string path, string root)
@@ -234,7 +243,7 @@ public sealed partial class SshMibConnectionService
             string parent = await ResolveWriteParentDirectoryAsync(remotePath, cancellationToken);
             if (!IsRccWriteTargetAllowed(remotePath) || !IsRccWriteDirectoryAllowed(parent))
                 throw new InvalidOperationException(
-                    "RCC is read-only in MibExplorer outside /net/rcc/mnt/efs-persist and /net/rcc/mnt/efs-system.");
+                    "RCC writes are restricted to efs-persist, efs-system and volatile /net/rcc/dev/shmem.");
 
             if (IsDirectlyWritablePath(parent))
             {

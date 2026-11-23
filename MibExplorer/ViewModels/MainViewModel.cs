@@ -327,10 +327,21 @@ public sealed partial class MainViewModel : ObservableObject
     private bool CanModifySelectedItem =>
         SelectedItem is not null && _mibConnectionService.CanWriteToPath(SelectedItem.FullPath);
 
-    private bool CanUploadIntoFolder(RemoteExplorerItem? folder) =>
-        folder is { IsNavigable: true } &&
-        _mibConnectionService.CanWriteToPath(
-            folder.FullPath.TrimEnd('/') + "/.__mibexplorer_write_check__");
+    private bool CanUploadIntoFolder(RemoteExplorerItem? folder)
+    {
+        if (folder is not { IsNavigable: true })
+            return false;
+
+        try
+        {
+            return _mibConnectionService.CanWriteToPath(
+                folder.BrowsingPath.TrimEnd('/') + "/.__mibexplorer_write_check__");
+        }
+        catch (InvalidOperationException)
+        {
+            return false; // A symlink without a resolved destination is not writable.
+        }
+    }
     public bool CanRunItemAction =>
         !IsBusy &&
         IsConnectedToMib &&
@@ -354,5 +365,10 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedItem is not null &&
         !SelectedItem.IsDirectory;
 
-    public string CurrentFolderLabel => SelectedTreeNode?.FullPath ?? "/";
+    public string CurrentFolderLabel => SelectedTreeNode is null ? "/" :
+        SelectedTreeNode.EntryType == RemoteEntryType.Symlink
+            ? string.IsNullOrWhiteSpace(SelectedTreeNode.SymlinkTarget)
+                ? $"{SelectedTreeNode.FullPath} (unresolved symbolic link)"
+                : $"{SelectedTreeNode.FullPath} -> {SelectedTreeNode.BrowsingPath}"
+            : SelectedTreeNode.FullPath;
 }

@@ -27,14 +27,23 @@ public sealed partial class SshMibConnectionService
 
             string permissions = parts[0];
             string name = string.Join(' ', parts.Skip(8));
+            char entryKind = permissions[0];
+            string? target = null;
+
+            // Preserve the actual link target. In Qnet an absolute target must
+            // be rebased onto its owning node before it is traversed.
+            if (entryKind == 'l')
+            {
+                int arrow = name.LastIndexOf(" -> ", StringComparison.Ordinal);
+                if (arrow >= 0)
+                {
+                    target = name[(arrow + 4)..];
+                    name = name[..arrow];
+                }
+            }
 
             if (name == "." || name == "..")
                 continue;
-
-            if (name.Contains(" -> "))
-                name = name.Split(" -> ")[0];
-
-            char entryKind = permissions[0];
 
             RemoteEntryType type = entryKind switch
             {
@@ -63,6 +72,7 @@ public sealed partial class SshMibConnectionService
                 Name = name,
                 FullPath = fullPath,
                 EntryType = type,
+                SymlinkTarget = target,
                 Size = type == RemoteEntryType.Directory ? 0 : size,
                 ModifiedAt = null
             });
@@ -74,7 +84,6 @@ public sealed partial class SshMibConnectionService
     public Task<IReadOnlyList<RemoteExplorerItem>> GetChildrenAsync(string remotePath, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        EnsureConnected();
 
         string normalizedPath = NormalizeRemotePath(remotePath);
         string escapedPath = EscapeShellArg(normalizedPath);
@@ -85,19 +94,25 @@ public sealed partial class SshMibConnectionService
                 $"cd {escapedPath} 2>/dev/null || exit 2; " +
                 "ls -la");
 
-        using var cmd = _sshClient!.CreateCommand(commandText);
-        string result = cmd.Execute();
-
-        if (cmd.ExitStatus != 0)
+        // SSH.NET Execute() is synchronous. Running it on the caller thread
+        // freezes WPF during slow Qnet listings. Do not change path semantics.
+        return Task.Run<IReadOnlyList<RemoteExplorerItem>>(() =>
         {
-            string message = string.IsNullOrWhiteSpace(cmd.Error)
-                ? $"Failed to list remote path: {normalizedPath}"
-                : cmd.Error.Trim();
+            cancellationToken.ThrowIfCancellationRequested();
+            EnsureConnected();
+            using var cmd = _sshClient!.CreateCommand(commandText);
+            string result = cmd.Execute();
 
-            throw new SshException(message);
-        }
+            if (cmd.ExitStatus != 0)
+            {
+                string message = string.IsNullOrWhiteSpace(cmd.Error)
+                    ? $"Failed to list remote path: {normalizedPath}"
+                    : cmd.Error.Trim();
 
-        IReadOnlyList<RemoteExplorerItem> items = ParseLsLa(normalizedPath, result);
-        return Task.FromResult(items);
+                throw new SshException(message);
+            }
+
+            return ParseLsLa(normalizedPath, result);
+        }, cancellationToken);
     }
 }
